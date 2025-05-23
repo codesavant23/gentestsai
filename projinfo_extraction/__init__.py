@@ -15,15 +15,15 @@
         - Calcolo della varianza del numero di test cases, tra moduli, di un progetto
 """
 
-from projinfo_extraction._private._counting_modules import count_modules
-from projinfo_extraction._private._counting_loc_bymodule import calc_modloc
-from projinfo_extraction._private._counting_numtcases_bymodule import count_modtcases
-from projinfo_extraction._private._calc_avg_loc import avg_projloc
-from projinfo_extraction._private._calc_var_loc import var_projloc
-from projinfo_extraction._private._calc_tot_numtcases import tot_proj_numtcases
-from projinfo_extraction._private._calc_avg_numtcases import avg_proj_numtcases
-from projinfo_extraction._private._calc_var_numtcases import var_proj_numtcases
-from projinfo_extraction._private._automatic_extraction import extract_projsinfo
+from projinfo_extraction._private.counting_modules import count_modules
+from projinfo_extraction._private.counting_loc_bymodule import calc_modloc
+from projinfo_extraction._private.counting_numtcases_bymodule import count_modtcases
+from projinfo_extraction._private.calc_avg_loc import avg_projloc
+from projinfo_extraction._private.calc_var_loc import var_projloc
+from projinfo_extraction._private.calc_tot_numtcases import tot_proj_numtcases
+from projinfo_extraction._private.calc_avg_numtcases import avg_proj_numtcases
+from projinfo_extraction._private.calc_var_numtcases import var_proj_numtcases
+from projinfo_extraction._private.automatic_extraction import extract_projsinfo
 
 # Defining exports for Whole-Package importing
 __all__ = [
