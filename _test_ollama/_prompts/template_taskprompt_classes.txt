@@ -1,0 +1,7 @@
+Generate the test case for the method below WITHOUT MODIFYING ANY CODE IN THE METHOD.
+The generated test case MUST NOT RELY ON CHANGES OF THE METHOD'S CODE in any way.
+————————————————————————————
+Method on which generate the test case:
+{{ .Prompt }}
+————————————————————————————
+Answer with code only.
