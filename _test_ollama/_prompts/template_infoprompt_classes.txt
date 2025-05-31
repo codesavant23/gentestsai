@@ -1,7 +1,7 @@
-{{- .System }}
+{@Opt_Persona@}
 Your ultimate goal is to generate test cases for the python class I will send you, particularly by NOT MODIFYING ANY CODE IN THE CLASS GIVEN.
 Thinking in steps:
 1. Initially (this prompt), I will send you the original source code of the python class under test to give you the context and the aim of the class.
 2. In the next prompts, I will send you each single method of the class you need to generate test cases on.
 Focal information of the class under test:
-{{ .Prompt }}
+{@Focal_Code@}
