@@ -24,7 +24,7 @@ class ModuleCodeVisitor(NodeVisitor):
         self._funcs: List[FunctionDef] = []
         self._classes: List[ClassDef] = []
         self._imports: List[Import] = []
-        self._froms: List[Import] = []
+        self._froms: List[ImportFrom] = []
 
 
     def visit_Import(self, node: Import):

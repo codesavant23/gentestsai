@@ -15,11 +15,13 @@ def build_full_infoprompt(templ: str, focal_info: str, opt_persona: str = None) 
     focalcode_patt: str = r"{@Focal_Code@}"
     info_prompt: str = reg_replace(focalcode_patt, focal_info, templ)
 
+    persona_patt: str = r"{@Opt_Persona@}"
     if opt_persona is not None:
-        persona_patt: str = r"{@Opt_Persona@}"
         info_prompt = reg_replace(persona_patt, opt_persona, info_prompt)
+    else:
+        info_prompt = reg_replace(persona_patt, "", info_prompt)
 
-    return info_prompt
+    return info_prompt.strip(" \n\t")
 
 
 def build_full_taskprompt(templ: str, task_info: str) -> str:

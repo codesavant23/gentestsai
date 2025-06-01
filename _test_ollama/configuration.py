@@ -1,6 +1,7 @@
 from typing import Dict
+from re import search as reg_search
 from os import mkdir
-from os.path import exists as dir_exists
+from os.path import exists as dir_exists, join as path_join
 
 
 def configure_script(base_dir: str, prompts_dir: str = "_prompts", gentests_dir: str = "tests") -> Dict[str, str]:
@@ -22,15 +23,11 @@ def configure_script(base_dir: str, prompts_dir: str = "_prompts", gentests_dir:
     """
     config: Dict[str, str] = dict()
 
-    new_base_dir: str = base_dir
-    if not base_dir.endswith("\\"):
-        new_base_dir += "\\"
+    config["base_dir"] = base_dir
+    config["prompts_dir"] = path_join(base_dir, prompts_dir)
+    config["gentests_dir"] = path_join(base_dir, gentests_dir)
 
-    config["base_dir"] = new_base_dir
-    config["prompts_dir"] = new_base_dir + prompts_dir + "\\"
-    config["gentests_dir"] = new_base_dir + gentests_dir + "\\"
-
-    if not dir_exists(config["gentest_dir"]):
+    if not dir_exists(config["gentests_dir"]):
         mkdir(config["gentests_dir"])
 
     userpass_pair: str = "ollama:3UHn2uyu1sxgAy15"
@@ -38,7 +35,7 @@ def configure_script(base_dir: str, prompts_dir: str = "_prompts", gentests_dir:
     action: str = "/api/chat"
     config["api_url"] = "http://" + userpass_pair + "@" + base_api + action
 
-    config["focalmod_path"] = new_base_dir + input("Inserire il nome del modulo Python (con estensione .py) di cui generare i tests :>  " + new_base_dir)
+    config["focalmod_path"] = path_join(base_dir, input("Inserire il nome del modulo Python (con estensione .py) di cui generare i tests (Directory base: "+base_dir+") :>  "))
     chosen_model: str = input("Inserire la coppia modello:tag per selezionare il LLM da utilizzare :>  ")
     model_patt: str = r"^[a-zA-z0-9\.\-_]+(?:\:[a-zA-z0-9\.\-_]+)?$"
     if reg_search(model_patt, chosen_model) is None:

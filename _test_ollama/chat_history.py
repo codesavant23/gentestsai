@@ -5,6 +5,8 @@ class ChatHistory:
     def __init__(self):
         self._history: List[Dict[str, str]] = []
 
+    def history(self) -> List[Dict[str, str]]:
+        return self._history
 
     def clear(self):
         self._history.clear()
