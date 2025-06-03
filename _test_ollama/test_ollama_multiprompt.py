@@ -14,7 +14,7 @@ from chat_history import ChatHistory
 
 
 #
-#   TODO: Aggiungere controlli sulla lunghezza del prompt e finestra di contesto
+#   TODO: Modificare per un' interazione con /api/chat
 #
 
 

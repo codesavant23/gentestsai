@@ -1,3 +1,4 @@
+from typing import Tuple
 from re import sub as reg_replace
 
 
@@ -40,3 +41,36 @@ def build_full_taskprompt(templ: str, task_info: str) -> str:
     task_prompt: str = reg_replace(focalcode_patt, task_info, templ)
 
     return task_prompt
+
+
+def build_full_singleprompt(templ: str, focal_code: str, context_names: Tuple[str, str]) -> str:
+    """
+
+        Parameters
+        ----------
+        templ: str
+            Una stringa contenente il template da utilizzare per costruire il prompt
+        focal_code: str
+            Una stringa contenente il codice focale da aggiungere al full prompt risultante
+        context_names
+            Una tupla di stringhe, contenente:
+
+                - [0]: Il nome del progetto a cui appartiene il codice del modulo focale
+                - [1]: Il nome del modulo focale
+
+        Returns
+        -------
+
+    """
+    proj_name: str = context_names[0]
+    mod_name: str = context_names[1]
+
+    projname_patt: str = r"{@Proj_Name}"
+    modname_patt: str = r"{@Module_Name}"
+    focalcode_patt: str = r"{@Focal_Code@}"
+
+    full_prompt: str = reg_replace(projname_patt, proj_name, templ)
+    full_prompt = reg_replace(modname_patt, mod_name, full_prompt)
+    full_prompt = reg_replace(focalcode_patt, focal_code, full_prompt)
+
+    return full_prompt

@@ -12,15 +12,20 @@ class ChatHistory:
         self._history.clear()
 
 
-    def add_message(self,
-            wrote_by: Literal["user", "llm"],
-            message: str
+    def add_message(
+        self,
+        writer_role: Literal["user", "llm", "context", "tool"],
+        message: str
     ):
         role: str
-        if wrote_by == "user":
+        if writer_role == "user":
             role = "user"
-        else:
+        elif writer_role == "llm":
             role = "assistant"
+        elif writer_role == "context":
+            role = "system"
+        else:
+            role = "tool"
 
         self._history.append(
             ChatHistory._new_history_message(role, message)
