@@ -65,8 +65,8 @@ def build_full_singleprompt(templ: str, focal_code: str, context_names: Tuple[st
     proj_name: str = context_names[0]
     mod_name: str = context_names[1]
 
-    projname_patt: str = r"{@Proj_Name}"
-    modname_patt: str = r"{@Module_Name}"
+    projname_patt: str = r"{@Proj_Name@}"
+    modname_patt: str = r"{@Module_Name@}"
     focalcode_patt: str = r"{@Focal_Code@}"
 
     full_prompt: str = reg_replace(projname_patt, proj_name, templ)

@@ -2,7 +2,7 @@ Generate the test cases for ALL classes and ALL functions in the Python module p
 In particular you should generate a test class for each class you find, and a test class for all module-proper functions.
 YOU MUST NOT MODIFY ANY OF THE CODE GIVEN TO ACHIEVE THE GOAL.
 Use ANY NECESSARY IMPORT, in the generated test code, TO SOLVE ANY DEPENDENCY needed.
-The module given is called "{@Module_Name}" and belongs to a project called "{@Proj_Name}".
+The module given is called "{@Module_Name@}" and belongs to a project called "{@Proj_Name@}".
 The code of the module follows the empty line after this line, and it will end with @@==END==@@ (excluded)
 
 {@Focal_Code@}
