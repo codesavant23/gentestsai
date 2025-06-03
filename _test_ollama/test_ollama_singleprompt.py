@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 from os.path import split as path_split, join as path_join
 from requests import post as req_post, Response
 from functools import reduce
+from re import split as reg_split
 from pprint import pprint
 
 from configuration import configure_script
@@ -9,6 +10,7 @@ from template_reading import read_templ_frompath
 from code_extraction import extract_focalmodule_code
 from prompt_building import build_full_singleprompt
 from chat_history import ChatHistory
+from tempfile import TemporaryDirectory, TemporaryFile
 
 
 """
@@ -31,7 +33,7 @@ if __name__ == "__main__":
     context_prompt: str = "You are a professional Python software developer."
 
     # ========== Lettura del Template di Prompt ==========
-    testprompt_path: str = path_join(config["prompts_dir"], "test_prompt.txt")
+    testprompt_path: str = path_join(config["prompts_dir"], "template_gentest_prompt.txt")
     test_templ: str = read_templ_frompath(testprompt_path)
 
     # ========== Estrazione del codice del singolo modulo  ==========
@@ -46,7 +48,9 @@ if __name__ == "__main__":
         ("optuna", "example_module")
     )
 
+    #_test_dir\example_module.py
     chat_history: ChatHistory = ChatHistory()
+    print("Lunghezza del Prompt Completo = "+str(len(reg_split(r"( |\n)+", full_prompt)))+" tokens")
     print("Richiesta di generazione dei test ... ", end="")
     chat_history.add_message("context", context_prompt)
     chat_history.add_message("user", full_prompt)
@@ -57,7 +61,7 @@ if __name__ == "__main__":
             "messages": chat_history.history(),
             "stream": False,
             "options": {
-                "temperature": 0.7,
+                "temperature": 0.3,
                 "top_k": 15,
                 "top_p": 0.20,
                 "num_ctx": 128000
@@ -67,11 +71,20 @@ if __name__ == "__main__":
     )
     print("[COMPLETATA]")
 
-    gen_code: str = response.json()["message"]["content"]
+    resp_str: str = response.json()["message"]["content"]
     chat_history.clear()
 
-    gen_lines: List[str] = gen_code.split("\n")
-    py_code: str = reduce(lambda acc,line: acc + "\n" + line, gen_lines[1:(len(gen_lines)-1)], "").lstrip("\n")
+    print("Response:")
+    pprint(resp_str)
+
+    #reduce(lambda acc, line: acc + "\n" + line, resp_lines[1:(len(resp_lines) - 1)], "").lstrip("\n")
+    resp_lines: List[str] = resp_str.split("\n")
+
+    resp_parts: List[str] = reduce(lambda acc, line: acc + "\n" + line, resp_lines[1:(len(resp_lines)-1)], "").lstrip("\n").split("@@==CODE_END==@@\n@@==IMPORTS_START==@@\n")
+    gen_code: str = resp_parts[0]
+    imps_code: str = resp_parts[1]
+
+    py_code: str = imps_code + "\n\n" + gen_code
 
     orig_path: Tuple[str, str] = path_split(config["focalmod_path"])
     module_name: str = orig_path[1].split(".")[0]

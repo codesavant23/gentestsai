@@ -1,0 +1,10 @@
+Generate the test cases, and associated imports, for ALL classes and ALL functions in the Python module provided.
+First generate the code for the test cases WITHOUT ANY IMPORT, then write @@==CODE_END==@@, and ONLY THEN GENERATE THE IMPORTS associated to the test cases written.
+When generating the code of test cases you should generate a test class for each class you find, and a test class for all module-proper functions.
+YOU MUST NOT MODIFY ANY OF THE CODE GIVEN TO ACHIEVE THE GOAL.
+The module given is called "{@Module_Name@}" and belongs to a project called "{@Proj_Name@}".
+The code of the module follows the empty line after this line, and it will end with @@==PROMPT_END==@@ (excluded)
+
+{@Focal_Code@}
+
+@@==PROMPT_END==@@
