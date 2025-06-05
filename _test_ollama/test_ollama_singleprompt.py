@@ -30,10 +30,10 @@ if __name__ == "__main__":
     config: Dict[str, str] = configure_script(base_dir)
     keep_alive: str = "30m"
 
-    context_prompt: str = "You are a professional Python software developer."
+    context_prompt: str = """You are a professional Python developer that generates test suites for modules, and ANSWERS with CODE ONLY."""
 
     # ========== Lettura del Template di Prompt ==========
-    testprompt_path: str = path_join(config["prompts_dir"], "template_gentest_prompt.txt")
+    testprompt_path: str = path_join(config["prompts_dir"], "template_cot_codeonly_6.txt")
     test_templ: str = read_templ_frompath(testprompt_path)
 
     # ========== Estrazione del codice del singolo modulo  ==========
@@ -45,10 +45,10 @@ if __name__ == "__main__":
     full_prompt: str = build_full_singleprompt(
         test_templ,
         raw_module_code,
-        ("optuna", "example_module")
+        ("optuna", "distributions")
     )
 
-    #_test_dir\example_module.py
+    #_test_dir\distributions.py
     chat_history: ChatHistory = ChatHistory()
     print("Lunghezza del Prompt Completo = "+str(len(reg_split(r"( |\n)+", full_prompt)))+" tokens")
     print("Richiesta di generazione dei test ... ", end="")
@@ -61,9 +61,9 @@ if __name__ == "__main__":
             "messages": chat_history.history(),
             "stream": False,
             "options": {
-                "temperature": 0.3,
-                "top_k": 15,
-                "top_p": 0.20,
+                "temperature": 0.1,
+                "top_k": 10,
+                "top_p": 0.90,
                 "num_ctx": 128000
             },
             "keep-alive": keep_alive
@@ -80,11 +80,11 @@ if __name__ == "__main__":
     #reduce(lambda acc, line: acc + "\n" + line, resp_lines[1:(len(resp_lines) - 1)], "").lstrip("\n")
     resp_lines: List[str] = resp_str.split("\n")
 
-    resp_parts: List[str] = reduce(lambda acc, line: acc + "\n" + line, resp_lines[1:(len(resp_lines)-1)], "").lstrip("\n").split("@@==CODE_END==@@\n@@==IMPORTS_START==@@\n")
-    gen_code: str = resp_parts[0]
-    imps_code: str = resp_parts[1]
+    py_code: str = reduce(lambda acc, line: acc + "\n" + line, resp_lines[1:(len(resp_lines)-1)], "").lstrip("\n")
+    #: str = resp_parts[0]
+    #imps_code: str = resp_parts[1]
 
-    py_code: str = imps_code + "\n\n" + gen_code
+    #py_code: str = imps_code + "\n\n" + gen_code
 
     orig_path: Tuple[str, str] = path_split(config["focalmod_path"])
     module_name: str = orig_path[1].split(".")[0]
