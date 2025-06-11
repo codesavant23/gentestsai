@@ -1,7 +1,14 @@
 from typing import Dict, List, Tuple
 from functools import reduce
+from tree_sitter import Node as TreeNode
 from ast import Module, parse as ast_parse
 from _modulecode_nodevisitor import ModuleCodeVisitor
+
+
+def parse_codeonly_response(resp: str) -> str:
+    resp_lines: List[str] = resp.split("\n")
+    code_only: str = reduce(lambda acc, line: acc + "\n" + line, resp_lines[1:(len(resp_lines) - 1)], "").lstrip("\n")
+    return code_only
 
 
 def extract_focalmodule_code(codefile_path: str) -> Tuple[str, Dict[str, List[str]]]:
@@ -66,3 +73,38 @@ def extract_module_code(module_code: str) -> Dict[str, List[str]]:
     result["classes"] = mod_classes
 
     return result
+
+
+def extract_fbyf_funcprompt_code(module_node: TreeNode) -> Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]]:
+    """
+
+        Parameters
+        ----------
+            module_node: TreeNode
+                Un nodo rappresentante l'intero modulo di codice da scomporre (corrispondente alla radice del CST)
+
+        Returns
+        -------
+            Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]]
+                Una Tupla di 2 oggetti contenente:
+
+                    - [0]: Una tupla di Liste di TreeNode:
+                        - [0]: La lista dei TreeNode "imports" trovati nel codice
+                        - [1]: La lista dei TreeNode "from imports" trovati nel codice
+                    - [1]: La lista di TreeNode di definizioni di funzioni trovate nel codice
+    """
+    ls_imports: List[TreeNode] = []
+    ls_fromimps: List[TreeNode] = []
+    ls_funcs: List[TreeNode] = []
+
+    for child_node in module_node.children:
+        if child_node.type == "import_statement":
+            ls_imports.append(child_node)
+        elif child_node.type == "import_from_statement":
+            ls_fromimps.append(child_node)
+        elif child_node.type == "block":
+            for prob_func in child_node.children:
+                if prob_func.type == "function_definition":
+                    ls_funcs.append(prob_func)
+
+    return ((ls_imports, ls_fromimps), ls_funcs)

@@ -74,3 +74,48 @@ def build_full_singleprompt(templ: str, focal_code: str, context_names: Tuple[st
     full_prompt = reg_replace(focalcode_patt, focal_code, full_prompt)
 
     return full_prompt
+
+
+def build_full_fbyf_singleprompt(
+    templ: str,
+    focal_code: str,
+    func_name: str,
+    context_names: Tuple[str, str]
+) -> str:
+    """
+        Iiii
+
+        Parameters
+        ----------
+            templ: str
+                Una stringa contenente il template da utilizzare per costruire il prompt
+            focal_code: str
+                Una stringa contenente il codice focale da aggiungere al full prompt risultante
+            func_name: str
+                Una stringa contenente il nome della funzione di cui generare il test
+            context_names: Tuple[str, str]
+                Una tupla di stringhe, contenente:
+
+                    - [0]: Il nome del progetto a cui appartiene il codice del modulo focale
+                    - [1]: Il nome del modulo focale
+
+        Returns
+        -------
+
+    """
+    full_singleprompt: str = build_full_singleprompt(templ, focal_code, context_names)
+
+    funcname_patt: str = r"{@Function_Name@}"
+    full_prompt: str = reg_replace(funcname_patt, func_name, full_singleprompt)
+
+    return full_prompt
+
+
+def build_corrimps_prompt(templ: str, focal_code: str, wrong_tsuite: str) -> str:
+    focalcode_patt: str = r"{@Focal_Code@}"
+    suitecode_patt: str = r"{@Suite_Code@}"
+
+    full_prompt: str = reg_replace(focalcode_patt, focal_code, templ)
+    full_prompt = reg_replace(suitecode_patt, wrong_tsuite, full_prompt)
+
+    return full_prompt

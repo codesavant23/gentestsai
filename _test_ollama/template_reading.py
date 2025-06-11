@@ -18,7 +18,7 @@ def read_templ_frompath(templ_path: str) -> str:
     return templ
 
 
-def extract_templs(
+def extract_infotask_templs(
         templs_paths: Tuple[Tuple[str,str],Tuple[str,str]]
 ) -> Dict[str, str]:
     """
