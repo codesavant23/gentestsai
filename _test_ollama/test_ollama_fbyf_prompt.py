@@ -15,11 +15,11 @@ from tree_sitter_python import language as py_grammar
 from configuration import configure_script
 from template_reading import read_templ_frompath
 from code_extraction import (
-    extract_focalmodule_code,
+    extract_fmodule_code,
+    separate_fmodule_code,
     extract_fbyf_funcprompt_code,
     parse_codeonly_response
 )
-from module_testsuite import ModuleTestSuite
 from chat_history import ChatHistory
 from prompt_building import (
     build_full_fbyf_singleprompt,
@@ -35,21 +35,21 @@ from pprint import pprint
 def _generate_tsuite_modfuncs(
         config: Dict[str, str],
         chat_history: ChatHistory,
+        template: str,
         code_parser: Parser,
         module_code: str,
-        template: str,
         module_funcs: List[str],
         context_names: Tuple[str, str]
 ) -> str:
-    context_prompt: str = "You are a professional Python developer that generates test suites for modules, and ANSWERS with CODE ONLY."
+    context_prompt: str = "You are a professional Python developer."
 
-    methsign_patt: str = r"(def\s+((?:[a-zA-Z0-9_\-]+))\s*\(((?:.|\n)*?)\)\s*(?:->\s*[a-zA-Z0-9\[\]]+)?:)"
-    methname_patt: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
+    funcsign_patt: str = r"(def\s+((?:[a-zA-Z0-9_\-]+))\s*\(((?:.|\n)*?)\)\s*(?:->\s*[a-zA-Z0-9\[\]]+)?:)"
+    funcname_patt: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
 
     resp_tree: Tree
     for func_def in module_funcs:
-        func_sign: str = reg_search(methsign_patt, func_def).group()
-        func_name: str = reg_search(methname_patt, func_sign).group(2)
+        func_sign: str = reg_search(funcsign_patt, func_def).group()
+        func_name: str = reg_search(funcname_patt, func_sign).group(2)
 
         with RequestSession() as sesh:
             # ========== Costruzione del Prompt Completo ==========
@@ -71,7 +71,7 @@ def _generate_tsuite_modfuncs(
                 sesh,
                 chat_history,
                 model_spec = {
-                    "temperature": 0.1,
+                    "temperature": 0,
                     "top_k": 10,
                     "top_p": 0.90,
                     "num_ctx": 70000
@@ -81,7 +81,7 @@ def _generate_tsuite_modfuncs(
 
             unwrapd_resp: str = parse_codeonly_response(response)
             print("Response: ")
-            pprint(unwrapd_resp)
+            print(unwrapd_resp)
 
             resp_tree = code_parser.parse(unwrapd_resp.encode())
             resp_tree_root: TreeNode = resp_tree.root_node
@@ -121,39 +121,66 @@ def _generate_tsuite_modfuncs(
     return ""
 
 
-def _generate_tsuite_testclss():
-    pass
+def _generate_tsuite_testclss(
+        config: Dict[str, str],
+        chat_history: ChatHistory,
+        template: str,
+        code_parser: Parser,
+        module_code: str,
+        module_classes: List[str],
+        classes_meths: Dict[str, List[str]],
+        context_names: Tuple[str, str]
+) -> str:
+    None
 
 
 def generate_tsuite(
         config: Dict[str, str],
         chat_history: ChatHistory,
-        templ_path: str,
+        templs_paths: Tuple[str, str],
         context_names: Tuple[str, str]
 ) -> Tuple[str, str]:
 
     context_prompt: str = "You are a professional Python developer that generates test suites for modules, and ANSWERS with CODE ONLY."
 
     # ========== Lettura del Template di Prompt ==========
-    template: str = read_templ_frompath(templ_path)
+    templ_func_path: str = templs_paths[0]
+    #templ_meth_path: str = templs_paths[1]
+
+    templ_func: str = read_templ_frompath(templ_func_path)
+    #templ_meth: str = read_templ_frompath(templ_meth_path)
 
     # ========== Estrazione del codice del modulo  ==========
-    result: Tuple[str, Dict[str, List[str]]] = extract_focalmodule_code(config["focalmod_path"])
-    raw_module_code: str = result[0]
-    module_code: Dict[str, List[str]] = result[1]
+    module_cst: Tree = extract_fmodule_code(config["focalmod_path"])
+
+    raw_module_code: str = module_cst.root_node.text.decode()
+    module_parts: Tuple[Dict[str, List[str]], Dict[str, List[str]]] = separate_fmodule_code(module_cst)
+    module_entities: Dict[str, List[str]] = module_parts[0]
+    module_classes: Dict[str, List[str]] = module_parts[1]
 
     python_lang: Language = Language(py_grammar())
     pycode_parser: Parser = Parser(python_lang)
 
-    tsuite_code: str = _generate_tsuite_modfuncs(
+    tsuite_funcs_code: str = _generate_tsuite_modfuncs(
         config,
         chat_history,
+        templ_func,
         pycode_parser,
         raw_module_code,
-        template,
-        module_code["funcs"],
+        module_entities["funcs"],
         context_names
     )
+
+    """tsuite_classes_code: str = _generate_tsuite_testclss(
+        config,
+        chat_history,
+        templ_meth,
+        pycode_parser,
+        raw_module_code,
+        module_entities["classes"],
+        module_classes,
+        context_names
+    )"""
 
     # TODO: Finish code
 
@@ -171,7 +198,7 @@ if __name__ == "__main__":
     result: Tuple[str, str] = generate_tsuite(
         config,
         chat_history,
-        path_join(config["prompts_dir"], "template_fbyf_func_codeonly.txt"),
+        (path_join(config["prompts_dir"], "template_fbyf_func.txt"), ""),
         ("optuna", "distributions")
     )
     focal_code: str = result[0]

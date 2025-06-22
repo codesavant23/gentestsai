@@ -1,8 +1,9 @@
 from typing import Dict, List, Tuple
 from functools import reduce
-from tree_sitter import Node as TreeNode
-from ast import Module, parse as ast_parse
-from _modulecode_nodevisitor import ModuleCodeVisitor
+from re import search as reg_search
+
+from tree_sitter import Language, Parser, Tree, Node as TreeNode
+from tree_sitter_python import language as py_grammar
 
 
 def parse_codeonly_response(resp: str) -> str:
@@ -11,7 +12,19 @@ def parse_codeonly_response(resp: str) -> str:
     return code_only
 
 
-def extract_focalmodule_code(codefile_path: str) -> Tuple[str, Dict[str, List[str]]]:
+def extract_fmodule_code(codefile_path: str) -> Tree:
+
+    code_mod: Module
+    code_mod_str: str
+    with open(codefile_path, "r") as ftest:
+        code_mod_str = reduce(lambda acc, x: acc + x, ftest.readlines(), "")
+
+    py_parser: Parser = Parser(Language(py_grammar()))
+    module_cst: Tree = py_parser.parse(code_mod_str.encode())
+    return module_cst
+
+
+def _old_extract_focalmodule_code(codefile_path: str) -> Tuple[str, Dict[str, List[str]]]:
     """
         TODO: Finish description
 
@@ -33,46 +46,65 @@ def extract_focalmodule_code(codefile_path: str) -> Tuple[str, Dict[str, List[st
     with open(codefile_path, "r") as ftest:
         code_mod_str = reduce(lambda acc, x: acc + x, ftest.readlines(), "")
 
-    result: Dict[str, List[str]] = extract_module_code(code_mod_str)
+    result: Dict[str, List[str]] = separate_fmodule_code(code_mod_str)
 
     return (code_mod_str, result)
 
 
-def extract_module_code(module_code: str) -> Dict[str, List[str]]:
+def separate_fmodule_code(module_cst: Tree) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
-        TODO: Finish Description
+        Separa il codice di un modulo focale dato come argomento.
+        In particolare suddivide il codice in:
+            - Funzioni proprie del namespace del modulo
+            - Classi proprie del namespace del modulo
+
+        In seguito effettua una seconda suddivisione separando anche ogni metodo, di ogni classe trovata,
+        associandolo alla classe in cui è definito.
 
         Parameters
         ----------
-        module_code
+        module_cst: Tree
+            Il Concrete Syntax Tree associato al modulo focale di cui separare le entità che lo compongono
 
         Returns
         -------
-        Dict[str, List[str]]
-            - Un dizionario di liste di stringhe, indicizzato su stringhe, contenente:
+        Tuple[Dict[str, List[str]], Dict[str, List[str]]]
+            Una tupla di 2 dizionari di liste di stringhe, indicizzati su stringhe, contenenti:
 
-                - "imports": Una lista di stringhe contenente tutti gli imports completi del modulo.
-                - "froms": Una lista di stringhe contenente tutti gli imports parziali del modulo.
-                - "funcs": Una lista di stringhe contenente tutti le funzioni (del modulo) estratte.
-                - "classes": Una lista di stringhe contenente tutti le definizioni di classe estratte.
+                - [0]: Il primo dizionario:
+
+                    - "funcs": Le funzioni proprie del namespace del modulo
+                    - "classes": Le classi proprie del namespace del modulo
+
+                - [1]: Il secondo dizionario, contenente una chiave per ogni classe:
+                    - "<class_name>": I metodi dichiarati nella classe <class_name>
     """
-    result: Dict[str, List[str]] = dict()
+    module_entities: Dict[str, List[str]] = {
+        "funcs": [],
+        "classes": [],
+    }
+    module_classes: Dict[str, List[str]] = dict()
 
-    module: Module = ast_parse(module_code)
+    cst_root: TreeNode = module_cst.root_node
 
-    focal_visitor: ModuleCodeVisitor = ModuleCodeVisitor()
-    focal_visitor.visit(module)
-    mod_classes: List[str] = focal_visitor.classes_definitions()
-    mod_funcs: List[str] = focal_visitor.funcs_definitions()
-    mod_imports: List[str] = focal_visitor.imports()
-    mod_froms: List[str] = focal_visitor.fromimports()
+    for child_node in cst_root.children:
+        if child_node.type == "function_definition":
+            found_func: str = child_node.text.decode()
+            module_entities["funcs"].append(found_func)
+        elif child_node.type == "class_definition":
+            found_class: str = child_node.text.decode()
+            found_clsname: str = reg_search(r"(class\s+)([a-zA-Z0-9_\-]+)", found_class.split("\n")[0]).group(2)
+            module_entities["classes"].append(found_class)
+            module_classes[found_clsname] =  []
 
-    result["imports"] = mod_imports
-    result["froms"] = mod_froms
-    result["funcs"] = mod_funcs
-    result["classes"] = mod_classes
+            for cls_node in child_node.children:
+                if cls_node.type == "block":
+                    for cls_meth in cls_node.children:
+                        if cls_meth.type == "function_definition":
+                            found_meth: str = cls_node.text.decode()
+                            module_classes[found_clsname].append(found_meth)
 
-    return result
+    return (module_entities, module_classes)
 
 
 def extract_fbyf_funcprompt_code(module_node: TreeNode) -> Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]]:
