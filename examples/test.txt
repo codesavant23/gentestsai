@@ -1,0 +1,840 @@
+# Request
+    Generate tests, and necessary imports, only for the function '_categorical_choice_equal' part of the focal module whose code is provided below.
+    The focal module is called "distributions.py" and belongs to a project called "optuna".
+
+## Very Important
+    - Suppose that the focal module physically resides in the same directory of your generated code.
+    - You must follow the response format specified below for your answer.
+    - Do not modify any of the module's code to achieve the goal.
+    - Do not generate any code except for tests and necessary imports.
+
+# Output Format
+    ```python
+        <generated_code_here>
+    ```
+
+# Example:
+    ## Example Focal Module:
+        ```python
+        from contextlib import ContextDecorator, contextmanager
+
+        from django.db import (
+            DEFAULT_DB_ALIAS,
+            DatabaseError,
+            Error,
+            ProgrammingError,
+            connections,
+        )
+
+
+        class TransactionManagementError(ProgrammingError):
+            pass
+
+
+        def get_connection(using=None):
+            if using is None:
+                using = DEFAULT_DB_ALIAS
+            return connections[using]
+
+
+         def get_autocommit(using=None):
+            return get_connection(using).get_autocommit()
+
+
+        def set_autocommit(autocommit, using=None):
+            return get_connection(using).set_autocommit(autocommit)
+
+
+        def commit(using=None):
+            get_connection(using).commit()
+
+
+        def rollback(using=None):
+            get_connection(using).rollback()
+
+
+        def savepoint(using=None):
+            return get_connection(using).savepoint()
+
+
+        def savepoint_rollback(sid, using=None):
+            get_connection(using).savepoint_rollback(sid)
+
+
+        def savepoint_commit(sid, using=None):
+            get_connection(using).savepoint_commit(sid)
+
+
+        def clean_savepoints(using=None):
+            get_connection(using).clean_savepoints()
+
+
+        def get_rollback(using=None):
+            return get_connection(using).get_rollback()
+
+
+        def set_rollback(rollback, using=None):
+            return get_connection(using).set_rollback(rollback)
+
+
+        @contextmanager
+        def mark_for_rollback_on_error(using=None):
+            try:
+                yield
+            except Exception as exc:
+                connection = get_connection(using)
+                if connection.in_atomic_block:
+                    connection.needs_rollback = True
+                    connection.rollback_exc = exc
+                raise
+
+
+        def on_commit(func, using=None, robust=False):
+            get_connection(using).on_commit(func, robust)
+
+
+        #################################
+        # Decorators / context managers #
+        #################################
+
+
+        class Atomic(ContextDecorator):
+            def __init__(self, using, savepoint, durable):
+                self.using = using
+                self.savepoint = savepoint
+                self.durable = durable
+                self._from_testcase = False
+
+            def __enter__(self):
+                connection = get_connection(self.using)
+
+                if (
+                    self.durable
+                    and connection.atomic_blocks
+                    and not connection.atomic_blocks[-1]._from_testcase
+                ):
+                    raise RuntimeError(
+                        "A durable atomic block cannot be nested within another "
+                        "atomic block."
+                    )
+                if not connection.in_atomic_block:
+                    # Reset state when entering an outermost atomic block.
+                    connection.commit_on_exit = True
+                    connection.needs_rollback = False
+                    if not connection.get_autocommit():
+                        # Pretend we're already in an atomic block to bypass the code
+                        # that disables autocommit to enter a transaction, and make a
+                        # note to deal with this case in __exit__.
+                        connection.in_atomic_block = True
+                        connection.commit_on_exit = False
+
+                if connection.in_atomic_block:
+                    # We're already in a transaction; create a savepoint, unless we
+                    # were told not to or we're already waiting for a rollback. The
+                    # second condition avoids creating useless savepoints and prevents
+                    # overwriting needs_rollback until the rollback is performed.
+                    if self.savepoint and not connection.needs_rollback:
+                        sid = connection.savepoint()
+                        connection.savepoint_ids.append(sid)
+                    else:
+                        connection.savepoint_ids.append(None)
+                else:
+                    connection.set_autocommit(
+                        False, force_begin_transaction_with_broken_autocommit=True
+                    )
+                    connection.in_atomic_block = True
+
+                if connection.in_atomic_block:
+                    connection.atomic_blocks.append(self)
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                connection = get_connection(self.using)
+
+                if connection.in_atomic_block:
+                    connection.atomic_blocks.pop()
+
+                if connection.savepoint_ids:
+                    sid = connection.savepoint_ids.pop()
+                else:
+                    # Prematurely unset this flag to allow using commit or rollback.
+                    connection.in_atomic_block = False
+
+                try:
+                    if connection.closed_in_transaction:
+                        # The database will perform a rollback by itself.
+                        # Wait until we exit the outermost block.
+                        pass
+
+                    elif exc_type is None and not connection.needs_rollback:
+                        if connection.in_atomic_block:
+                            # Release savepoint if there is one
+                            if sid is not None:
+                                try:
+                                    connection.savepoint_commit(sid)
+                                except DatabaseError:
+                                    try:
+                                        connection.savepoint_rollback(sid)
+                                        # The savepoint won't be reused. Release it to
+                                        # minimize overhead for the database server.
+                                        connection.savepoint_commit(sid)
+                                    except Error:
+                                        # If rolling back to a savepoint fails, mark for
+                                        # rollback at a higher level and avoid shadowing
+                                        # the original exception.
+                                        connection.needs_rollback = True
+                                    raise
+                        else:
+                            # Commit transaction
+                            try:
+                                connection.commit()
+                            except DatabaseError:
+                                try:
+                                    connection.rollback()
+                                except Error:
+                                    # An error during rollback means that something
+                                    # went wrong with the connection. Drop it.
+                                    connection.close()
+                                raise
+                    else:
+                        # This flag will be set to True again if there isn't a savepoint
+                        # allowing to perform the rollback at this level.
+                        connection.needs_rollback = False
+                        if connection.in_atomic_block:
+                            # Roll back to savepoint if there is one, mark for rollback
+                            # otherwise.
+                            if sid is None:
+                                connection.needs_rollback = True
+                            else:
+                                try:
+                                    connection.savepoint_rollback(sid)
+                                    # The savepoint won't be reused. Release it to
+                                    # minimize overhead for the database server.
+                                    connection.savepoint_commit(sid)
+                                except Error:
+                                    # If rolling back to a savepoint fails, mark for
+                                    # rollback at a higher level and avoid shadowing
+                                    # the original exception.
+                                    connection.needs_rollback = True
+                        else:
+                            # Roll back transaction
+                            try:
+                                connection.rollback()
+                            except Error:
+                                # An error during rollback means that something
+                                # went wrong with the connection. Drop it.
+                                connection.close()
+
+                finally:
+                    # Outermost block exit when autocommit was enabled.
+                    if not connection.in_atomic_block:
+                        if connection.closed_in_transaction:
+                            connection.connection = None
+                        else:
+                            connection.set_autocommit(True)
+                    # Outermost block exit when autocommit was disabled.
+                    elif not connection.savepoint_ids and not connection.commit_on_exit:
+                        if connection.closed_in_transaction:
+                            connection.connection = None
+                        else:
+                            connection.in_atomic_block = False
+
+
+        def atomic(using=None, savepoint=True, durable=False):
+            # Bare decorator: @atomic -- although the first argument is called
+            # `using`, it's actually the function being decorated.
+            if callable(using):
+                return Atomic(DEFAULT_DB_ALIAS, savepoint, durable)(using)
+            # Decorator: @atomic(...) or context manager: with atomic(...): ...
+            else:
+                return Atomic(using, savepoint, durable)
+
+
+        def _non_atomic_requests(view, using):
+            try:
+                view._non_atomic_requests.add(using)
+            except AttributeError:
+                view._non_atomic_requests = {using}
+            return view
+
+
+        def non_atomic_requests(using=None):
+            if callable(using):
+                return _non_atomic_requests(using, DEFAULT_DB_ALIAS)
+            else:
+                if using is None:
+                    using = DEFAULT_DB_ALIAS
+                return lambda view: _non_atomic_requests(view, using)
+        ```
+
+    ## Example Answer (only for the function 'mark_for_rollback_on_error'):
+        ```python
+        from unittest import TestCase
+
+        class ModuleFunctionTests(TestCase):
+            available_apps = ["transactions"]
+
+            def test_mark_for_rollback_on_error(self):
+                with transaction.atomic(savepoint=False):
+                    # Swallow the intentional error raised.
+                    with self.assertRaisesMessage(Exception, "Oops"):
+                        # Wrap in `mark_for_rollback_on_error` to check if the
+                        # transaction is marked broken.
+                        with transaction.mark_for_rollback_on_error():
+                            # Ensure that we are still in a good state.
+                            self.assertFalse(transaction.get_rollback())
+
+                        # mark_for_rollback_on_error marked the transaction as broken …
+                        self.assertTrue(transaction.get_rollback())
+
+                    # … and further queries fail.
+                    msg = "You can't execute queries until the end of the 'atomic' block."
+                    with self.assertRaisesMessage(transaction.TransactionManagementError, msg):
+                        Reporter.objects.create()
+
+                # Transaction errors are reset at the end of an transaction, so this
+                # should just work.
+                Reporter.objects.create()
+
+                self.assertTrue(transaction.get_autocommit())
+                # Swallow the intentional error raised.
+                with self.assertRaisesMessage(Exception, "Oops"):
+                    # Wrap in `mark_for_rollback_on_error` to check if the transaction
+                    # is marked broken.
+                    with transaction.mark_for_rollback_on_error():
+                        # Ensure that we are still in a good state.
+                        self.assertFalse(transaction.get_connection().needs_rollback)
+
+                    # Ensure that `mark_for_rollback_on_error` did not mark the transaction
+                    # as broken, since we are in autocommit mode …
+                    self.assertFalse(transaction.get_connection().needs_rollback)
+
+                # … and further queries work nicely.
+                Reporter.objects.create()
+        ```
+
+# Focal module:
+```python
+from __future__ import annotations
+
+import abc
+from collections.abc import Sequence
+import copy
+import decimal
+import json
+import math
+from numbers import Real
+from typing import Any
+from typing import cast
+from typing import Union
+import warnings
+
+from optuna._deprecated import deprecated_class
+
+
+CategoricalChoiceType = Union[None, bool, int, float, str]
+
+
+_float_distribution_deprecated_msg = (
+    "Use :class:`~optuna.distributions.FloatDistribution` instead."
+)
+_int_distribution_deprecated_msg = "Use :class:`~optuna.distributions.IntDistribution` instead."
+
+
+class BaseDistribution(abc.ABC):
+    def to_external_repr(self, param_value_in_internal_repr: float) -> Any:
+        return param_value_in_internal_repr
+
+    @abc.abstractmethod
+    def to_internal_repr(self, param_value_in_external_repr: Any) -> float:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def single(self) -> bool:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _contains(self, param_value_in_internal_repr: float) -> bool:
+        raise NotImplementedError
+
+    def _asdict(self) -> dict:
+        return self.__dict__
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, BaseDistribution):
+            return NotImplemented
+        if type(self) is not type(other):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __hash__(self) -> int:
+        return hash((self.__class__,) + tuple(sorted(self.__dict__.items())))
+
+    def __repr__(self) -> str:
+        kwargs = ", ".join("{}={}".format(k, v) for k, v in sorted(self._asdict().items()))
+        return "{}({})".format(self.__class__.__name__, kwargs)
+
+
+class FloatDistribution(BaseDistribution):
+    def __init__(
+        self, low: float, high: float, log: bool = False, step: None | float = None
+    ) -> None:
+        if log and step is not None:
+            raise ValueError("The parameter `step` is not supported when `log` is true.")
+
+        if low > high:
+            raise ValueError(
+                "The `low` value must be smaller than or equal to the `high` value "
+                "(low={}, high={}).".format(low, high)
+            )
+
+        if log and low <= 0.0:
+            raise ValueError(
+                "The `low` value must be larger than 0 for a log distribution "
+                "(low={}, high={}).".format(low, high)
+            )
+
+        if step is not None and step <= 0:
+            raise ValueError(
+                "The `step` value must be non-zero positive value, " "but step={}.".format(step)
+            )
+
+        self.step = None
+        if step is not None:
+            high = _adjust_discrete_uniform_high(low, high, step)
+            self.step = float(step)
+
+        self.low = float(low)
+        self.high = float(high)
+        self.log = log
+
+    def single(self) -> bool:
+        if self.step is None:
+            return self.low == self.high
+        else:
+            if self.low == self.high:
+                return True
+            high = decimal.Decimal(str(self.high))
+            low = decimal.Decimal(str(self.low))
+            step = decimal.Decimal(str(self.step))
+            return (high - low) < step
+
+    def _contains(self, param_value_in_internal_repr: float) -> bool:
+        value = param_value_in_internal_repr
+        if self.step is None:
+            return self.low <= value <= self.high
+        else:
+            k = (value - self.low) / self.step
+            return self.low <= value <= self.high and abs(k - round(k)) < 1.0e-8
+
+    def to_internal_repr(self, param_value_in_external_repr: float) -> float:
+        try:
+            internal_repr = float(param_value_in_external_repr)
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                f"'{param_value_in_external_repr}' is not a valid type. "
+                "float-castable value is expected."
+            ) from e
+
+        if math.isnan(internal_repr):
+            raise ValueError(f"`{param_value_in_external_repr}` is invalid value.")
+        if self.log and internal_repr <= 0.0:
+            raise ValueError(
+                f"`{param_value_in_external_repr}` is invalid value for the case log=True."
+            )
+        return internal_repr
+
+
+@deprecated_class("3.0.0", "6.0.0", text=_float_distribution_deprecated_msg)
+class UniformDistribution(FloatDistribution):
+    def __init__(self, low: float, high: float) -> None:
+        super().__init__(low=low, high=high, log=False, step=None)
+
+    def _asdict(self) -> dict:
+        d = copy.deepcopy(self.__dict__)
+        d.pop("log")
+        d.pop("step")
+        return d
+
+
+@deprecated_class("3.0.0", "6.0.0", text=_float_distribution_deprecated_msg)
+class LogUniformDistribution(FloatDistribution):
+    def __init__(self, low: float, high: float) -> None:
+        super().__init__(low=low, high=high, log=True, step=None)
+
+    def _asdict(self) -> dict:
+        d = copy.deepcopy(self.__dict__)
+        d.pop("log")
+        d.pop("step")
+        return d
+
+
+@deprecated_class("3.0.0", "6.0.0", text=_float_distribution_deprecated_msg)
+class DiscreteUniformDistribution(FloatDistribution):
+    def __init__(self, low: float, high: float, q: float) -> None:
+        super().__init__(low=low, high=high, step=q)
+
+    def _asdict(self) -> dict:
+        d = copy.deepcopy(self.__dict__)
+        d.pop("log")
+
+        step = d.pop("step")
+        d["q"] = step
+        return d
+
+    @property
+    def q(self) -> float:
+        return cast(float, self.step)
+
+    @q.setter
+    def q(self, v: float) -> None:
+        self.step = v
+
+
+class IntDistribution(BaseDistribution):
+    def __init__(self, low: int, high: int, log: bool = False, step: int = 1) -> None:
+        if log and step != 1:
+            raise ValueError(
+                "Samplers and other components in Optuna only accept step is 1 "
+                "when `log` argument is True."
+            )
+
+        if low > high:
+            raise ValueError(
+                "The `low` value must be smaller than or equal to the `high` value "
+                "(low={}, high={}).".format(low, high)
+            )
+
+        if log and low < 1:
+            raise ValueError(
+                "The `low` value must be equal to or greater than 1 for a log distribution "
+                "(low={}, high={}).".format(low, high)
+            )
+
+        if step <= 0:
+            raise ValueError(
+                "The `step` value must be non-zero positive value, but step={}.".format(step)
+            )
+
+        self.log = log
+        self.step = int(step)
+        self.low = int(low)
+        high = int(high)
+        self.high = _adjust_int_uniform_high(self.low, high, self.step)
+
+    def to_external_repr(self, param_value_in_internal_repr: float) -> int:
+        return int(param_value_in_internal_repr)
+
+    def to_internal_repr(self, param_value_in_external_repr: int) -> float:
+        try:
+            internal_repr = float(param_value_in_external_repr)
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                f"'{param_value_in_external_repr}' is not a valid type. "
+                "float-castable value is expected."
+            ) from e
+
+        if math.isnan(internal_repr):
+            raise ValueError(f"`{param_value_in_external_repr}` is invalid value.")
+        if self.log and internal_repr <= 0.0:
+            raise ValueError(
+                f"`{param_value_in_external_repr}` is invalid value for the case log=True."
+            )
+        return internal_repr
+
+    def single(self) -> bool:
+        if self.log:
+            return self.low == self.high
+
+        if self.low == self.high:
+            return True
+        return (self.high - self.low) < self.step
+
+    def _contains(self, param_value_in_internal_repr: float) -> bool:
+        value = param_value_in_internal_repr
+        return self.low <= value <= self.high and (value - self.low) % self.step == 0
+
+
+@deprecated_class("3.0.0", "6.0.0", text=_int_distribution_deprecated_msg)
+class IntUniformDistribution(IntDistribution):
+    def __init__(self, low: int, high: int, step: int = 1) -> None:
+        super().__init__(low=low, high=high, log=False, step=step)
+
+    def _asdict(self) -> dict:
+        d = copy.deepcopy(self.__dict__)
+        d.pop("log")
+        return d
+
+
+@deprecated_class("3.0.0", "6.0.0", text=_int_distribution_deprecated_msg)
+class IntLogUniformDistribution(IntDistribution):
+    def __init__(self, low: int, high: int, step: int = 1) -> None:
+        super().__init__(low=low, high=high, log=True, step=step)
+
+    def _asdict(self) -> dict:
+        d = copy.deepcopy(self.__dict__)
+        d.pop("log")
+        return d
+
+
+def _categorical_choice_equal(
+    value1: CategoricalChoiceType, value2: CategoricalChoiceType
+) -> bool:
+    value1_is_nan = isinstance(value1, Real) and math.isnan(float(value1))
+    value2_is_nan = isinstance(value2, Real) and math.isnan(float(value2))
+    return (value1 == value2) or (value1_is_nan and value2_is_nan)
+
+
+class CategoricalDistribution(BaseDistribution):
+    def __init__(self, choices: Sequence[CategoricalChoiceType]) -> None:
+        if len(choices) == 0:
+            raise ValueError("The `choices` must contain one or more elements.")
+        for choice in choices:
+            if choice is not None and not isinstance(choice, (bool, int, float, str)):
+                message = (
+                    "Choices for a categorical distribution should be a tuple of None, bool, "
+                    "int, float and str for persistent storage but contains {} which is of type "
+                    "{}.".format(choice, type(choice).__name__)
+                )
+                warnings.warn(message)
+
+        self.choices = tuple(choices)
+
+    def to_external_repr(self, param_value_in_internal_repr: float) -> CategoricalChoiceType:
+        return self.choices[int(param_value_in_internal_repr)]
+
+    def to_internal_repr(self, param_value_in_external_repr: CategoricalChoiceType) -> float:
+        try:
+            # NOTE(nabenabe): With this implementation, we cannot distinguish some values
+            # such as True and 1, or 1.0 and 1. For example, if choices=[True, 1] and external_repr
+            # is 1, this method wrongly returns 0 instead of 1. However, we decided to accept this
+            # bug for such exceptional choices for less complexity and faster processing.
+            return self.choices.index(param_value_in_external_repr)
+        except ValueError:  # ValueError: param_value_in_external_repr is not in choices.
+            # ValueError also happens if external_repr is nan or includes precision error in float.
+            for index, choice in enumerate(self.choices):
+                if _categorical_choice_equal(param_value_in_external_repr, choice):
+                    return index
+
+        raise ValueError(f"'{param_value_in_external_repr}' not in {self.choices}.")
+
+    def single(self) -> bool:
+        return len(self.choices) == 1
+
+    def _contains(self, param_value_in_internal_repr: float) -> bool:
+        index = int(param_value_in_internal_repr)
+        return 0 <= index < len(self.choices)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, BaseDistribution):
+            return NotImplemented
+        if not isinstance(other, self.__class__):
+            return False
+        if self.__dict__.keys() != other.__dict__.keys():
+            return False
+        for key, value in self.__dict__.items():
+            if key == "choices":
+                if len(value) != len(getattr(other, key)):
+                    return False
+                for choice, other_choice in zip(value, getattr(other, key)):
+                    if not _categorical_choice_equal(choice, other_choice):
+                        return False
+            else:
+                if value != getattr(other, key):
+                    return False
+        return True
+
+    __hash__ = BaseDistribution.__hash__
+
+
+DISTRIBUTION_CLASSES = (
+    IntDistribution,
+    IntLogUniformDistribution,
+    IntUniformDistribution,
+    FloatDistribution,
+    UniformDistribution,
+    LogUniformDistribution,
+    DiscreteUniformDistribution,
+    CategoricalDistribution,
+)
+
+
+def json_to_distribution(json_str: str) -> BaseDistribution:
+    json_dict = json.loads(json_str)
+
+    if "name" in json_dict:
+        if json_dict["name"] == CategoricalDistribution.__name__:
+            json_dict["attributes"]["choices"] = tuple(json_dict["attributes"]["choices"])
+
+        for cls in DISTRIBUTION_CLASSES:
+            if json_dict["name"] == cls.__name__:
+                return cls(**json_dict["attributes"])
+
+        raise ValueError("Unknown distribution class: {}".format(json_dict["name"]))
+
+    else:
+        # Deserialize a distribution from an abbreviated format.
+        if json_dict["type"] == "categorical":
+            return CategoricalDistribution(json_dict["choices"])
+        elif json_dict["type"] in ("float", "int"):
+            low = json_dict["low"]
+            high = json_dict["high"]
+            step = json_dict.get("step")
+            log = json_dict.get("log", False)
+
+            if json_dict["type"] == "float":
+                return FloatDistribution(low, high, log=log, step=step)
+
+            else:
+                if step is None:
+                    step = 1
+                return IntDistribution(low=low, high=high, log=log, step=step)
+
+        raise ValueError("Unknown distribution type: {}".format(json_dict["type"]))
+
+
+def distribution_to_json(dist: BaseDistribution) -> str:
+    return json.dumps({"name": dist.__class__.__name__, "attributes": dist._asdict()})
+
+
+def check_distribution_compatibility(
+    dist_old: BaseDistribution, dist_new: BaseDistribution
+) -> None:
+    if dist_old.__class__ != dist_new.__class__:
+        raise ValueError("Cannot set different distribution kind to the same parameter name.")
+
+    if isinstance(dist_old, (FloatDistribution, IntDistribution)):
+        # For mypy.
+        assert isinstance(dist_new, (FloatDistribution, IntDistribution))
+
+        if dist_old.log != dist_new.log:
+            raise ValueError("Cannot set different log configuration to the same parameter name.")
+
+    if not isinstance(dist_old, CategoricalDistribution):
+        return
+    if not isinstance(dist_new, CategoricalDistribution):
+        return
+    if dist_old != dist_new:
+        raise ValueError(
+            CategoricalDistribution.__name__ + " does not support dynamic value space."
+        )
+
+
+def _adjust_discrete_uniform_high(low: float, high: float, step: float) -> float:
+    d_high = decimal.Decimal(str(high))
+    d_low = decimal.Decimal(str(low))
+    d_step = decimal.Decimal(str(step))
+
+    d_r = d_high - d_low
+
+    if d_r % d_step != decimal.Decimal("0"):
+        old_high = high
+        high = float((d_r // d_step) * d_step + d_low)
+        warnings.warn(
+            "The distribution is specified by [{low}, {old_high}] and step={step}, but the range "
+            "is not divisible by `step`. It will be replaced by [{low}, {high}].".format(
+                low=low, old_high=old_high, high=high, step=step
+            )
+        )
+
+    return high
+
+
+def _adjust_int_uniform_high(low: int, high: int, step: int) -> int:
+    r = high - low
+    if r % step != 0:
+        old_high = high
+        high = r // step * step + low
+        warnings.warn(
+            "The distribution is specified by [{low}, {old_high}] and step={step}, but the range "
+            "is not divisible by `step`. It will be replaced by [{low}, {high}].".format(
+                low=low, old_high=old_high, high=high, step=step
+            )
+        )
+    return high
+
+
+def _get_single_value(distribution: BaseDistribution) -> int | float | CategoricalChoiceType:
+    assert distribution.single()
+
+    if isinstance(
+        distribution,
+        (
+            FloatDistribution,
+            IntDistribution,
+        ),
+    ):
+        return distribution.low
+    elif isinstance(distribution, CategoricalDistribution):
+        return distribution.choices[0]
+    assert False
+
+
+# TODO(himkt): Remove this method with the deletion of deprecated distributions.
+# https://github.com/optuna/optuna/issues/2941
+def _convert_old_distribution_to_new_distribution(
+    distribution: BaseDistribution,
+    suppress_warning: bool = False,
+) -> BaseDistribution:
+    new_distribution: BaseDistribution
+
+    # Float distributions.
+    if isinstance(distribution, UniformDistribution):
+        new_distribution = FloatDistribution(
+            low=distribution.low,
+            high=distribution.high,
+            log=False,
+            step=None,
+        )
+    elif isinstance(distribution, LogUniformDistribution):
+        new_distribution = FloatDistribution(
+            low=distribution.low,
+            high=distribution.high,
+            log=True,
+            step=None,
+        )
+    elif isinstance(distribution, DiscreteUniformDistribution):
+        new_distribution = FloatDistribution(
+            low=distribution.low,
+            high=distribution.high,
+            log=False,
+            step=distribution.q,
+        )
+
+    # Integer distributions.
+    elif isinstance(distribution, IntUniformDistribution):
+        new_distribution = IntDistribution(
+            low=distribution.low,
+            high=distribution.high,
+            log=False,
+            step=distribution.step,
+        )
+    elif isinstance(distribution, IntLogUniformDistribution):
+        new_distribution = IntDistribution(
+            low=distribution.low,
+            high=distribution.high,
+            log=True,
+            step=distribution.step,
+        )
+
+    # Categorical distribution.
+    else:
+        new_distribution = distribution
+
+    if new_distribution != distribution and not suppress_warning:
+        message = (
+            f"{distribution} is deprecated and internally converted to"
+            f" {new_distribution}. See https://github.com/optuna/optuna/issues/2941."
+        )
+        warnings.warn(message, FutureWarning)
+
+    return new_distribution
+
+
+def _is_distribution_log(distribution: BaseDistribution) -> bool:
+    if isinstance(distribution, (FloatDistribution, IntDistribution)):
+        return distribution.log
+
+    return False
+```
+
+# Answer (only for the function '_categorical_choice_equal'):
