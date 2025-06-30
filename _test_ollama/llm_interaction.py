@@ -11,6 +11,7 @@ def ollama_interact(
         chat_history: ChatHistory,
         keep_alive: str="30m",
         model_spec: Dict[str, Any]=None,
+        think: bool=True,
         stream: bool=False,
         debug_msgs: Tuple[str, str]=None
 ) -> str:
@@ -26,6 +27,7 @@ def ollama_interact(
         "model": model,
         "messages": chat_history.history(),
         "stream": stream,
+        "think": think,
         "keep-alive": keep_alive
     }
     if noopts_call:

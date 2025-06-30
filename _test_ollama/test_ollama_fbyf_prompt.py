@@ -46,77 +46,90 @@ def _generate_tsuite_modfuncs(
     funcsign_patt: str = r"(def\s+((?:[a-zA-Z0-9_\-]+))\s*\(((?:.|\n)*?)\)\s*(?:->\s*[a-zA-Z0-9\[\]]+)?:)"
     funcname_patt: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
 
+    chat_history.clear()
     resp_tree: Tree
     for func_def in module_funcs:
         func_sign: str = reg_search(funcsign_patt, func_def).group()
         func_name: str = reg_search(funcname_patt, func_sign).group(2)
 
-        with RequestSession() as sesh:
-            # ========== Costruzione del Prompt Completo ==========
-            full_funcprompt: str = build_full_fbyf_singleprompt(
-                template,
-                module_code,
-                func_name,
-                context_names
-            )
+        # ========== Costruzione del Prompt Completo ==========
+        full_funcprompt: str = build_full_fbyf_singleprompt(
+            template,
+            module_code,
+            func_name,
+            context_names
+        )
 
-            #  _test_dir\distributions.py
-            print("Function: ", func_name)
-            chat_history.add_message("context", context_prompt)
-            chat_history.add_message("user", full_funcprompt)
-            print("Lunghezza del Prompt per la gen. di una Singola Funzione = " + str(len(reg_split(r"([ \n])+", full_funcprompt))) + " tokens")
-            response: str = ollama_interact(
+        print("----------------- PROMPT -----------------")
+        print(full_funcprompt)
+        print("-------------- END-PROMPT ----------------")
+
+        chat_history.add_message("context", context_prompt)
+        chat_history.add_message("user", full_funcprompt)
+
+        #  _test_dir\distributions.py
+        print("Function: ", func_name)
+        print("Lunghezza del Prompt per la gen. di una Singola Funzione = " + str(len(reg_split(r"([ \n])+", full_funcprompt))) + " tokens")
+        response: str
+        with RequestSession() as sesh:
+            response = ollama_interact(
                 config["api_url"],
                 config["model"],
                 sesh,
                 chat_history,
                 model_spec = {
                     "temperature": 0,
-                    "top_k": 10,
-                    "top_p": 0.90,
-                    "num_ctx": 70000
-                }
+                    "num_ctx": 88192,
+                },
+                stream = False,
+                think = False
             )
-            chat_history.clear()
 
-            unwrapd_resp: str = parse_codeonly_response(response)
-            print("Response: ")
-            print(unwrapd_resp)
+            """
+            "top_k": 10,
+            "top_p": 0.90,
+            """
+        chat_history.clear()
 
-            resp_tree = code_parser.parse(unwrapd_resp.encode())
-            resp_tree_root: TreeNode = resp_tree.root_node
+        #unwrapd_resp: str = parse_codeonly_response(response.content)
+        unwrapd_resp: str = parse_codeonly_response(response)
+        print("Response: ")
+        print(unwrapd_resp)
 
-            tree_sexp: str = tree_to_sexp(resp_tree.root_node)
-            print("S-Expression: ", tree_sexp)
+        resp_tree = code_parser.parse(unwrapd_resp.encode())
+        resp_tree_root: TreeNode = resp_tree.root_node
 
-            result: Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]] = extract_fbyf_funcprompt_code(resp_tree_root)
+        """tree_sexp: str = tree_to_sexp(resp_tree.root_node)
+        print("S-Expression: ", tree_sexp)"""
 
-            resp_imports: List[TreeNode] = result[0][0]
-            resp_fromimps: List[TreeNode] = result[0][1]
-            resp_funcs: List[TreeNode] = result[1]
+        result: Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]] = extract_fbyf_funcprompt_code(resp_tree_root)
 
-            imports_str: str = ""
-            fromimps_str: str = ""
-            funcs_str: str = ""
-            for import_ in resp_imports:
-                imports_str += ("\n" + str(import_.text))
-            imports_str.lstrip("\n")
-            for fimport_ in resp_fromimps:
-                fromimps_str += ("\n" + str(fimport_.text))
-            fromimps_str.lstrip("\n")
-            for func in resp_funcs:
-                funcs_str += ("\n" + str(func.text))
-            fromimps_str.lstrip("\n")
+        resp_imports: List[TreeNode] = result[0][0]
+        resp_fromimps: List[TreeNode] = result[0][1]
+        resp_funcs: List[TreeNode] = result[1]
 
-            print("\n----------------------------------------------------------")
-            print("IMPORTS:")
-            pprint(imports_str)
-            print("FROM-IMPORTS:")
-            pprint(fromimps_str)
-            print("TESTS:")
-            pprint(funcs_str)
+        """imports_str: str = ""
+        fromimps_str: str = ""
+        funcs_str: str = ""
+        for import_ in resp_imports:
+            imports_str += ("\n" + str(import_.text))
+        imports_str.lstrip("\n")
+        for fimport_ in resp_fromimps:
+            fromimps_str += ("\n" + str(fimport_.text))
+        fromimps_str.lstrip("\n")
+        for func in resp_funcs:
+            funcs_str += ("\n" + str(func.text))
+        fromimps_str.lstrip("\n")
 
-            raise KeyboardInterrupt()
+        print("\n----------------------------------------------------------")
+        print("IMPORTS:")
+        pprint(imports_str)
+        print("FROM-IMPORTS:")
+        pprint(fromimps_str)
+        print("TESTS:")
+        pprint(funcs_str)"""
+
+        raise KeyboardInterrupt()
 
     return ""
 
