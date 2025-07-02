@@ -1,7 +1,7 @@
-from typing import Dict, List, Tuple
+import base64
+from typing import Dict, List, Tuple, Iterator
 from os.path import split as path_split, join as path_join
 
-from requests import Session as RequestSession
 from re import (
     search as reg_search,
     findall as reg_findall,
@@ -25,8 +25,8 @@ from prompt_building import (
     build_full_fbyf_singleprompt,
     build_corrimps_prompt
 )
-from llm_interaction import ollama_interact
-from sexp_utils import tree_to_sexp
+
+from ollama import Client as OllamaClient, ChatResponse
 
 from tempfile import TemporaryDirectory, TemporaryFile
 from pprint import pprint
@@ -70,31 +70,36 @@ def _generate_tsuite_modfuncs(
         #  _test_dir\distributions.py
         print("Function: ", func_name)
         print("Lunghezza del Prompt per la gen. di una Singola Funzione = " + str(len(reg_split(r"([ \n])+", full_funcprompt))) + " tokens")
-        response: str
-        with RequestSession() as sesh:
-            response = ollama_interact(
-                config["api_url"],
-                config["model"],
-                sesh,
-                chat_history,
-                model_spec = {
-                    "temperature": 0,
-                    "num_ctx": 88192,
-                },
-                stream = False,
-                think = False
-            )
 
-            """
-            "top_k": 10,
-            "top_p": 0.90,
-            """
+        oll: OllamaClient = OllamaClient(
+            host = config["api_url"],
+            headers = {'Authorization': f'Basic {base64.b64encode(config["api_auth"].encode()).decode()}'}
+        )
+        response: Iterator[ChatResponse] | ChatResponse = oll.chat(
+            config["model"],
+            chat_history.history(),
+            options = {
+                "temperature": 0,
+                "num_ctx": 88192,
+            },
+            stream = False,
+            think = False
+        )
+
+        """
+        "top_k": 10,
+        "top_p": 0.90,
+        """
         chat_history.clear()
 
         #unwrapd_resp: str = parse_codeonly_response(response.content)
-        unwrapd_resp: str = parse_codeonly_response(response)
+        #unwrapd_resp: str = parse_codeonly_response(response)
         print("Response: ")
-        print(unwrapd_resp)
+        print(response['message']['content'])
+        """for msg in response:
+            print(msg['message']['content'], end="", flush=True)"""
+
+        raise KeyboardInterrupt()
 
         resp_tree = code_parser.parse(unwrapd_resp.encode())
         resp_tree_root: TreeNode = resp_tree.root_node
@@ -128,8 +133,6 @@ def _generate_tsuite_modfuncs(
         pprint(fromimps_str)
         print("TESTS:")
         pprint(funcs_str)"""
-
-        raise KeyboardInterrupt()
 
     return ""
 
