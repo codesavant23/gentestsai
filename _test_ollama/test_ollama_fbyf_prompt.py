@@ -1,5 +1,5 @@
 import base64
-from typing import Dict, List, Tuple, Iterator
+from typing import Dict, List, Set, Tuple, Iterator
 from os.path import split as path_split, join as path_join
 
 from re import (
@@ -18,18 +18,27 @@ from code_extraction import (
     extract_fmodule_code,
     separate_fmodule_code,
     extract_fbyf_funcprompt_code,
-    parse_codeonly_response
 )
 from chat_history import ChatHistory
 from prompt_building import (
-    build_full_fbyf_singleprompt,
+    build_full_fbyf_funcprompt,
+    build_full_fbyf_methprompt,
     build_corrimps_prompt
 )
 
 from ollama import Client as OllamaClient, ChatResponse
 
+from sexp_utils import tree_to_sexp
+
 from tempfile import TemporaryDirectory, TemporaryFile
 from pprint import pprint
+
+PYTHON_LANG: Language = Language(py_grammar())
+CONTEXT_PROMPT: str = "You are a professional Python developer."
+GENCODE_PATT: str = r"(?:<think>[\S\n\t ]*</think>)?\s*```python\n?(?P<gen_code>[\s\S]+)\n?```"
+CLSDEF_PATT: str = r"class\s+(?P<cls_name>[a-zA-Z0-9\-\_]+)(\((?P<sup_cls>\S+)\):|:)"
+FUNCSIGN_PATT: str = r"(def\s+((?:[a-zA-Z0-9_\-]+))\s*\(((?:.|\n)*?)\)\s*(?:->\s*[a-zA-Z0-9\[\]]+)?:)"
+FUNCNAME_PATT: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
 
 
 def _generate_tsuite_modfuncs(
@@ -41,35 +50,35 @@ def _generate_tsuite_modfuncs(
         module_funcs: List[str],
         context_names: Tuple[str, str]
 ) -> str:
-    context_prompt: str = "You are a professional Python developer."
-
-    funcsign_patt: str = r"(def\s+((?:[a-zA-Z0-9_\-]+))\s*\(((?:.|\n)*?)\)\s*(?:->\s*[a-zA-Z0-9\[\]]+)?:)"
-    funcname_patt: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
-
     chat_history.clear()
-    resp_tree: Tree
+
+    gen_imports: Dict[str, Set[str]] = dict()
+    gen_imports["imports"] = set()
+    gen_imports["fimports"] = set()
+
+    gen_funcs: str = ""
+
+    currcode_tree: Tree
+    currcode_tree_root: TreeNode
+    gen_code: str
+
     for func_def in module_funcs:
-        func_sign: str = reg_search(funcsign_patt, func_def).group()
-        func_name: str = reg_search(funcname_patt, func_sign).group(2)
+        func_sign: str = reg_search(FUNCSIGN_PATT, func_def).group()
+        func_name: str = reg_search(FUNCNAME_PATT, func_sign).group(2)
 
         # ========== Costruzione del Prompt Completo ==========
-        full_funcprompt: str = build_full_fbyf_singleprompt(
+        full_funcprompt: str = build_full_fbyf_funcprompt(
             template,
             module_code,
             func_name,
             context_names
         )
 
-        print("----------------- PROMPT -----------------")
-        print(full_funcprompt)
-        print("-------------- END-PROMPT ----------------")
-
-        chat_history.add_message("context", context_prompt)
+        chat_history.add_message("context", CONTEXT_PROMPT)
         chat_history.add_message("user", full_funcprompt)
 
-        #  _test_dir\distributions.py
-        print("Function: ", func_name)
-        print("Lunghezza del Prompt per la gen. di una Singola Funzione = " + str(len(reg_split(r"([ \n])+", full_funcprompt))) + " tokens")
+        print("Generating tests for Function '" + func_name + "' ...")
+        print("Lunghezza del (Func.) Prompt = " + str(len(reg_split(r"([ \n])+", full_funcprompt)) * 3/2) + " tokens")
 
         oll: OllamaClient = OllamaClient(
             host = config["api_url"],
@@ -82,59 +91,51 @@ def _generate_tsuite_modfuncs(
                 "temperature": 0,
                 "num_ctx": 88192,
             },
-            stream = False,
+            stream = True,
             think = False
         )
 
-        """
-        "top_k": 10,
-        "top_p": 0.90,
-        """
         chat_history.clear()
 
-        #unwrapd_resp: str = parse_codeonly_response(response.content)
-        #unwrapd_resp: str = parse_codeonly_response(response)
-        print("Response: ")
-        print(response['message']['content'])
-        """for msg in response:
-            print(msg['message']['content'], end="", flush=True)"""
+        full_response: str = ""
+        for msg in response:
+            full_response += msg['message']['content']
 
-        raise KeyboardInterrupt()
+        gen_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
 
-        resp_tree = code_parser.parse(unwrapd_resp.encode())
-        resp_tree_root: TreeNode = resp_tree.root_node
+        currcode_tree = code_parser.parse(gen_code.encode())
+        currcode_tree_root = currcode_tree.root_node
 
-        """tree_sexp: str = tree_to_sexp(resp_tree.root_node)
+        """tree_sexp: str = tree_to_sexp(currcode_tree_root)
         print("S-Expression: ", tree_sexp)"""
 
-        result: Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]] = extract_fbyf_funcprompt_code(resp_tree_root)
+        result: Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]] = extract_fbyf_funcprompt_code(currcode_tree_root)
 
-        resp_imports: List[TreeNode] = result[0][0]
-        resp_fromimps: List[TreeNode] = result[0][1]
-        resp_funcs: List[TreeNode] = result[1]
+        for imp_stat in result[0][0]:
+            gen_imports["imports"].add(imp_stat.text.decode())
+        for fimp_stat in result[0][1]:
+            gen_imports["fimports"].add(fimp_stat.text.decode())
+        gen_imports["fimports"].add("from unittest import TestCase")
 
-        """imports_str: str = ""
-        fromimps_str: str = ""
-        funcs_str: str = ""
-        for import_ in resp_imports:
-            imports_str += ("\n" + str(import_.text))
-        imports_str.lstrip("\n")
-        for fimport_ in resp_fromimps:
-            fromimps_str += ("\n" + str(fimport_.text))
-        fromimps_str.lstrip("\n")
-        for func in resp_funcs:
-            funcs_str += ("\n" + str(func.text))
-        fromimps_str.lstrip("\n")
+        new_res_func: str
+        res_func_str: str
+        for res_func in result[1]:
+            res_func_str = res_func.text.decode()
+            new_res_func = ("\t" + res_func_str.replace("\n", "\n\t"))
+            gen_funcs += new_res_func + "\n"
 
-        print("\n----------------------------------------------------------")
-        print("IMPORTS:")
-        pprint(imports_str)
-        print("FROM-IMPORTS:")
-        pprint(fromimps_str)
-        print("TESTS:")
-        pprint(funcs_str)"""
+    part_tsuite: str = ""
 
-    return ""
+    for imp_stat in gen_imports["imports"]:
+        part_tsuite += imp_stat + "\n"
+    for fimp_stat in gen_imports["fimports"]:
+        part_tsuite += fimp_stat + "\n"
+    part_tsuite = part_tsuite.rstrip("\n")
+
+    part_tsuite += ("\n\n" + "class ModuleFunctionsTests(TestCase):" + "\n")
+    part_tsuite += gen_funcs
+
+    return part_tsuite
 
 
 def _generate_tsuite_testclss(
@@ -147,7 +148,52 @@ def _generate_tsuite_testclss(
         classes_meths: Dict[str, List[str]],
         context_names: Tuple[str, str]
 ) -> str:
-    None
+    for fclass in module_classes:
+        fcls_name: str = reg_search(CLSDEF_PATT, fclass).group("cls_name")
+
+        print("Generating tests for Class '" + fcls_name + "' ...")
+        for meth_def in classes_meths[fcls_name]:
+            meth_sign: str = reg_search(FUNCSIGN_PATT, meth_def).group()
+            meth_name: str = reg_search(FUNCNAME_PATT, meth_sign).group(2)
+
+            full_methprompt: str = build_full_fbyf_methprompt(
+                template,
+                module_code,
+                fcls_name,
+                meth_name,
+                context_names
+            )
+
+            chat_history.add_message("context", CONTEXT_PROMPT)
+            chat_history.add_message("user", full_methprompt)
+
+            print("\tGenerating tests for Method '" + meth_name + "' ...")
+            print("\tLunghezza del (Method) Prompt = " + str(len(reg_split(r"([ \n])+", full_methprompt)) * 3/2) + " tokens")
+
+            oll: OllamaClient = OllamaClient(
+                host=config["api_url"],
+                headers={'Authorization': f'Basic {base64.b64encode(config["api_auth"].encode()).decode()}'}
+            )
+            response: Iterator[ChatResponse] | ChatResponse = oll.chat(
+                config["model"],
+                chat_history.history(),
+                options={
+                    "temperature": 0,
+                    "num_ctx": 88192,
+                },
+                stream=True,
+                think=False
+            )
+
+            chat_history.clear()
+
+            full_response: str = ""
+            for msg in response:
+                full_response += msg['message']['content']
+
+            gen_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
+
+            # TODO: Finish Code
 
 
 def generate_tsuite(
@@ -174,8 +220,7 @@ def generate_tsuite(
     module_entities: Dict[str, List[str]] = module_parts[0]
     module_classes: Dict[str, List[str]] = module_parts[1]
 
-    python_lang: Language = Language(py_grammar())
-    pycode_parser: Parser = Parser(python_lang)
+    pycode_parser: Parser = Parser(PYTHON_LANG)
 
     tsuite_funcs_code: str = _generate_tsuite_modfuncs(
         config,
@@ -187,7 +232,15 @@ def generate_tsuite(
         context_names
     )
 
-    """tsuite_classes_code: str = _generate_tsuite_testclss(
+    #  _test_dir\distributions.py
+    # Versione Attuale = Ollama 0.95
+    print("")
+    print("T_SUITE FUNCS CODE:")
+    print(tsuite_funcs_code)
+
+    raise KeyboardInterrupt()
+
+    tsuite_classes_code: str = _generate_tsuite_testclss(
         config,
         chat_history,
         templ_meth,
@@ -196,7 +249,7 @@ def generate_tsuite(
         module_entities["classes"],
         module_classes,
         context_names
-    )"""
+    )
 
     # TODO: Finish code
 

@@ -76,7 +76,7 @@ def build_full_singleprompt(templ: str, focal_code: str, context_names: Tuple[st
     return full_prompt
 
 
-def build_full_fbyf_singleprompt(
+def build_full_fbyf_funcprompt(
     templ: str,
     focal_code: str,
     func_name: str,
@@ -107,6 +107,38 @@ def build_full_fbyf_singleprompt(
 
     funcname_patt: str = r"{@Function_Name@}"
     full_prompt: str = reg_replace(funcname_patt, func_name, full_singleprompt)
+
+    return full_prompt
+
+
+def build_full_fbyf_methprompt(
+    templ: str,
+    focal_code: str,
+    cls_name: str,
+    meth_name: str,
+    context_names: Tuple[str, str]
+) -> str:
+    """
+
+        Parameters
+        ----------
+        templ
+        focal_code
+        cls_name
+        meth_name
+        context_names
+
+        Returns
+        -------
+
+    """
+    full_prompt: str = build_full_singleprompt(templ, focal_code, context_names)
+
+    methname_patt = r"{@Method_Name@}"
+    full_prompt = reg_replace(methname_patt, meth_name, full_prompt)
+
+    clsname_patt = r"{@Class_Name@}"
+    full_prompt = reg_replace(clsname_patt, cls_name, full_prompt)
 
     return full_prompt
 

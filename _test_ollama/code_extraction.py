@@ -13,8 +13,6 @@ def parse_codeonly_response(resp: str) -> str:
 
 
 def extract_fmodule_code(codefile_path: str) -> Tree:
-
-    code_mod: Module
     code_mod_str: str
     with open(codefile_path, "r") as ftest:
         code_mod_str = reduce(lambda acc, x: acc + x, ftest.readlines(), "")
@@ -22,33 +20,6 @@ def extract_fmodule_code(codefile_path: str) -> Tree:
     py_parser: Parser = Parser(Language(py_grammar()))
     module_cst: Tree = py_parser.parse(code_mod_str.encode())
     return module_cst
-
-
-def _old_extract_focalmodule_code(codefile_path: str) -> Tuple[str, Dict[str, List[str]]]:
-    """
-        TODO: Finish description
-
-        Returns
-        -------
-        Tuple[str, Dict[str, str]]
-            Una tupla contenente:
-
-                - L' intero codice estratto dal modulo
-                - Un dizionario di liste di stringhe, indicizzato su stringhe, contenente:
-
-                    - "imports": Una lista di stringhe contenente tutti gli imports completi del modulo.
-                    - "froms": Una lista di stringhe contenente tutti gli imports parziali del modulo.
-                    - "funcs": Una lista di stringhe contenente tutti le funzioni (del modulo) estratte.
-                    - "classes": Una lista di stringhe contenente tutti le definizioni di classe estratte.
-    """
-    code_mod: Module
-    code_mod_str: str
-    with open(codefile_path, "r") as ftest:
-        code_mod_str = reduce(lambda acc, x: acc + x, ftest.readlines(), "")
-
-    result: Dict[str, List[str]] = separate_fmodule_code(code_mod_str)
-
-    return (code_mod_str, result)
 
 
 def separate_fmodule_code(module_cst: Tree) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
@@ -134,9 +105,10 @@ def extract_fbyf_funcprompt_code(module_node: TreeNode) -> Tuple[Tuple[List[Tree
             ls_imports.append(child_node)
         elif child_node.type == "import_from_statement":
             ls_fromimps.append(child_node)
-        elif child_node.type == "block":
-            for prob_func in child_node.children:
-                if prob_func.type == "function_definition":
-                    ls_funcs.append(prob_func)
+        elif child_node.type == "class_definition":
+            for cls_node in child_node.children:
+                if cls_node.type == "block":
+                    for prob_func in cls_node.children:
+                        ls_funcs.append(prob_func)
 
     return ((ls_imports, ls_fromimps), ls_funcs)
