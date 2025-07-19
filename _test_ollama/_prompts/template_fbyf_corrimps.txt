@@ -1,0 +1,27 @@
+# Request
+    Correct the code of the test suite given below by adding/modifying/removing any import statement.
+    The focal module "{@Module_Name@}", from which the test suite originates, is also provided and belongs to a project called "{@Project_Name@}".
+
+## Very Important
+    - Suppose that the focal module resides in the following path: "{@Focal_Path@}"
+    - Suppose that the test suite resides in the following path: "{@Suite_Path@}"
+    - Once the code is corrected, it must be runnable without any error.
+    - You must follow the response format specified below for your answer.
+    - Do not modify any of the focal module's code to achieve the goal.
+
+# Output Format
+    ```python
+        <corrected_test_suite_code_here>
+    ```
+
+# Focal module:
+```python
+{@Focal_Code@}
+```
+
+# Test suite:
+```python
+{@Suite_Code@}
+```
+
+# Answer:

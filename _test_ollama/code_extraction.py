@@ -72,13 +72,13 @@ def separate_fmodule_code(module_cst: Tree) -> Tuple[Dict[str, List[str]], Dict[
                 if cls_node.type == "block":
                     for cls_meth in cls_node.children:
                         if cls_meth.type == "function_definition":
-                            found_meth: str = cls_node.text.decode()
+                            found_meth: str = cls_meth.text.decode()
                             module_classes[found_clsname].append(found_meth)
 
     return (module_entities, module_classes)
 
 
-def extract_fbyf_funcprompt_code(module_node: TreeNode) -> Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]]:
+def extract_fbyf_code(module_node: TreeNode) -> Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]]:
     """
 
         Parameters

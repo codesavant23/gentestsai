@@ -3,7 +3,8 @@
     The focal module is called "{@Module_Name@}" and belongs to a project called "{@Project_Name@}".
 
 ## Very Important
-    - Suppose that the focal module physically resides in the same directory of your generated code.
+    - Suppose that the generated code will reside in the following path: "{@Suite_Path@}"
+    - Suppose that the focal module resides in the following path: "{@Focal_Path@}"
     - You must follow the response format specified below for your answer.
     - Do not modify any of the module's code to achieve the goal.
     - Do not generate any code except for tests and necessary imports.

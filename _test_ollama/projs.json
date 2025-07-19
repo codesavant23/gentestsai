@@ -1,0 +1,34 @@
+{
+  "names": [
+    "optuna",
+    "fastapi",
+    "httpie",
+    "detectron2",
+    "scrapy",
+    "box",
+    "agno",
+    "pytext"
+  ],
+
+  "roots": [
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\optuna-master\\optuna-master\\optuna\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\fastapi-master\\fastapi-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\httpie-cli-master\\cli-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\scrapy-master\\scrapy-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\Box-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\"
+  ],
+
+  "tests": [
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\optuna-master\\optuna-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\fastapi-master\\fastapi-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\httpie-cli-master\\cli-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\scrapy-master\\scrapy-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\Box-master\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\",
+    "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\"
+  ]
+}

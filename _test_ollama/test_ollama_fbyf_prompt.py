@@ -1,219 +1,75 @@
-import base64
-from typing import Dict, List, Set, Tuple, Iterator
-from os.path import split as path_split, join as path_join
+from typing import Dict, List, Set, Tuple
+from functools import reduce
 
-from re import (
-    search as reg_search,
-    findall as reg_findall,
-    split as reg_split,
-    RegexFlag as RegexFlags
+from os import (
+    walk as os_walk,
+    replace as os_rename,
+    remove as os_remove
+)
+from os.path import (
+    sep as path_sep,
+    commonpath as path_intersect,
+    join as path_join,
+    splitext as path_split_ext
 )
 
-from tree_sitter import Language, Parser, Tree, Node as TreeNode
+from json import loads as json_loads
+
+from re import (
+    Match,
+    sub as reg_replace,
+    search as reg_search,
+    findall as reg_findall,
+)
+
+from tree_sitter import Language, Parser, Tree
 from tree_sitter_python import language as py_grammar
 
-from configuration import configure_script
+from configuration import (
+    configure_ollama,
+    configure_dirs
+)
 from template_reading import read_templ_frompath
 from code_extraction import (
     extract_fmodule_code,
     separate_fmodule_code,
-    extract_fbyf_funcprompt_code,
+
 )
 from chat_history import ChatHistory
-from prompt_building import (
-    build_full_fbyf_funcprompt,
-    build_full_fbyf_methprompt,
-    build_corrimps_prompt
+
+from subprocess import run as subproc_run, CalledProcessError, CompletedProcess
+
+from script_core.tsuite_fbyf_generation import (
+    generate_tsuite_modfuncs,
+    generate_tsuite_testclss
 )
 
-from ollama import Client as OllamaClient, ChatResponse
-
-from sexp_utils import tree_to_sexp
-
-from tempfile import TemporaryDirectory, TemporaryFile
-from pprint import pprint
+from script_core.tsuite_correction import (
+    correct_tsuite,
+    correct_tsuite_imports
+)
 
 PYTHON_LANG: Language = Language(py_grammar())
-CONTEXT_PROMPT: str = "You are a professional Python developer."
-GENCODE_PATT: str = r"(?:<think>[\S\n\t ]*</think>)?\s*```python\n?(?P<gen_code>[\s\S]+)\n?```"
-CLSDEF_PATT: str = r"class\s+(?P<cls_name>[a-zA-Z0-9\-\_]+)(\((?P<sup_cls>\S+)\):|:)"
-FUNCSIGN_PATT: str = r"(def\s+((?:[a-zA-Z0-9_\-]+))\s*\(((?:.|\n)*?)\)\s*(?:->\s*[a-zA-Z0-9\[\]]+)?:)"
-FUNCNAME_PATT: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
-
-
-def _generate_tsuite_modfuncs(
-        config: Dict[str, str],
-        chat_history: ChatHistory,
-        template: str,
-        code_parser: Parser,
-        module_code: str,
-        module_funcs: List[str],
-        context_names: Tuple[str, str]
-) -> str:
-    chat_history.clear()
-
-    gen_imports: Dict[str, Set[str]] = dict()
-    gen_imports["imports"] = set()
-    gen_imports["fimports"] = set()
-
-    gen_funcs: str = ""
-
-    currcode_tree: Tree
-    currcode_tree_root: TreeNode
-    gen_code: str
-
-    for func_def in module_funcs:
-        func_sign: str = reg_search(FUNCSIGN_PATT, func_def).group()
-        func_name: str = reg_search(FUNCNAME_PATT, func_sign).group(2)
-
-        # ========== Costruzione del Prompt Completo ==========
-        full_funcprompt: str = build_full_fbyf_funcprompt(
-            template,
-            module_code,
-            func_name,
-            context_names
-        )
-
-        chat_history.add_message("context", CONTEXT_PROMPT)
-        chat_history.add_message("user", full_funcprompt)
-
-        print("Generating tests for Function '" + func_name + "' ...")
-        print("Lunghezza del (Func.) Prompt = " + str(len(reg_split(r"([ \n])+", full_funcprompt)) * 3/2) + " tokens")
-
-        oll: OllamaClient = OllamaClient(
-            host = config["api_url"],
-            headers = {'Authorization': f'Basic {base64.b64encode(config["api_auth"].encode()).decode()}'}
-        )
-        response: Iterator[ChatResponse] | ChatResponse = oll.chat(
-            config["model"],
-            chat_history.history(),
-            options = {
-                "temperature": 0,
-                "num_ctx": 88192,
-            },
-            stream = True,
-            think = False
-        )
-
-        chat_history.clear()
-
-        full_response: str = ""
-        for msg in response:
-            full_response += msg['message']['content']
-
-        gen_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
-
-        currcode_tree = code_parser.parse(gen_code.encode())
-        currcode_tree_root = currcode_tree.root_node
-
-        """tree_sexp: str = tree_to_sexp(currcode_tree_root)
-        print("S-Expression: ", tree_sexp)"""
-
-        result: Tuple[Tuple[List[TreeNode], List[TreeNode]], List[TreeNode]] = extract_fbyf_funcprompt_code(currcode_tree_root)
-
-        for imp_stat in result[0][0]:
-            gen_imports["imports"].add(imp_stat.text.decode())
-        for fimp_stat in result[0][1]:
-            gen_imports["fimports"].add(fimp_stat.text.decode())
-        gen_imports["fimports"].add("from unittest import TestCase")
-
-        new_res_func: str
-        res_func_str: str
-        for res_func in result[1]:
-            res_func_str = res_func.text.decode()
-            new_res_func = ("\t" + res_func_str.replace("\n", "\n\t"))
-            gen_funcs += new_res_func + "\n"
-
-    part_tsuite: str = ""
-
-    for imp_stat in gen_imports["imports"]:
-        part_tsuite += imp_stat + "\n"
-    for fimp_stat in gen_imports["fimports"]:
-        part_tsuite += fimp_stat + "\n"
-    part_tsuite = part_tsuite.rstrip("\n")
-
-    part_tsuite += ("\n\n" + "class ModuleFunctionsTests(TestCase):" + "\n")
-    part_tsuite += gen_funcs
-
-    return part_tsuite
-
-
-def _generate_tsuite_testclss(
-        config: Dict[str, str],
-        chat_history: ChatHistory,
-        template: str,
-        code_parser: Parser,
-        module_code: str,
-        module_classes: List[str],
-        classes_meths: Dict[str, List[str]],
-        context_names: Tuple[str, str]
-) -> str:
-    for fclass in module_classes:
-        fcls_name: str = reg_search(CLSDEF_PATT, fclass).group("cls_name")
-
-        print("Generating tests for Class '" + fcls_name + "' ...")
-        for meth_def in classes_meths[fcls_name]:
-            meth_sign: str = reg_search(FUNCSIGN_PATT, meth_def).group()
-            meth_name: str = reg_search(FUNCNAME_PATT, meth_sign).group(2)
-
-            full_methprompt: str = build_full_fbyf_methprompt(
-                template,
-                module_code,
-                fcls_name,
-                meth_name,
-                context_names
-            )
-
-            chat_history.add_message("context", CONTEXT_PROMPT)
-            chat_history.add_message("user", full_methprompt)
-
-            print("\tGenerating tests for Method '" + meth_name + "' ...")
-            print("\tLunghezza del (Method) Prompt = " + str(len(reg_split(r"([ \n])+", full_methprompt)) * 3/2) + " tokens")
-
-            oll: OllamaClient = OllamaClient(
-                host=config["api_url"],
-                headers={'Authorization': f'Basic {base64.b64encode(config["api_auth"].encode()).decode()}'}
-            )
-            response: Iterator[ChatResponse] | ChatResponse = oll.chat(
-                config["model"],
-                chat_history.history(),
-                options={
-                    "temperature": 0,
-                    "num_ctx": 88192,
-                },
-                stream=True,
-                think=False
-            )
-
-            chat_history.clear()
-
-            full_response: str = ""
-            for msg in response:
-                full_response += msg['message']['content']
-
-            gen_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
-
-            # TODO: Finish Code
+SCRIPT_DEBUG: bool = True
 
 
 def generate_tsuite(
+        focalmod_path: str,
         config: Dict[str, str],
         chat_history: ChatHistory,
         templs_paths: Tuple[str, str],
+        paths: Tuple[str, str],
         context_names: Tuple[str, str]
-) -> Tuple[str, str]:
-
-    context_prompt: str = "You are a professional Python developer that generates test suites for modules, and ANSWERS with CODE ONLY."
-
+) -> str:
     # ========== Lettura del Template di Prompt ==========
     templ_func_path: str = templs_paths[0]
-    #templ_meth_path: str = templs_paths[1]
+    templ_meth_path: str = templs_paths[1]
 
     templ_func: str = read_templ_frompath(templ_func_path)
-    #templ_meth: str = read_templ_frompath(templ_meth_path)
+    templ_meth: str = read_templ_frompath(templ_meth_path)
 
     # ========== Estrazione del codice del modulo  ==========
-    module_cst: Tree = extract_fmodule_code(config["focalmod_path"])
+    module_cst: Tree = extract_fmodule_code(focalmod_path)
 
     raw_module_code: str = module_cst.root_node.text.decode()
     module_parts: Tuple[Dict[str, List[str]], Dict[str, List[str]]] = separate_fmodule_code(module_cst)
@@ -222,25 +78,21 @@ def generate_tsuite(
 
     pycode_parser: Parser = Parser(PYTHON_LANG)
 
-    tsuite_funcs_code: str = _generate_tsuite_modfuncs(
+    tsuite_funcs: Tuple[Dict[str, Set[str]], str]  = generate_tsuite_modfuncs(
         config,
         chat_history,
         templ_func,
         pycode_parser,
         raw_module_code,
         module_entities["funcs"],
-        context_names
+        paths,
+        context_names,
+        SCRIPT_DEBUG
     )
+    tsuite_funcs_imps: Dict[str, Set[str]] = tsuite_funcs[0]
+    tsuite_funcs_code: str = tsuite_funcs[1]
 
-    #  _test_dir\distributions.py
-    # Versione Attuale = Ollama 0.95
-    print("")
-    print("T_SUITE FUNCS CODE:")
-    print(tsuite_funcs_code)
-
-    raise KeyboardInterrupt()
-
-    tsuite_classes_code: str = _generate_tsuite_testclss(
+    tsuite_classes: Tuple[Dict[str, Set[str]], str] = generate_tsuite_testclss(
         config,
         chat_history,
         templ_meth,
@@ -248,40 +100,184 @@ def generate_tsuite(
         raw_module_code,
         module_entities["classes"],
         module_classes,
-        context_names
+        paths,
+        context_names,
+        SCRIPT_DEBUG
     )
+    tsuite_classes_imps: Dict[str, Set[str]] = tsuite_classes[0]
+    tsuite_classes_code: str = tsuite_classes[1]
 
-    # TODO: Finish code
+    tsuite_imports: Set[str] = set()
+    tsuite_imports_str: str = ""
 
-    return ("","")
+    i: int
+    j: int
+    not_finished: bool
+    for imp_type in ["imports", "fimports"]:
+        i = 0
+        j = 0
+        not_finished = True
+        while not_finished:
+            if (i >= len(tsuite_funcs_imps[imp_type])) and (j >= len(tsuite_classes_imps[imp_type])):
+                not_finished = False
+            elif i < len(tsuite_funcs_imps[imp_type]):
+                tsuite_imports.add(tsuite_funcs_imps[imp_type].pop())
+                i += 1
+            elif j < len(tsuite_classes_imps[imp_type]):
+                tsuite_imports.add(tsuite_classes_imps[imp_type].pop())
+                j += 1
+
+    for imp_stat in tsuite_imports:
+        tsuite_imports_str += (imp_stat + "\n")
+    tsuite_imports_str = tsuite_imports_str.rstrip("\n")
+
+    generated_tsuite: str = tsuite_imports_str + "\n\n\n" + (tsuite_funcs_code + "\n\n" + tsuite_classes_code)
+
+    return generated_tsuite
 
 
 
 
 if __name__ == "__main__":
-    base_dir: str = "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\"
+    prompts_testdir: str = "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\_prompts"
+    projects: List[str]
+    names: List[str]
 
-    config: Dict[str, str] = configure_script(base_dir)
+    buffer: str
+    with open("dirs.json", "r") as fp:
+        buffer = reduce(lambda acc, x: acc + x, fp.readlines())
+    dirs_file: Dict[str, str] = json_loads(buffer)
 
-    chat_history: ChatHistory = ChatHistory()
-    result: Tuple[str, str] = generate_tsuite(
-        config,
-        chat_history,
-        (path_join(config["prompts_dir"], "template_fbyf_func.txt"), ""),
-        ("optuna", "distributions")
+    with open("projs.json", "r") as fp:
+        buffer = reduce(lambda acc, x: acc + x, fp.readlines())
+    projs_file: Dict[str, List[str]] = json_loads(buffer)
+
+    prompts_root = dirs_file["prompts_path"]
+    projects = projs_file["roots"]
+    names = projs_file["names"]
+    test_paths = projs_file["tests"]
+
+    config: Dict[str, str] = configure_ollama(
+        "158.110.146.224:1337",
+        "ollama:3UHn2uyu1sxgAy15",
+        "qwen3:32b"
     )
-    focal_code: str = result[0]
-    tsuite_code: str = result[1]
-    """tsuite_code = correct_tsuite_imports(
-        config,
-        chat_history,
-        (focal_code, tsuite_code)
-    )"""
 
-    orig_path: Tuple[str, str] = path_split(config["focalmod_path"])
-    module_name: str = orig_path[1].split(".")[0]
-    suite_path: str = path_join(config["gentests_dir"], (module_name + "_testsuite.py"))
-    with open(suite_path, "w") as fsuite:
-        fsuite.write(tsuite_code)
+    curr_file: str
+    module_name: str
 
-    print("Test suite del modulo salvata in '" + suite_path + "' !")
+    file_check: Match[str]
+
+    test_entered: bool = False
+    for i, proj_root in enumerate(projects, start=0):
+        config = configure_dirs(
+            prompts_root,
+            path_join(test_paths[i], "gen_tests"),
+            old_config = config
+        )
+
+        if SCRIPT_DEBUG:
+            print("PROJ_ROOT = ", proj_root)
+        for curr_path, dirs, files in os_walk(proj_root):
+            for file in files:
+                file_check = reg_search(r"[\S]+\.py$", file)
+
+                if (file != "__init__.py") and (file_check is not None):
+                    if SCRIPT_DEBUG:
+                        print("Scorrimento dei file: File corrente \"" + file + "\"")
+                    test_entered = True
+
+                    curr_file = path_join(curr_path, file)
+                    module_name = path_split_ext(file)[0]
+
+                    chat_history: ChatHistory = ChatHistory()
+
+                    tsuite_fname: str = module_name + "_testsuite.py"
+                    temp_prefix: str = "temp_"
+                    temp_tsuite_fname: str = temp_prefix + tsuite_fname
+
+                    common_path: str = path_intersect([curr_path, proj_root])
+                    rel_path: str = curr_path.replace(common_path, "").strip(path_sep)
+                    tsuite_path: str = path_join(config["gentests_dir"], rel_path)
+
+                    tsuite_code: str = generate_tsuite(
+                        curr_file,
+                        config,
+                        chat_history,
+                        (
+                            path_join(config["prompts_dir"], "template_fbyf_func.txt"),
+                            path_join(config["prompts_dir"], "template_fbyf_meth.txt")
+                         ),
+                        (curr_path, tsuite_path),
+                        (names[i], module_name)
+                    )
+
+                    temp_tsuite_path: str = path_join(tsuite_path, temp_tsuite_fname)
+                    with open(temp_tsuite_path, "w") as fp:
+                        fp.write(tsuite_code)
+
+                    max_retries: int = 5
+                    exec_success: bool
+                    never_corrected: bool = True
+                    i: int = 0
+                    module_dottedpath: str = curr_path.replace(path_sep, ".").strip(".") + "." + module_name
+                    coverage_cmd: str = "coverage run --source=" + module_dottedpath + " " + temp_tsuite_path
+                    corrected_code: str = ""
+                    # do-while
+                    while True:
+                        exec_success = False
+                        try:
+                            result: CompletedProcess[str] = subproc_run(
+                                coverage_cmd.split(" "),
+                                check = True,
+                                capture_output = True,
+                                text = True,
+                            )
+                            exec_success = True
+                        except CalledProcessError as err:
+                            never_corrected = False
+
+                            results: List[Match[str]] = reg_findall(r"^[\w_\-]+Error", err.output)
+                            last_exception = results.pop()
+
+                            focalmod_cst: Tree = extract_fmodule_code(curr_file)
+                            if last_exception == "ImportError":
+                                corrected_code = correct_tsuite_imports(
+                                    focalmod_cst.root_node.text.decode(),
+                                    tsuite_code,
+                                    config,
+                                    chat_history,
+                                    path_join(config["prompts_dir"], "template_fbyf_corrimps.txt"),
+                                    (curr_path, tsuite_path),
+                                    (names[i], module_name)
+                                )
+                            else:
+                                corrected_code = correct_tsuite(
+                                    focalmod_cst.root_node.text.decode(),
+                                    tsuite_code,
+                                    config,
+                                    chat_history,
+                                    path_join(config["prompts_dir"], "template_fbyf_corr.txt"),
+                                    (curr_path, tsuite_path),
+                                    (names[i], module_name)
+                                )
+
+                        i += 1
+
+                        # do-while termination condition
+                        if exec_success or i >= max_retries:
+                            break
+
+                    correct_tsuite_path: str = path_join(tsuite_path, tsuite_fname)
+                    if exec_success:
+                        if never_corrected:
+                            os_rename(temp_tsuite_path, correct_tsuite_path)
+                        else:
+                            os_remove(temp_tsuite_path)
+                            with open(correct_tsuite_path, "w") as fp:
+                                fp.write(corrected_code)
+                    else:
+                        raise RuntimeError("The Test Suite hasn't been corrected, after " + str(max_retries) + " tries !!")
+
+                if test_entered:
+                    raise KeyboardInterrupt()

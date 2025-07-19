@@ -1,47 +1,114 @@
 from typing import Dict
+from base64 import b64encode as b64_encode
 from re import search as reg_search
 from os import mkdir
 from os.path import exists as dir_exists, join as path_join
 
 
-def configure_script(base_dir: str, prompts_dir: str = "_prompts", gentests_dir: str = "tests") -> Dict[str, str]:
+def configure_ollama(
+        api_url: str,
+        userpass_pair: str,
+        llm_model: str,
+        old_config: Dict[str, str]=None
+) -> Dict[str, str]:
     """
-        TODO: Finish description
+        <Descrizione>
+
+        Parameters
+        ----------
+        api_url: str
+            Una stringa contenente l' URL (URI:Port) a cui è hostata l' istanza di Ollama con cui si effettueranno le
+            interazioni
+
+        userpass_pair: str
+            Una stringa contenente la coppia username e password (User:Pass) utilizzati come credenziali di
+
+        llm_model: str
+            Una stringa contenente la coppia "modello:implementazione"
+
+        old_config: Dict[str, str]
+            Opzionale.
+            Un dizionario di stringhe, indicizzato su stringhe, contenente la configurazione
+            a cui aggiungere le informazioni senza creare un nuovo dizionario di configurazione.
 
         Returns
         -------
         Dict[str, str]
-            Un dizionario di stringhe, indicizzato su stringhe, contenente:
+            Un dizionario di stringhe, indicizzato su stringhe, contenente (sicuramente):
 
-                - "base_dir": La directory di partenza (base) utilizzata dallo script.
+                - "model": La stringa identificante il modello da utilizzare
+                - "api_url": L' URL per l' accesso alla specifica istanza di Ollama hostata
+                             utilizzata dallo script.
+                - "api_auth": Le credenziali di autorizzazione codificate e utilizzabili
+                              per accedere all' API di Ollama (da utilizzarsi come valore
+                              dell' header "Authorization")
+
+    """
+    model_patt: str = r"^[a-zA-z0-9\.\-_]+(?:\:[a-zA-z0-9\.\-_]+)?$"
+    if reg_search(model_patt, llm_model) is None:
+        raise ValueError("La coppia modello:tag data è malformata o invalida")
+
+    config: Dict[str, str]
+    if old_config is not None:
+        config = old_config
+    else:
+        config = dict()
+
+    config["model"] = llm_model
+
+    config["api_url"] = "http://" + api_url
+    config["api_auth"] = f'Basic {b64_encode(userpass_pair.encode()).decode()}'
+
+    return config
+
+    # config["focalmod_path"] = path_join(base_dir, input("Inserire il nome del modulo Python (con estensione .py) di cui generare i tests (Directory base: "+base_dir+") :>  "))
+    # chosen_model: str = input("Inserire la coppia modello:tag per selezionare il LLM da utilizzare :>  ")
+
+
+def configure_dirs(
+        prompts_root: str,
+        tests_root: str,
+        old_config: Dict[str, str]=None
+) -> Dict[str, str]:
+    """
+        <Descrizione>
+
+        Parameters
+        ----------
+        prompts_root: str
+            Una stringa contenente la path della directory dei prompts da utilizzare
+
+        proj_root: str
+            Una stringa contenente la path della root directory del progetto in esame
+
+        tests_dir: str
+            Una stringa contenente il nome della sotto-directory (di 'proj_root') che conterrà
+            i tests generati
+
+        old_config: Dict[str, str]
+            Opzionale.
+            Un dizionario di stringhe, indicizzato su stringhe, contenente la configurazione
+            a cui aggiungere le informazioni senza creare un nuovo dizionario di configurazione.
+
+        Returns
+        -------
+        Dict[str, str]
+            Un dizionario di stringhe, indicizzato su stringhe, contenente (sicuramente):
+
                 - "prompts_dir": La sotto-directory della base che contiene i template dei prompt.
                 - "gentests_dir": La sotto-directory della base che conterrà i tests generati.
-                - "api_url": L' URL completo per l' accesso alla specifica operazione, dell' API,
-                             utilizzata dallo script.
-                - "api_auth": Le credenziali di autorizzazione per accedere all' API di Ollama
-                - "focalmod_path": La path che identifica il modulo di cui generare i tests.
-                - "model": La stringa identificante il modello da utilizzare
     """
-    config: Dict[str, str] = dict()
 
-    config["base_dir"] = base_dir
-    config["prompts_dir"] = path_join(base_dir, prompts_dir)
-    config["gentests_dir"] = path_join(base_dir, gentests_dir)
+    config: Dict[str, str]
+    if old_config is not None:
+        config = old_config
+    else:
+        config = dict()
+
+    config["prompts_dir"] = prompts_root
+    config["gentests_dir"] = tests_root
 
     if not dir_exists(config["gentests_dir"]):
         mkdir(config["gentests_dir"])
-
-    userpass_pair: str = "ollama:3UHn2uyu1sxgAy15"
-    base_api: str = "158.110.146.224:1337"
-
-    config["api_url"] = "http://" + base_api
-    config["api_auth"] = userpass_pair
-
-    config["focalmod_path"] = path_join(base_dir, input("Inserire il nome del modulo Python (con estensione .py) di cui generare i tests (Directory base: "+base_dir+") :>  "))
-    chosen_model: str = input("Inserire la coppia modello:tag per selezionare il LLM da utilizzare :>  ")
-    model_patt: str = r"^[a-zA-z0-9\.\-_]+(?:\:[a-zA-z0-9\.\-_]+)?$"
-    if reg_search(model_patt, chosen_model) is None:
-        raise ValueError("La coppia modello:tag data è malformata o invalida")
-    config["model"] = chosen_model
 
     return config
