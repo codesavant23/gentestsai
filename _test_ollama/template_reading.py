@@ -12,6 +12,6 @@ def read_templ_frompath(templ_path: str) -> str:
             per essere arricchito e creare quindi un prompt completo.
     """
     templ: str
-    with open(templ_path, "r", encoding="utf-8") as ftempl:
+    with open(templ_path, "r") as ftempl:
         templ = reduce(lambda acc, x: acc + x, ftempl.readlines(), "")
     return templ
