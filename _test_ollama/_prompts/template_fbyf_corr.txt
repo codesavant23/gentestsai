@@ -1,6 +1,7 @@
 # Request
     Correct the code of the test suite given below by modifying any necessary statement in its code.
-    The focal module "{@Module_Name@}", from which the test suite originates, is also provided and belongs to a project called "{@Project_Name@}".
+    The focal module "{@Module_Name@}", from which the test suite originates, belongs to a project called "{@Project_Name@}".
+    The error encountered is "{@Exception_Name@}", associtated to the following message "{@Exception_Message@}".
 
 ## Very Important
     - Suppose that the focal module resides in the following path: "{@Focal_Path@}"
@@ -13,11 +14,6 @@
     ```python
         <corrected_test_suite_code_here>
     ```
-
-# Focal module:
-```python
-{@Focal_Code@}
-```
 
 # Test suite:
 ```python

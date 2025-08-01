@@ -14,7 +14,7 @@ def parse_codeonly_response(resp: str) -> str:
 
 def extract_fmodule_code(codefile_path: str) -> Tree:
     code_mod_str: str
-    with open(codefile_path, "r") as ftest:
+    with open(codefile_path, "r", encoding="utf-8") as ftest:
         code_mod_str = reduce(lambda acc, x: acc + x, ftest.readlines(), "")
 
     py_parser: Parser = Parser(Language(py_grammar()))
