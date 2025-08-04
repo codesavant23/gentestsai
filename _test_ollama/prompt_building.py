@@ -92,7 +92,7 @@ def build_full_fbyf_funcprompt(
         -------
 
     """
-    full_prompt: str = build_full_singleprompt(templ, focal_code, context_names, paths)
+    full_prompt: str = build_full_singleprompt(templ, focal_code, paths, context_names)
 
     funcname_patt: str = r"{@Function_Name@}"
     full_prompt = full_prompt.replace(funcname_patt, func_name)
@@ -140,7 +140,7 @@ def build_full_fbyf_methprompt(
         -------
 
     """
-    full_prompt: str = build_full_singleprompt(templ, focal_code, context_names, paths)
+    full_prompt: str = build_full_singleprompt(templ, focal_code, paths, context_names)
 
     methname_patt = r"{@Method_Name@}"
     full_prompt = full_prompt.replace(methname_patt, meth_name)
@@ -151,7 +151,7 @@ def build_full_fbyf_methprompt(
     return full_prompt
 
 
-def build_corr_prompt(
+def build_full_corrprompt(
         templ: str,
         wrong_tsuite: str,
         error: Tuple[str, str],
@@ -190,7 +190,7 @@ def build_corr_prompt(
         -------
 
     """
-    full_prompt: str = build_full_singleprompt(templ, "", context_names, paths)
+    full_prompt: str = build_full_singleprompt(templ, "", paths, context_names)
 
     suitecode_patt: str = r"{@Suite_Code@}"
     full_prompt = full_prompt.replace(suitecode_patt, wrong_tsuite)

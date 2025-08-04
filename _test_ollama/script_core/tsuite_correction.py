@@ -32,7 +32,7 @@ from _test_ollama.template_reading import (
     read_templ_frompath
 )
 from _test_ollama.prompt_building import (
-    build_corr_prompt
+    build_full_corrprompt
 )
 
 from ollama import Client as OllamaClient, ChatResponse
@@ -59,7 +59,7 @@ def correct_tsuite_1time(
 ) -> str:
 
     templ: str = read_templ_frompath(templ_path)
-    full_corr_prompt: str = build_corr_prompt(
+    full_corr_prompt: str = build_full_corrprompt(
         templ,
         wrong_tsuite,
         error,
