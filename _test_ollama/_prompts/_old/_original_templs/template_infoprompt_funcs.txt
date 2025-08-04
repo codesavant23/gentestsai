@@ -1,7 +1,0 @@
-{{ .System }}
-Your ultimate goal is to generate test cases for the Python module I will send you, particularly by NOT MODIFYING ANY CODE IN THE MODULE GIVEN.
-Thinking in steps:
-1. Initially (this prompt), I will send you the original source code of the module under test to give you the context and the aim of the module.
-2. In the next prompts, I will send you each single function of the module you need to generate tests on.
-Focal information of the module under test:
-{{ .Prompt }}

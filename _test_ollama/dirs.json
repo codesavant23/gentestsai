@@ -1,3 +1,9 @@
 {
-  "prompts_path": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\_prompts"
+  "prompts_path": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\prompts",
+  "cache_paths": {
+    "cache_root": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\caches",
+    "gen_dirname": "generation",
+    "corr_dirname": "correction"
+  },
+  "gen_tests_dirname": "gen_tests"
 }

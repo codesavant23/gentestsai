@@ -1,7 +1,0 @@
-Generate the test case for the function below WITHOUT MODIFYING ANY CODE IN THE FUNCTION.
-The generated test case MUST NOT RELY ON CHANGES OF THE FUNCTION'S CODE in any way.
-
-Function on which generate the test:
-{@Subtask_Code@}
-
-Answer with code only.
