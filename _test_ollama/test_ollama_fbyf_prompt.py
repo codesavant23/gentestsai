@@ -248,5 +248,11 @@ if __name__ == "__main__":
 
                             chat_history.clear()
     finally:
+        if SCRIPT_DEBUG:
+            print("Closing caching databases...", end="")
+        corr_conn.commit()
+        gen_conn.commit()
         corr_conn.close()
         gen_conn.close()
+        if SCRIPT_DEBUG:
+            print("CLOSED!")
