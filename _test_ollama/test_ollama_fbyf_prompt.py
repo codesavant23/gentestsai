@@ -3,7 +3,7 @@ from functools import reduce
 
 from os import (
     walk as os_walk,
-    mkdir as os_mkdir,
+    makedirs as os_mkdirs,
 )
 from shutil import (
     rmtree as os_dremove
@@ -89,12 +89,12 @@ def generate_module_tsuite(
     )
 
     # ========== Creazione/sovrascrittura della directory test-suite ==========
-    if os_fdexists(tsuite_path):
-        os_dremove(tsuite_path)
-    os_mkdir(tsuite_path)
-
     if SCRIPT_DEBUG:
         print("Calculated Test-Suite path for '" + context_names[1] + "' (\"" + context_names[0] + "\"): " + tsuite_path)
+
+    if os_fdexists(tsuite_path):
+        os_dremove(tsuite_path)
+    os_mkdirs(tsuite_path)
 
     # ========== Generazione Completa (con correzione e scrittura) delle test-suite parziali delle funzioni ==========
     generate_tsuite_modfuncs(
@@ -225,11 +225,11 @@ if __name__ == "__main__":
 
                         # Se il file rappresenta un modulo Python parte del codice focale
                         if (file != "__init__.py") and (file_check is not None):
-                            if SCRIPT_DEBUG:
-                                print("Current module-file: \"" + file + "\"")
-
                             curr_file = path_join(curr_path, file)
                             module_name = path_split_ext(file)[0]
+
+                            if SCRIPT_DEBUG:
+                                print("Current module-file: \"" + file + "\" | Module_Path = " + curr_file)
 
                             # ========== Generazione completa dei tests per quello specifico modulo ==========
                             generate_module_tsuite(
