@@ -37,9 +37,7 @@ CONTEXT_PROMPT: str = "You are a professional Python developer."
 GENCODE_PATT: str = r"(?:<think>[\S\n\t ]*</think>)?\s*```python\n?(?P<gen_code>[\s\S]+)\n?```"
 CLSDEF_PATT: str = r"class\s+(?P<cls_name>[a-zA-Z0-9\-\_]+)(\((?P<sup_cls>\S+(?:, *\S+)*)\):|:)"
 
-FUNCSIGN_PATT: str = r"(def\s+(?P<func_name>[A-z0-9_\-]+)\s*\(\s*(?P<params>[A-z0-9,.|:=\"\{\}\[\]()\t\n ]*)\s*\)\s*(?:->\s*[A-z0-9,.|=\"\{\}\[\]\t\n ]+)?:)"
-
-FUNCNAME_PATT: str = r"(def\s+)([a-zA-Z0-9_\-]+)"
+FUNCSIGN_PATT: str = r"(def\s+(?P<func_name>[A-z0-9_\-]+)\s*\(\s*(?P<params>[A-z0-9,.|:=\"\{\}\[\]()*\t\n ]*)\s*\)\s*(?:->\s*[A-z0-9,.|=\"\{\}\[\]\t\n ]+)?:)"
 
 
 def generate_tsuite_modfuncs(

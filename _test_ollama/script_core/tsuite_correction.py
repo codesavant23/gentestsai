@@ -35,9 +35,10 @@ from py_compile import (
     PyCompileError
 )
 
-
 CONTEXT_PROMPT: str = "You are a professional Python developer."
 GENCODE_PATT: str = r"(?:<think>[\S\n\t ]*</think>)?\s*```python\n?(?P<gen_code>[\s\S]+)\n?```"
+
+
 
 def correct_tsuite_1time(
         wrong_tsuite: str,
@@ -68,7 +69,8 @@ def correct_tsuite_1time(
     corr_conn_cur.execute(f"""
         SELECT * FROM `{project_name}`
         WHERE `prompt` = ?
-    """, [full_corrprompt])
+        AND `model` = ?
+    """, [full_corrprompt, config["model"]])
     rows: List[Tuple[str, str]] = corr_conn_cur.fetchall()
     prompt_exists = len(rows) > 0
 
@@ -77,7 +79,6 @@ def correct_tsuite_1time(
         if debug:
             print("Correcting code of the module '" + context_names[1] + "' (\"" + context_names[0] + "\") ...")
             print("Lunghezza del (Correct) Prompt = " + str(len(reg_split(r"([ \n])+", full_corrprompt)) * 3 / 2) + " tokens")
-            print("\tReceiving response... ", end="")
 
         oll: OllamaClient = OllamaClient(
             host=config["api_url"],
@@ -94,19 +95,20 @@ def correct_tsuite_1time(
             think=False
         )
         if debug:
-            print("RECEIVED!")
-
+            print("\tReceiving response... ", end="")
         full_response: str = ""
         for msg in response:
             full_response += msg['message']['content']
+        if debug:
+            print("RECEIVED!")
 
         corr_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
 
         corr_conn_cur.execute(f"""
-            INSERT INTO {project_name} (prompt, response)
-            VALUES (?, ?);
+            INSERT INTO {project_name} (prompt, response, model)
+            VALUES (?, ?, ?);
         """,
-        [full_corrprompt, corr_code])
+        [full_corrprompt, corr_code, config["model"]])
         if debug:
             print("Correction Cache Updated!")
     else:
