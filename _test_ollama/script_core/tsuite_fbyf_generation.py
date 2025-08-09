@@ -7,24 +7,18 @@ from regex import (
     RegexFlag as RegexFlags
 )
 
+from sqlite3 import (
+    Cursor as SqlConnectionCursor
+)
+
 from os import (
-    mkdir as os_mkdir,
     replace as os_rename
 )
 from os.path import (
-    exists as os_fdexists,
-    sep as path_sep,
-    commonpath as path_intersect,
     join as path_join,
-    splitext as path_split_ext
 )
 
-from json import (
-    load as json_load,
-    dump as json_dump
-)
-
-from tree_sitter import Parser, Tree, Node as TreeNode
+from tree_sitter import Tree, Node as TreeNode
 
 from _test_ollama.chat_history import ChatHistory
 
@@ -53,12 +47,12 @@ def generate_tsuite_modfuncs(
         config: Dict[str, str],
         chat_history: ChatHistory,
         template: str,
-        code_parser: Parser,
         module_code: str,
         module_funcs: List[str],
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        llm_history_gen: Dict[str, str],
+        gen_conn_cur: SqlConnectionCursor,
+        corr_conn_cur: SqlConnectionCursor,
         debug: bool = False
 ) -> None:
     """
@@ -85,6 +79,7 @@ def generate_tsuite_modfuncs(
         - [1]: Una stringa contenente il codice di testing relativo alle funzioni proprie del modulo dato
 
     """
+    project_name: str = context_names[0]
     tsuite_path: str = paths[1]
 
     gen_code: str
@@ -107,7 +102,16 @@ def generate_tsuite_modfuncs(
         chat_history.add_message("context", CONTEXT_PROMPT)
         chat_history.add_message("user", full_funcprompt)
 
-        if not (full_funcprompt in llm_history_gen.keys()):
+        prompt_exists: bool
+        gen_conn_cur.execute(f"""
+            SELECT * FROM `{project_name}`
+            WHERE `prompt` = ?
+            AND `model` = ?
+        """, [full_funcprompt, config["model"]])
+        rows: List[Tuple[str, str, str]] = gen_conn_cur.fetchall()
+        prompt_exists = len(rows) > 0
+
+        if not prompt_exists:
             if debug:
                 print("Generating tests for Function '" + func_name + "' ...")
                 print("Lunghezza del (Func.) Prompt = " + str(
@@ -137,17 +141,19 @@ def generate_tsuite_modfuncs(
 
             gen_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
 
-            llm_history_gen[full_funcprompt] = gen_code
-            with open("last_history_gen.json", "w") as fp:
-                json_dump(llm_history_gen, fp)
+            gen_conn_cur.execute(f"""
+                INSERT INTO {project_name} (prompt, response, model)
+                VALUES (?, ?, ?);
+            """,
+            [full_funcprompt, gen_code, config["model"]])
             if debug:
                 print("Generation Cache Updated!")
         else:
-            gen_code = llm_history_gen[full_funcprompt]
+            gen_code = rows[0][1]
             if debug:
                 print("Response of '" + func_name + "' taken by the LLM Generated Cache")
 
-        parttsuite_name: str = func_name + "_tests.py"
+        parttsuite_name: str = func_name + "_" + config["model"].replace(":", "-") + "_tests.py"
         temp_parttsuite_name: str = "temp_" + parttsuite_name
 
         with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
@@ -160,6 +166,7 @@ def generate_tsuite_modfuncs(
             path_join(config["prompts_dir"], "template_fbyf_corr.txt"),
             paths,
             context_names,
+            corr_conn_cur,
             debug=debug
         )
 
@@ -177,13 +184,13 @@ def generate_tsuite_testclss(
         config: Dict[str, str],
         chat_history: ChatHistory,
         template: str,
-        code_parser: Parser,
         module_code: str,
         module_classes: List[str],
         classes_meths: Dict[str, List[str]],
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        llm_history_gen: Dict[str, str],
+        gen_conn_cur: SqlConnectionCursor,
+        corr_conn_cur: SqlConnectionCursor,
         debug: bool = False
 ) -> None:
     """
@@ -210,9 +217,9 @@ def generate_tsuite_testclss(
 
         - [1]: Una stringa contenente il codice di testing relativo alle classi contenute nel modulo dato
     """
-
     chat_history.clear()
 
+    project_name: str = context_names[0]
     tsuite_path: str = paths[1]
 
     fcls_name: str
@@ -243,7 +250,16 @@ def generate_tsuite_testclss(
             chat_history.add_message("context", CONTEXT_PROMPT)
             chat_history.add_message("user", full_methprompt)
 
-            if not (full_methprompt in llm_history_gen.keys()):
+            prompt_exists: bool
+            gen_conn_cur.execute(f"""
+                SELECT * FROM `{project_name}`
+                WHERE `prompt` = ?
+                AND `model` = ?
+            """, [full_methprompt, config["model"]])
+            rows: List[Tuple[str, str, str]] = gen_conn_cur.fetchall()
+            prompt_exists = len(rows) > 0
+
+            if not prompt_exists:
                 if debug:
                     print("\tGenerating tests for Method '" + meth_name + "' ...")
                     print("\tLunghezza del (Method) Prompt = " + str(len(reg_split(r"([ \n])+", full_methprompt)) * 3 / 2) + " tokens")
@@ -266,22 +282,24 @@ def generate_tsuite_testclss(
                 full_response: str = ""
                 for msg in response:
                     full_response += msg['message']['content']
+                if debug:
+                    print("RECEIVED!")
 
                 gen_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
-                llm_history_gen[full_methprompt] = gen_code
-                with open("last_history_gen.json", "w") as fp:
-                    json_dump(llm_history_gen, fp)
+
+                gen_conn_cur.execute(f"""
+                    INSERT INTO {project_name} (prompt, response, model)
+                    VALUES (?, ?, ?);
+                """,
+                [full_methprompt, gen_code, config["model"]])
                 if debug:
                     print("\tGeneration Cache Updated!")
             else:
-                gen_code = llm_history_gen[full_methprompt]
+                gen_code = rows[0][1]
                 if debug:
                     print("\tResponse of '" + meth_name + "' taken by the LLM Generated Cache")
 
-            currcode_tree = code_parser.parse(gen_code.encode())
-            currcode_tree_root = currcode_tree.root_node
-
-            parttsuite_name: str = meth_name + "_tests.py"
+            parttsuite_name: str = meth_name + "_" + config["model"].replace(":", "-") + "_tests.py"
             temp_parttsuite_name: str = "temp_" + parttsuite_name
 
             with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
@@ -294,6 +312,7 @@ def generate_tsuite_testclss(
                 path_join(config["prompts_dir"], "template_fbyf_corr.txt"),
                 paths,
                 context_names,
+                corr_conn_cur,
                 debug=debug
             )
 

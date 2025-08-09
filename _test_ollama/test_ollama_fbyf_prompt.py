@@ -17,17 +17,18 @@ from os.path import (
 )
 
 from json import (
-    load as json_load,
     loads as json_loads
+)
+from sqlite3 import (
+    connect as sql_connect,
+    Connection as SqlConnection,
+    Cursor as SqlConnectionCursor
 )
 
 from re import (
     Match,
     search as reg_search,
 )
-
-from tree_sitter import Language, Parser, Tree
-from tree_sitter_python import language as py_grammar
 
 from configuration import (
     configure_ollama,
@@ -37,8 +38,8 @@ from template_reading import read_templ_frompath
 from code_extraction import (
     extract_fmodule_code,
     separate_fmodule_code,
-
 )
+from tree_sitter import Tree
 from chat_history import ChatHistory
 
 from script_core.tsuite_fbyf_generation import (
@@ -46,17 +47,18 @@ from script_core.tsuite_fbyf_generation import (
     generate_tsuite_testclss
 )
 
-PYTHON_LANG: Language = Language(py_grammar())
 SCRIPT_DEBUG: bool = True
 
 
-def generate_tsuite(
+def generate_module_tsuite(
         proj_root: str,
         module_path: str,
         config: Dict[str, str],
         chat_history: ChatHistory,
         templs_paths: Tuple[str, str],
-        context_names: Tuple[str, str]
+        context_names: Tuple[str, str],
+        gen_conn_cur: SqlConnectionCursor,
+        corr_conn_cur: SqlConnectionCursor
 ) -> None:
     module_name: str = context_names[1]
 
@@ -79,17 +81,6 @@ def generate_tsuite(
     module_entities: Dict[str, List[str]] = module_parts[0]
     module_classes: Dict[str, List[str]] = module_parts[1]
 
-    pycode_parser: Parser = Parser(PYTHON_LANG)
-
-    # ========== Lettura/Creazione della Cache di Generazione  ==========
-    last_history_gen: Dict[str, str] = dict()
-    if os_fdexists("last_history_gen.json"):
-        with open("last_history_gen.json", "r") as fp:
-            last_history_gen = json_load(fp)
-    else:
-        with open("last_history_gen.json", "w") as fp:
-            pass
-
     # ========== Calcolo della directory che conterrà la test-suite ==========
     common_path: str = path_intersect([module_path, proj_root])
     rel_path: str = module_path.replace(common_path, "").strip(path_sep)
@@ -110,12 +101,12 @@ def generate_tsuite(
         config,
         chat_history,
         templ_func,
-        pycode_parser,
         raw_module_code,
         module_entities["funcs"],
         (module_path, tsuite_path),
         context_names,
-        last_history_gen,
+        gen_conn_cur,
+        corr_conn_cur,
         SCRIPT_DEBUG
     )
 
@@ -124,100 +115,138 @@ def generate_tsuite(
         config,
         chat_history,
         templ_meth,
-        pycode_parser,
         raw_module_code,
         module_entities["classes"],
         module_classes,
         (module_path, tsuite_path),
         context_names,
-        last_history_gen,
+        gen_conn_cur,
+        corr_conn_cur,
         SCRIPT_DEBUG
     )
 
 
 if __name__ == "__main__":
-    projects: List[str]
-    names: List[str]
-
+    # ========== Lettura dei file di configurazione del progetto ==========
     buffer: str
     with open("dirs.json", "r") as fp:
         buffer = reduce(lambda acc, x: acc + x, fp.readlines())
-    dirs_file: Dict[str, str] = json_loads(buffer)
+    dirs_config: Dict[str, str] = json_loads(buffer)
 
     with open("projs.json", "r") as fp:
         buffer = reduce(lambda acc, x: acc + x, fp.readlines())
-    projs_file: Dict[str, List[str]] = json_loads(buffer)
+    projs_config: Dict[str, List[str]] = json_loads(buffer)
 
-    prompts_root = dirs_file["prompts_path"]
-    projects = projs_file["roots"]
-    names = projs_file["names"]
-    test_paths = projs_file["tests"]
+    with open("ollama.json", "r") as fp:
+        buffer = reduce(lambda acc, x: acc + x, fp.readlines())
+    ollamaauth_config: Dict[str, str] = json_loads(buffer)
 
-    config: Dict[str, str] = configure_ollama(
-        "158.110.146.224:1337",
-        "ollama:3UHn2uyu1sxgAy15",
-        "qwen3:32b"
-    )
+    with open("models.json", "r") as fp:
+        buffer = reduce(lambda acc, x: acc + x, fp.readlines())
+    models_toevaluate: List[str] = json_loads(buffer)
+
+    with open("cache.json", "r") as fp:
+        buffer = reduce(lambda acc, x: acc + x, fp.readlines())
+    cache_config: Dict[str, str] = json_loads(buffer)
+
+    prompts_root: str = dirs_config["prompts_path"]
+    projects: List[str] = projs_config["roots"]
+    project_names: List[str] = projs_config["names"]
+    test_paths: List[str] = projs_config["tests"]
+
+    # ========== Calcolo delle path delle caches ==========
+    gen_cache_path: str = path_join(cache_config["cache_root"], cache_config["gen_cache_db"])
+    corr_cache_path: str = path_join(cache_config["cache_root"], cache_config["corr_cache_db"])
+
+    # ========== Apertura, ed eventuale creazione, delle caches ==========
+    if not os_fdexists(gen_cache_path):
+        with open(gen_cache_path, "w") as fp:
+            pass
+
+    gen_conn: SqlConnection = sql_connect(gen_cache_path)
+    gen_conn_cur: SqlConnectionCursor = gen_conn.cursor()
+
+    if not os_fdexists(corr_cache_path):
+        with open(corr_cache_path, "w") as fp:
+            pass
+
+    corr_conn: SqlConnection = sql_connect(corr_cache_path)
+    corr_conn_cur: SqlConnectionCursor = corr_conn.cursor()
 
     curr_file: str
     module_name: str
-
     file_check: Match[str]
     chat_history: ChatHistory = ChatHistory()
-    for i, proj_root in enumerate(projects, start=0):
-        config = configure_dirs(
-            prompts_root,
-            path_join(test_paths[i], "gen_tests"),
-            old_config = config
-        )
 
-        if SCRIPT_DEBUG:
-            print("Current project '" + names[i] + "' | Project_Root = " + proj_root)
-        for curr_path, dirs, files in os_walk(proj_root):
-            for file in files:
-                file_check = reg_search(r"[\S]+\.py$", file)
+    curr_config: Dict[str, str]
+    try:
+        # ========== Scorrimento dei modelli da valutare ==========
+        for model_toevaluate in models_toevaluate:
+            curr_config = configure_ollama(
+                ollamaauth_config["api_url"],
+                ollamaauth_config["userpass_pair"],
+                model_toevaluate
+            )
 
-                if (file != "__init__.py") and (file_check is not None):
-                    if SCRIPT_DEBUG:
-                        print("Current module-file: \"" + file + "\"")
+            # ========== Scorrimento di ogni progetto di cui generare i tests ==========
+            for i, proj_root in enumerate(projects, start=0):
+                curr_config = configure_dirs(
+                    prompts_root,
+                    path_join(test_paths[i], "gen_tests"),
+                    old_config = curr_config
+                )
 
-                    curr_file = path_join(curr_path, file)
-                    module_name = path_split_ext(file)[0]
-
-                    generate_tsuite(
-                        proj_root,
-                        curr_path,
-                        config,
-                        chat_history,
-                        (
-                            path_join(config["prompts_dir"], "template_fbyf_func.txt"),
-                            path_join(config["prompts_dir"], "template_fbyf_meth.txt")
-                         ),
-                        (names[i], module_name)
+                # ========== Eventuale creazione della tabella del progetto nella cache di "Generazione" ==========
+                gen_conn_cur.execute(f"""
+                    CREATE TABLE IF NOT EXISTS "{project_names[i]}" (
+                        `prompt` TEXT,
+                        `response` TEXT,
+                        `model` TEXT,
+                        PRIMARY KEY (`prompt`, `model`)
                     )
+                """)
 
-                    chat_history.clear()
+                # ========== Eventuale creazione della tabella del progetto nella cache di "Correzione" ==========
+                corr_conn_cur.execute(f"""
+                    CREATE TABLE IF NOT EXISTS "{project_names[i]}" (
+                        `prompt` TEXT,
+                        `response` TEXT,
+                        `model` TEXT,
+                        PRIMARY KEY (`prompt`, `model`)
+                    )
+                """)
 
-                    ## COVERAGE PART
-                    """
-                        temp_tsuite_path: str = path_join(tsuite_path, temp_tsuite_fname)
-                        with open(temp_tsuite_path, "w") as fp:
-                            fp.write(tsuite_code)
-    
-                        i: int = 0
-                        module_dottedpath: str = curr_path.replace(path_sep, ".").strip(".") + "." + module_name
-                        coverage_cmd: str = "coverage run --source=" + module_dottedpath + " " + temp_tsuite_path
-                        # coverage run --source=optuna.cli .../gen_tests/temp_cli_testsuite.py
-                        corrected_code: str = ""
-    
-                        correct_tsuite_path: str = path_join(tsuite_path, tsuite_fname)
-                        if exec_success:
-                            if never_corrected:
-                                os_rename(temp_tsuite_path, correct_tsuite_path)
-                            else:
-                                os_remove(temp_tsuite_path)
-                                with open(correct_tsuite_path, "w") as fp:
-                                    fp.write(corrected_code)
-                        else:
-                            raise RuntimeError("The Test Suite hasn't been corrected, after " + str(max_retries) + " tries !!")
-                    """
+                # ========== Scorrimento di ogni directory/file appartenente al progetto ==========
+                if SCRIPT_DEBUG:
+                    print("Current project '" + project_names[i] + "' | Project_Root = " + proj_root)
+                for curr_path, dirs, files in os_walk(proj_root):
+                    for file in files:
+                        file_check = reg_search(r"[\S]+\.py$", file)
+
+                        # Se il file rappresenta un modulo Python parte del codice focale
+                        if (file != "__init__.py") and (file_check is not None):
+                            if SCRIPT_DEBUG:
+                                print("Current module-file: \"" + file + "\"")
+
+                            curr_file = path_join(curr_path, file)
+                            module_name = path_split_ext(file)[0]
+
+                            # ========== Generazione completa dei tests per quello specifico modulo ==========
+                            generate_module_tsuite(
+                                proj_root,
+                                curr_path,
+                                curr_config,
+                                chat_history,
+                                (
+                                    path_join(curr_config["prompts_dir"], "template_fbyf_func.txt"),
+                                    path_join(curr_config["prompts_dir"], "template_fbyf_meth.txt")
+                                 ),
+                                (project_names[i], module_name),
+                                gen_conn_cur,
+                                corr_conn_cur
+                            )
+
+                            chat_history.clear()
+    finally:
+        corr_conn.close()
+        gen_conn.close()

@@ -1,0 +1,5 @@
+{
+  "cache_root": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\caches",
+  "gen_cache_db": "gen_cache.db",
+  "corr_cache_db": "corr_cache.db"
+}

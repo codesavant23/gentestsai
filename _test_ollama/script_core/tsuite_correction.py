@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Iterator
+from typing import Dict, Tuple, List, Iterator
 
 from functools import reduce
 
@@ -13,19 +13,12 @@ from os import (
 )
 
 from os.path import (
-    exists as os_fdexists,
-    sep as path_sep,
-    commonpath as path_intersect,
     join as path_join,
-    splitext as path_split_ext
 )
 
-from json import (
-    load as json_load,
-    dump as json_dump
+from sqlite3 import (
+    Cursor as SqlConnectionCursor
 )
-
-from networkx.classes import is_empty
 
 from _test_ollama.chat_history import ChatHistory
 from _test_ollama.template_reading import (
@@ -54,12 +47,13 @@ def correct_tsuite_1time(
         templ_path: str,
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        llm_history_corr: Dict[str, str],
+        corr_conn_cur: SqlConnectionCursor,
         debug: bool = False
 ) -> str:
+    project_name: str = context_names[0]
 
     templ: str = read_templ_frompath(templ_path)
-    full_corr_prompt: str = build_full_corrprompt(
+    full_corrprompt: str = build_full_corrprompt(
         templ,
         wrong_tsuite,
         error,
@@ -68,13 +62,21 @@ def correct_tsuite_1time(
     )
 
     chat_history.add_message("context", CONTEXT_PROMPT)
-    chat_history.add_message("user", full_corr_prompt)
+    chat_history.add_message("user", full_corrprompt)
+
+    prompt_exists: bool
+    corr_conn_cur.execute(f"""
+        SELECT * FROM `{project_name}`
+        WHERE `prompt` = ?
+    """, [full_corrprompt])
+    rows: List[Tuple[str, str]] = corr_conn_cur.fetchall()
+    prompt_exists = len(rows) > 0
 
     corr_code: str
-    if not (full_corr_prompt in llm_history_corr.keys()):
+    if not prompt_exists:
         if debug:
             print("Correcting code of the module '" + context_names[1] + "' (\"" + context_names[0] + "\") ...")
-            print("Lunghezza del (Correct) Prompt = " + str(len(reg_split(r"([ \n])+", full_corr_prompt)) * 3 / 2) + " tokens")
+            print("Lunghezza del (Correct) Prompt = " + str(len(reg_split(r"([ \n])+", full_corrprompt)) * 3 / 2) + " tokens")
             print("\tReceiving response... ", end="")
 
         oll: OllamaClient = OllamaClient(
@@ -100,13 +102,15 @@ def correct_tsuite_1time(
 
         corr_code = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE).group("gen_code")
 
-        llm_history_corr[full_corr_prompt] = corr_code
-        with open("last_history_corr.json", "w") as fp:
-            json_dump(llm_history_corr, fp)
+        corr_conn_cur.execute(f"""
+            INSERT INTO {project_name} (prompt, response)
+            VALUES (?, ?);
+        """,
+        [full_corrprompt, corr_code])
         if debug:
             print("Correction Cache Updated!")
     else:
-        corr_code = llm_history_corr[full_corr_prompt]
+        corr_code = rows[0][1]
         if debug:
             print("Correction of error '" + error[0] + "' on '" + context_names[1] + "' (\"" + context_names[0] + "\") test-suite taken by the LLM Correction Cache")
 
@@ -120,21 +124,10 @@ def correct_tsuite(
         templ_path: str,
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
+        corr_conn_cur: SqlConnectionCursor,
         debug: bool = False,
 ):
     tsuite_path: str = paths[1]
-
-    last_history_corr: Dict[str, str] = dict()
-    if os_fdexists("last_history_corr.json"):
-        content: str = ""
-        with open("last_history_corr.json", "r") as fp:
-            content = reduce(lambda acc, x: acc + "\n" + x, fp.readlines(), "").rstrip("\n")
-        if not (content == ""):
-            with open("last_history_corr.json", "r") as fp:
-                last_history_corr = json_load(fp)
-    else:
-        with open("last_history_corr.json", "w") as fp:
-            pass
 
     wrong_parttsuite: str
     with open(wrong_parttsuite_path, "r") as fp:
@@ -164,7 +157,7 @@ def correct_tsuite(
                 templ_path,
                 paths,
                 context_names,
-                last_history_corr,
+                corr_conn_cur,
                 debug=debug
             )
 

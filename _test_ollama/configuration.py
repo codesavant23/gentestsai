@@ -2,7 +2,7 @@ from typing import Dict
 from base64 import b64encode as b64_encode
 from re import search as reg_search
 from os import mkdir
-from os.path import exists as dir_exists, join as path_join
+from os.path import exists as dir_exists
 
 
 def configure_ollama(

@@ -376,10 +376,10 @@
                             # Ensure that we are still in a good state.
                             self.assertFalse(transaction.get_rollback())
 
-                        # mark_for_rollback_on_error marked the transaction as broken …
+                        # mark_for_rollback_on_error marked the transaction as broken ...
                         self.assertTrue(transaction.get_rollback())
 
-                    # … and further queries fail.
+                    # ... and further queries fail.
                     msg = "You can't execute queries until the end of the 'atomic' block."
                     with self.assertRaisesMessage(transaction.TransactionManagementError, msg):
                         Reporter.objects.create()
@@ -398,10 +398,10 @@
                         self.assertFalse(transaction.get_connection().needs_rollback)
 
                     # Ensure that `mark_for_rollback_on_error` did not mark the transaction
-                    # as broken, since we are in autocommit mode …
+                    # as broken, since we are in autocommit mode ...
                     self.assertFalse(transaction.get_connection().needs_rollback)
 
-                # … and further queries work nicely.
+                # ... and further queries work nicely.
                 Reporter.objects.create()
         ```
 
