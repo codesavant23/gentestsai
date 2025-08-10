@@ -8,6 +8,7 @@ from regex import (
 )
 
 from sqlite3 import (
+    Connection as SqlConnection,
     Cursor as SqlConnectionCursor
 )
 
@@ -48,8 +49,8 @@ def generate_tsuite_modfuncs(
         module_funcs: List[str],
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        gen_conn_cur: SqlConnectionCursor,
-        corr_conn_cur: SqlConnectionCursor,
+        gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
+        corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
         debug: bool = False
 ) -> None:
     """
@@ -76,6 +77,8 @@ def generate_tsuite_modfuncs(
         - [1]: Una stringa contenente il codice di testing relativo alle funzioni proprie del modulo dato
 
     """
+    gen_conn: SqlConnection = gen_cache[0]
+    gen_conn_cur: SqlConnectionCursor = gen_cache[1]
     project_name: str = context_names[0]
     tsuite_path: str = paths[1]
 
@@ -143,6 +146,7 @@ def generate_tsuite_modfuncs(
                 VALUES (?, ?, ?);
             """,
             [full_funcprompt, gen_code, config["model"]])
+            gen_conn.commit()
             if debug:
                 print("Generation Cache Updated!")
         else:
@@ -163,7 +167,7 @@ def generate_tsuite_modfuncs(
             path_join(config["prompts_dir"], "template_fbyf_corr.txt"),
             paths,
             context_names,
-            corr_conn_cur,
+            corr_cache,
             debug=debug
         )
 
@@ -186,8 +190,8 @@ def generate_tsuite_testclss(
         classes_meths: Dict[str, List[str]],
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        gen_conn_cur: SqlConnectionCursor,
-        corr_conn_cur: SqlConnectionCursor,
+        gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
+        corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
         debug: bool = False
 ) -> None:
     """
@@ -214,7 +218,8 @@ def generate_tsuite_testclss(
 
         - [1]: Una stringa contenente il codice di testing relativo alle classi contenute nel modulo dato
     """
-    chat_history.clear()
+    gen_conn: SqlConnection = gen_cache[0]
+    gen_conn_cur: SqlConnectionCursor = gen_cache[1]
 
     project_name: str = context_names[0]
     tsuite_path: str = paths[1]
@@ -225,6 +230,8 @@ def generate_tsuite_testclss(
     gen_code: str
     currcode_tree: Tree
     currcode_tree_root: TreeNode
+
+    chat_history.clear()
     for fclass in module_classes:
         fcls_name = reg_search(CLSDEF_PATT, fclass).group("cls_name")
 
@@ -289,6 +296,7 @@ def generate_tsuite_testclss(
                     VALUES (?, ?, ?);
                 """,
                 [full_methprompt, gen_code, config["model"]])
+                gen_conn.commit()
                 if debug:
                     print("\tGeneration Cache Updated!")
             else:
@@ -309,7 +317,7 @@ def generate_tsuite_testclss(
                 path_join(config["prompts_dir"], "template_fbyf_corr.txt"),
                 paths,
                 context_names,
-                corr_conn_cur,
+                corr_cache,
                 debug=debug
             )
 

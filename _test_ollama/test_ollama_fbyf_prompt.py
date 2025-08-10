@@ -1,7 +1,15 @@
 from typing import Dict, List, Tuple
 from functools import reduce
+
+from sys import (
+    platform as sys_platform
+)
 from atexit import (
     register as py_guarantee
+)
+from signal import (
+    signal as sig_reghandler,
+    Signals as OsSignals,
 )
 
 from os import (
@@ -51,7 +59,16 @@ from script_core.tsuite_fbyf_generation import (
 )
 
 SCRIPT_DEBUG: bool = True
+gen_conn: SqlConnection = None
+corr_conn: SqlConnection = None
 
+
+
+def db_caches_close_handler(sig, frame):
+    db_caches_close(
+        gen_conn,
+        corr_conn
+    )
 
 
 def db_caches_close(
@@ -75,8 +92,8 @@ def generate_module_tsuite(
         chat_history: ChatHistory,
         templs_paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        gen_conn_cur: SqlConnectionCursor,
-        corr_conn_cur: SqlConnectionCursor
+        gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
+        corr_cache: Tuple[SqlConnection, SqlConnectionCursor]
 ) -> None:
     module_name: str = context_names[1]
 
@@ -123,8 +140,8 @@ def generate_module_tsuite(
         module_entities["funcs"],
         (module_path, tsuite_path),
         context_names,
-        gen_conn_cur,
-        corr_conn_cur,
+        gen_cache,
+        corr_cache,
         SCRIPT_DEBUG
     )
 
@@ -138,8 +155,8 @@ def generate_module_tsuite(
         module_classes,
         (module_path, tsuite_path),
         context_names,
-        gen_conn_cur,
-        corr_conn_cur,
+        gen_cache,
+        corr_cache,
         SCRIPT_DEBUG
     )
 
@@ -192,11 +209,23 @@ if __name__ == "__main__":
     corr_conn_cur: SqlConnectionCursor = corr_conn.cursor()
 
     # ========== Registrazione del blocco di codice di chiusura dei databases di caching ==========
-    py_guarantee(
+    """py_guarantee(
         db_caches_close,
         gen_conn=gen_conn,
         corr_conn=corr_conn
     )
+
+    if sys_platform == "win32":
+        sig_reghandler(OsSignals.SIGBREAK, db_caches_close_handler)
+    else:
+        sig_reghandler(OsSignals.SIGKILL, db_caches_close_handler)
+        sig_reghandler(OsSignals.SIGBUS, db_caches_close_handler)
+
+    sig_reghandler(OsSignals.SIGILL, db_caches_close_handler)
+    sig_reghandler(OsSignals.SIGSEGV, db_caches_close_handler)
+    sig_reghandler(OsSignals.SIGABRT, db_caches_close_handler)
+    sig_reghandler(OsSignals.SIGTERM, db_caches_close_handler)
+    sig_reghandler(OsSignals.SIGINT, db_caches_close_handler)"""
     # =============================================================================================
 
     curr_file: str
@@ -267,8 +296,10 @@ if __name__ == "__main__":
                                 path_join(curr_config["prompts_dir"], "template_fbyf_meth.txt")
                              ),
                             (project_names[i], module_name),
-                            gen_conn_cur,
-                            corr_conn_cur
+                            (gen_conn, gen_conn_cur),
+                            (corr_conn, corr_conn_cur)
                         )
 
                         chat_history.clear()
+    gen_conn.close()
+    corr_conn.close()

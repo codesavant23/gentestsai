@@ -17,6 +17,7 @@ from os.path import (
 )
 
 from sqlite3 import (
+    Connection as SqlConnection,
     Cursor as SqlConnectionCursor
 )
 
@@ -48,9 +49,11 @@ def correct_tsuite_1time(
         templ_path: str,
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        corr_conn_cur: SqlConnectionCursor,
+        corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
         debug: bool = False
 ) -> str:
+    corr_conn: SqlConnection = corr_cache[0]
+    corr_conn_cur: SqlConnectionCursor = corr_cache[1]
     project_name: str = context_names[0]
 
     templ: str = read_templ_frompath(templ_path)
@@ -109,6 +112,7 @@ def correct_tsuite_1time(
             VALUES (?, ?, ?);
         """,
         [full_corrprompt, corr_code, config["model"]])
+        corr_conn.commit()
         if debug:
             print("Correction Cache Updated!")
     else:
@@ -126,7 +130,7 @@ def correct_tsuite(
         templ_path: str,
         paths: Tuple[str, str],
         context_names: Tuple[str, str],
-        corr_conn_cur: SqlConnectionCursor,
+        corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
         debug: bool = False,
 ):
     tsuite_path: str = paths[1]
@@ -159,7 +163,7 @@ def correct_tsuite(
                 templ_path,
                 paths,
                 context_names,
-                corr_conn_cur,
+                corr_cache,
                 debug=debug
             )
 
