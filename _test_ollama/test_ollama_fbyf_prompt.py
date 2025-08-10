@@ -1,17 +1,6 @@
 from typing import Dict, List, Tuple
 from functools import reduce
 
-from sys import (
-    platform as sys_platform
-)
-from atexit import (
-    register as py_guarantee
-)
-from signal import (
-    signal as sig_reghandler,
-    Signals as OsSignals,
-)
-
 from os import (
     walk as os_walk,
     makedirs as os_mkdirs,
@@ -59,30 +48,7 @@ from script_core.tsuite_fbyf_generation import (
 )
 
 SCRIPT_DEBUG: bool = True
-gen_conn: SqlConnection = None
-corr_conn: SqlConnection = None
 
-
-
-def db_caches_close_handler(sig, frame):
-    db_caches_close(
-        gen_conn,
-        corr_conn
-    )
-
-
-def db_caches_close(
-        gen_conn: SqlConnection = None,
-        corr_conn: SqlConnection = None,
-) -> None:
-    if SCRIPT_DEBUG:
-        print("\n" + "Closing caching databases...", end="")
-    corr_conn.commit()
-    gen_conn.commit()
-    corr_conn.close()
-    gen_conn.close()
-    if SCRIPT_DEBUG:
-        print("CLOSED!", end="\n\n")
 
 
 def generate_module_tsuite(
