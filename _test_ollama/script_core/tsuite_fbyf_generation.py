@@ -304,7 +304,7 @@ def generate_tsuite_testclss(
                 if debug:
                     print("\tResponse of '" + meth_name + "' taken by the LLM Generated Cache")
 
-            parttsuite_name: str = meth_name + "_" + config["model"].replace(":", "-") + "_tests.py"
+            parttsuite_name: str = fcls_name + "_" + meth_name + "_" + config["model"].replace(":", "-") + "_tests.py"
             temp_parttsuite_name: str = "temp_" + parttsuite_name
 
             with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
