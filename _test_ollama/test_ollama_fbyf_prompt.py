@@ -1,5 +1,8 @@
 from typing import Dict, List, Tuple
 from functools import reduce
+from atexit import (
+    register as py_guarantee
+)
 
 from os import (
     walk as os_walk,
@@ -48,6 +51,21 @@ from script_core.tsuite_fbyf_generation import (
 )
 
 SCRIPT_DEBUG: bool = True
+
+
+
+def db_caches_close(
+        gen_conn: SqlConnection = None,
+        corr_conn: SqlConnection = None,
+) -> None:
+    if SCRIPT_DEBUG:
+        print("\n" + "Closing caching databases...", end="")
+    corr_conn.commit()
+    gen_conn.commit()
+    corr_conn.close()
+    gen_conn.close()
+    if SCRIPT_DEBUG:
+        print("CLOSED!", end="\n\n")
 
 
 def generate_module_tsuite(
@@ -173,86 +191,84 @@ if __name__ == "__main__":
     corr_conn: SqlConnection = sql_connect(corr_cache_path)
     corr_conn_cur: SqlConnectionCursor = corr_conn.cursor()
 
+    # ========== Registrazione del blocco di codice di chiusura dei databases di caching ==========
+    py_guarantee(
+        db_caches_close,
+        gen_conn=gen_conn,
+        corr_conn=corr_conn
+    )
+    # =============================================================================================
+
     curr_file: str
     module_name: str
     file_check: Match[str]
     chat_history: ChatHistory = ChatHistory()
 
     curr_config: Dict[str, str]
-    try:
-        # ========== Scorrimento dei modelli da valutare ==========
-        for model_toevaluate in models_toevaluate:
-            curr_config = configure_ollama(
-                ollamaauth_config["api_url"],
-                ollamaauth_config["userpass_pair"],
-                model_toevaluate
+    # ========== Scorrimento dei modelli da valutare ==========
+    for model_toevaluate in models_toevaluate:
+        curr_config = configure_ollama(
+            ollamaauth_config["api_url"],
+            ollamaauth_config["userpass_pair"],
+            model_toevaluate
+        )
+
+        # ========== Scorrimento di ogni progetto di cui generare i tests ==========
+        for i, proj_root in enumerate(projects, start=0):
+            curr_config = configure_dirs(
+                prompts_root,
+                path_join(test_paths[i], "gen_tests"),
+                old_config = curr_config
             )
 
-            # ========== Scorrimento di ogni progetto di cui generare i tests ==========
-            for i, proj_root in enumerate(projects, start=0):
-                curr_config = configure_dirs(
-                    prompts_root,
-                    path_join(test_paths[i], "gen_tests"),
-                    old_config = curr_config
+            # ========== Eventuale creazione della tabella del progetto nella cache di "Generazione" ==========
+            gen_conn_cur.execute(f"""
+                CREATE TABLE IF NOT EXISTS "{project_names[i]}" (
+                    `prompt` TEXT,
+                    `response` TEXT,
+                    `model` TEXT,
+                    PRIMARY KEY (`prompt`, `model`)
                 )
+            """)
 
-                # ========== Eventuale creazione della tabella del progetto nella cache di "Generazione" ==========
-                gen_conn_cur.execute(f"""
-                    CREATE TABLE IF NOT EXISTS "{project_names[i]}" (
-                        `prompt` TEXT,
-                        `response` TEXT,
-                        `model` TEXT,
-                        PRIMARY KEY (`prompt`, `model`)
-                    )
-                """)
+            # ========== Eventuale creazione della tabella del progetto nella cache di "Correzione" ==========
+            corr_conn_cur.execute(f"""
+                CREATE TABLE IF NOT EXISTS "{project_names[i]}" (
+                    `prompt` TEXT,
+                    `response` TEXT,
+                    `model` TEXT,
+                    PRIMARY KEY (`prompt`, `model`)
+                )
+            """)
 
-                # ========== Eventuale creazione della tabella del progetto nella cache di "Correzione" ==========
-                corr_conn_cur.execute(f"""
-                    CREATE TABLE IF NOT EXISTS "{project_names[i]}" (
-                        `prompt` TEXT,
-                        `response` TEXT,
-                        `model` TEXT,
-                        PRIMARY KEY (`prompt`, `model`)
-                    )
-                """)
+            # ========== Scorrimento di ogni directory/file appartenente al progetto ==========
+            if SCRIPT_DEBUG:
+                print("Current project '" + project_names[i] + "' | Project_Root = " + proj_root)
+            for curr_path, dirs, files in os_walk(proj_root):
+                for file in files:
+                    file_check = reg_search(r"[\S]+\.py$", file)
 
-                # ========== Scorrimento di ogni directory/file appartenente al progetto ==========
-                if SCRIPT_DEBUG:
-                    print("Current project '" + project_names[i] + "' | Project_Root = " + proj_root)
-                for curr_path, dirs, files in os_walk(proj_root):
-                    for file in files:
-                        file_check = reg_search(r"[\S]+\.py$", file)
+                    # Se il file rappresenta un modulo Python parte del codice focale
+                    if (file != "__init__.py") and (file_check is not None):
+                        curr_file = path_join(curr_path, file)
+                        module_name = path_split_ext(file)[0]
 
-                        # Se il file rappresenta un modulo Python parte del codice focale
-                        if (file != "__init__.py") and (file_check is not None):
-                            curr_file = path_join(curr_path, file)
-                            module_name = path_split_ext(file)[0]
+                        if SCRIPT_DEBUG:
+                            print("Current module-file: \"" + file + "\" | Module_Path = " + curr_file)
 
-                            if SCRIPT_DEBUG:
-                                print("Current module-file: \"" + file + "\" | Module_Path = " + curr_file)
+                        # ========== Generazione completa dei tests per quello specifico modulo ==========
+                        generate_module_tsuite(
+                            proj_root,
+                            curr_path,
+                            curr_config,
+                            chat_history,
+                            (
+                                path_join(curr_config["prompts_dir"], "template_fbyf_func.txt"),
+                                path_join(curr_config["prompts_dir"], "template_fbyf_meth.txt")
+                             ),
+                            (project_names[i], module_name),
+                            gen_conn_cur,
+                            corr_conn_cur
+                        )
 
-                            # ========== Generazione completa dei tests per quello specifico modulo ==========
-                            generate_module_tsuite(
-                                proj_root,
-                                curr_path,
-                                curr_config,
-                                chat_history,
-                                (
-                                    path_join(curr_config["prompts_dir"], "template_fbyf_func.txt"),
-                                    path_join(curr_config["prompts_dir"], "template_fbyf_meth.txt")
-                                 ),
-                                (project_names[i], module_name),
-                                gen_conn_cur,
-                                corr_conn_cur
-                            )
-
-                            chat_history.clear()
-    finally:
-        if SCRIPT_DEBUG:
-            print("\n" + "Closing caching databases...", end="")
-        corr_conn.commit()
-        gen_conn.commit()
-        corr_conn.close()
-        gen_conn.close()
-        if SCRIPT_DEBUG:
-            print("CLOSED!", end="\n\n")
+                        chat_history.clear()
