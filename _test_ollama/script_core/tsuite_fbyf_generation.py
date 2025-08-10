@@ -37,7 +37,7 @@ CONTEXT_PROMPT: str = "You are a professional Python developer."
 GENCODE_PATT: str = r"(?:<think>[\S\n\t ]*</think>)?\s*```python\n?(?P<gen_code>[\s\S]+)\n?```"
 CLSDEF_PATT: str = r"class\s+(?P<cls_name>[a-zA-Z0-9\-\_]+)(\((?P<sup_cls>\S+(?:, *\S+)*)\):|:)"
 
-FUNCSIGN_PATT: str = r"(def\s+(?P<func_name>[A-z0-9_\-]+)\s*\(\s*(?P<params>[A-z0-9,.|:=\"\{\}\[\]()*#\t\n ]*)\s*\)\s*(?:->\s*[A-z0-9,.|=\"\{\}\[\]\t\n ]+)?:)"
+FUNCNAME_PATT: str = r"(?:def\s+([A-z0-9_\-]+)\s*\()"
 
 
 def generate_tsuite_modfuncs(
@@ -83,9 +83,9 @@ def generate_tsuite_modfuncs(
     corrected_code: str
 
     chat_history.clear()
+    func_name: str
     for func_def in module_funcs:
-        func_sign: Match[str] = reg_search(FUNCSIGN_PATT, func_def, RegexFlags.MULTILINE)
-        func_name: str = func_sign.group("func_name")
+        func_name = reg_search(FUNCNAME_PATT, func_def, RegexFlags.MULTILINE).group(1)
 
         # ========== Costruzione del Prompt Completo ==========
         full_funcprompt: str = build_full_fbyf_funcprompt(
@@ -220,7 +220,6 @@ def generate_tsuite_testclss(
     tsuite_path: str = paths[1]
 
     fcls_name: str
-    meth_sign: Match[str]
     meth_name: str
 
     gen_code: str
@@ -232,8 +231,7 @@ def generate_tsuite_testclss(
         if debug:
             print("Generating tests for Class '" + fcls_name + "' ...")
         for meth_def in classes_meths[fcls_name]:
-            meth_sign = reg_search(FUNCSIGN_PATT, meth_def)
-            meth_name = meth_sign.group("func_name")
+            meth_name = reg_search(FUNCNAME_PATT, meth_def).group(1)
 
             full_methprompt: str = build_full_fbyf_methprompt(
                 template,
