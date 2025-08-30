@@ -1,0 +1,15 @@
+{
+	"def_model_params": {
+		"context_window": 88192,
+		"options": {
+			"temperature": 0,
+			"num_predict": -2
+		}
+	},
+    "gen_tests_dir": "gen_tests",
+    "coverage_dir": "cov_gen_tests",
+	"skipped_tests_file": "skipped.json",
+	"excluded_files": [
+		"__init__.py"
+	]
+}

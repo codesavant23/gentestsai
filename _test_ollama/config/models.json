@@ -1,0 +1,10 @@
+[
+	{
+		"name": "llama3.1:latest",
+		"context_window": 88192
+	},
+	{
+		"name": "qwen3:32b",
+		"context_window": 88192
+	}
+]
