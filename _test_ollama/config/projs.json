@@ -1,4 +1,8 @@
 {
+	"agno": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\agno\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\tests\\"
+	},
 	"optuna": {
 		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\optuna-master\\optuna-master\\optuna\\",
 		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\optuna-master\\optuna-master\\tests\\"
@@ -25,10 +29,6 @@
 		"focal_excluded": [
 			"C:\\Users\\filip\\Desktop\\Thesis_Repos\\saleor-main\\saleor-main\\saleor\\tests\\"
 		]
-	},
-	"agno": {
-		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\agno\\",
-		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\tests\\"
 	},
 	"pytext": {
 		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\pytext-main\\pytext\\",

@@ -231,6 +231,7 @@ if __name__ == "__main__":
 								(gen_conn, gen_conn_cur),
 								(corr_conn, corr_conn_cur),
 								debug=SCRIPT_DEBUG,
+								debug_promptresp=True,
 								debug_log_config=debug_log_config,
 								debug_errlog_config=debug_errlog_config
 							)

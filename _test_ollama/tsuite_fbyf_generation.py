@@ -54,6 +54,8 @@ from json import (
 
 from datetime import datetime
 
+from pprint import pprint
+
 CONTEXT_PROMPT: str = "You are a professional Python developer."
 GENCODE_PATT: str = r"(?:<think>[\S\n\t ]*</think>)?\s*```python\n?(?P<gen_code>[\s\S]+)\n?```"
 CLSDEF_PATT: str = r"class\s+(?P<cls_name>[a-zA-Z0-9\-\_]+)(\((?P<sup_cls>\S+(?:, *\S+)*)\):|:)"
@@ -75,6 +77,7 @@ def generate_tsuite_modfuncs(
 		gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
+		debug_promptresp: bool = False,
 		debug_log_config: Dict[str, str] = None,
 		debug_errlog_config: Dict[str, str] = None
 ) -> None:
@@ -98,8 +101,9 @@ def generate_tsuite_modfuncs(
 	mod_funcs_skipd: List[str] = []
 	skipd_tests: Dict[str, Any]
 
-	chat_history.clear()
 	func_name: str
+
+	chat_history.clear()
 	for func_def in module_funcs:
 		func_name = reg_search(FUNCNAME_PATT, func_def, RegexFlags.MULTILINE).group(1)
 
@@ -114,6 +118,10 @@ def generate_tsuite_modfuncs(
 
 		chat_history.add_message("context", CONTEXT_PROMPT)
 		chat_history.add_message("user", full_funcprompt)
+
+		if debug_promptresp:
+			print("\n\n##### Chat-History Pre-Response: #####")
+			pprint(chat_history.history())
 
 		prompt_exists: bool
 		gen_conn_cur.execute(f"""
@@ -146,7 +154,7 @@ def generate_tsuite_modfuncs(
 				chat_history.history(),
 				options=config["model_options"],
 				stream=True,
-				think=False
+				think=False,
 			)
 
 			if debug_log_config is not None:
@@ -177,6 +185,8 @@ def generate_tsuite_modfuncs(
 			if debug_log_config is None:
 				for chunk in response:
 					full_response += chunk['message']['content']
+					if debug_promptresp:
+						print(chunk['message']['content'], end="", flush=True)
 					# Se è arrivato alla fine
 					if "eval_count" in chunk:
 						resp_tokens = chunk["eval_count"]
@@ -185,6 +195,8 @@ def generate_tsuite_modfuncs(
 				try:
 					for chunk in response:
 						full_response += chunk['message']['content']
+						if debug_promptresp:
+							print(chunk['message']['content'], end="", flush=True)
 						fplog_resp.write(chunk["message"]["content"])
 						fplog_resp.flush()
 						# Se è arrivato alla fine
@@ -198,12 +210,14 @@ def generate_tsuite_modfuncs(
 			if debug_log_config is not None:
 				fplog_resp.close()
 
-			# Se ci sono stati errori nell' ottenere il numero di tokens
 			if (prompt_tokens == -1) or (resp_tokens == -1):
-				raise ValueError("ERROR! Prompt Tokens or Response Tokens have not been set!" +
-								 "(prompt_tokens = " + str(prompt_tokens) +
-								 " | " +
-								 "response_tokens = " + str(resp_tokens))
+				now: datetime = datetime.now()
+				datetime_now: str = (str(now.day) + "-" + str(now.month) + "-" + str(now.year) + "_" +
+									 str(now.hour) + ":" + str(now.minute) + ":" + str(now.second))
+				raise ValueError(
+					f"C'è stato un errore!! ( Prompt_Tokens={prompt_tokens} | Resp_Tokens={resp_tokens} )" +
+					f" {datetime_now}"
+				)
 
 			# Se il modello non è andato in generazione ciclica -> allora la test-suite parziale è stata generata
 			# (e me ne accorgo dalla finestra di contesto perfettamente satura)
@@ -242,6 +256,9 @@ def generate_tsuite_modfuncs(
 			gen_code = rows[0][1]
 			if debug:
 				print("Response of '" + func_name + "' taken by the LLM Generated Cache")
+			if debug_promptresp:
+				print("\n\n\t#### Cached Response: ####")
+				print(gen_code)
 
 		if not_skipped:
 			parttsuite_name: str = "test_" + func_name + ".py"
@@ -255,6 +272,7 @@ def generate_tsuite_modfuncs(
 				config,
 				chat_history,
 				template_corr_path,
+				absolute_paths,
 				relative_paths,
 				context_names,
 				corr_cache,
@@ -292,6 +310,7 @@ def generate_tsuite_testclss(
 		gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
+		debug_promptresp: bool = False,
 		debug_log_config: Dict[str, str] = None,
 		debug_errlog_config: Dict[str, str] = None
 ) -> None:
@@ -354,6 +373,10 @@ def generate_tsuite_testclss(
 			chat_history.add_message("context", CONTEXT_PROMPT)
 			chat_history.add_message("user", full_methprompt)
 
+			if debug_promptresp:
+				print("\n\n##### Chat-History Pre-Response: #####")
+				pprint(chat_history.history())
+
 			prompt_exists: bool
 			gen_conn_cur.execute(f"""
 				SELECT * FROM `{project_name}`
@@ -378,7 +401,7 @@ def generate_tsuite_testclss(
 				oll: OllamaClient = OllamaClient(
 					host=config["api_url"],
 					headers={'Authorization': config["api_auth"]},
-					timeout=config["timeout"]
+					timeout=config["timeout"],
 				)
 				response: Iterator[ChatResponse] | ChatResponse = oll.chat(
 					config["model"],
@@ -416,6 +439,8 @@ def generate_tsuite_testclss(
 				if debug_log_config is None:
 					for chunk in response:
 						full_response += chunk['message']['content']
+						if debug_promptresp:
+							print(chunk['message']['content'], end="", flush=True)
 						# Se è arrivato alla fine
 						if "eval_count" in chunk:
 							resp_tokens = chunk["eval_count"]
@@ -424,6 +449,8 @@ def generate_tsuite_testclss(
 					try:
 						for chunk in response:
 							full_response += chunk['message']['content']
+							if debug_promptresp:
+								print(chunk['message']['content'], end="", flush=True)
 							fplog_resp.write(chunk["message"]["content"])
 							fplog_resp.flush()
 							# Se è arrivato alla fine
@@ -437,12 +464,12 @@ def generate_tsuite_testclss(
 				if debug_log_config is not None:
 					fplog_resp.close()
 
-				# Se ci sono stati errori nell' ottenere il numero di tokens
 				if (prompt_tokens == -1) or (resp_tokens == -1):
-					raise ValueError("ERROR! Prompt Tokens or Response Tokens have not been set!" +
-									 "(prompt_tokens = " + str(prompt_tokens) +
-									 " | " +
-									 "response_tokens = " + str(resp_tokens))
+					now: datetime = datetime.now()
+					datetime_now: str = (str(now.day) + "-" + str(now.month) + "-" + str(now.year) + "_" +
+										 str(now.hour) + ":" + str(now.minute) + ":" + str(now.second))
+					raise ValueError(f"C'è stato un errore!! ( Prompt_Tokens={prompt_tokens} | Resp_Tokens={resp_tokens} ) " +
+									 f"{datetime_now}")
 
 				# Se il modello non è andato in generazione ciclica -> allora la test-suite parziale è stata generata
 				# (e me ne accorgo dalla finestra di contesto perfettamente satura)
@@ -481,6 +508,9 @@ def generate_tsuite_testclss(
 				gen_code = rows[0][1]
 				if debug:
 					print("\tResponse of '" + meth_name + "' taken by the LLM Generated Cache")
+				if debug_promptresp:
+					print("\n\n\t#### Cached Response: ####")
+					print(gen_code)
 
 			if not_skipped:
 				parttsuite_name: str = "test_" + meth_name + ".py"
@@ -494,10 +524,12 @@ def generate_tsuite_testclss(
 					config,
 					chat_history,
 					template_corr_path,
+					absolute_paths,
 					(relative_paths[0], rel_tsuite_path),
 					context_names,
 					corr_cache,
 					debug=debug,
+					debug_promptresp=debug_promptresp,
 					debuglog_config=debug_errlog_config
 				)
 

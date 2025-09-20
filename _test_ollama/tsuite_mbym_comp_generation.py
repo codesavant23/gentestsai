@@ -45,6 +45,7 @@ def generate_module_tsuite(
 		gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
+		debug_promptresp: bool = False,
 		debug_log_config: Dict[str, str] = None,
 		debug_errlog_config: Dict[str, str] = None
 ) -> None:
@@ -127,6 +128,7 @@ def generate_module_tsuite(
 		gen_cache,
 		corr_cache,
 		debug=debug,
+		debug_promptresp=debug_promptresp,
 		debug_log_config=debug_log_config,
 		debug_errlog_config=debug_errlog_config
 	)
@@ -149,6 +151,7 @@ def generate_module_tsuite(
 		gen_cache,
 		corr_cache,
 		debug=debug,
+		debug_promptresp=debug_promptresp,
 		debug_log_config=debug_log_config,
 		debug_errlog_config=debug_errlog_config
 	)

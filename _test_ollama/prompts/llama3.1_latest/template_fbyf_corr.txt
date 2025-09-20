@@ -14,13 +14,8 @@ The error encountered is described below in the section "Error Encountered".
 <corrected_test_suite_code_here>
 ```
 
-# Test suite:
-```python
-{@Suite_Code@}
-```
-
 # Error Encountered:
-The exeception name is "{@Exception_Name@}".
+The error encountered is shortly described as "{@Exception_Name@}".
 It has the following associated message:
 ```console
 {@Exception_Message@}
