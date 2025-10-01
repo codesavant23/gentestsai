@@ -1,6 +1,3 @@
-from functools import reduce
-
-
 def read_templ_frompath(templ_path: str) -> str:
     """
         Legge un template per prompt da un file a caratteri
@@ -13,5 +10,5 @@ def read_templ_frompath(templ_path: str) -> str:
     """
     templ: str
     with open(templ_path, "r") as ftempl:
-        templ = reduce(lambda acc, x: acc + x, ftempl.readlines(), "")
+        templ = ftempl.read()
     return templ

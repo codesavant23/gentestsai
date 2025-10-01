@@ -1,4 +1,8 @@
 {
+	"detectron2": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\detectron2\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\tests\\"
+	},
 	"agno": {
 		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\agno\\",
 		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\tests\\"
@@ -14,10 +18,6 @@
 	"httpie": {
 		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\httpie-cli-master\\cli-master\\httpie\\",
 		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\httpie-cli-master\\cli-master\\tests\\"
-	},
-	"detectron2": {
-		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\detectron2\\",
-		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\tests\\"
 	},
 	"scrapy": {
 		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\scrapy-master\\scrapy-master\\scrapy\\",

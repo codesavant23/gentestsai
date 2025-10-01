@@ -7,6 +7,8 @@ from re import (
 	search as reg_search,
 )
 
+from logic.utils.model_name_normalizer import normalize_model_name
+
 from os import (
 	walk as os_walk,
 	makedirs as os_mkdirs,
@@ -29,9 +31,9 @@ from sqlite3 import (
 	Cursor as SqlConnectionCursor
 )
 
-from chat_history import ChatHistory
+from logic.tsuite_gen.chat_history import ChatHistory
 
-from configuration import (
+from logic.tsuite_gen.configuration import (
 	configure_ollama,
 	read_gentests_conf
 )
@@ -39,7 +41,7 @@ from json import (
 	loads as json_loads
 )
 
-from tsuite_mbym_comp_generation import (
+from logic.tsuite_gen.mbym_generation import (
 	generate_module_tsuite
 )
 
@@ -50,7 +52,7 @@ SCRIPT_DEBUG: bool = True
 if __name__ == "__main__":
 # ========== Macro-processo di "Configurazione Parametri" del progetto ==========
 	# ========== Lettura dei file di configurazione del progetto ==========
-	all_configs: Dict[str, Any] = read_gentests_conf()
+	all_configs: Dict[str, Any] = read_gentests_conf("config")
 
 	general_config: Dict[str, Any] = all_configs["general_config"]
 	projs_config: Dict[str, Dict[str, Any]] = all_configs["projs_config"]
@@ -89,7 +91,11 @@ if __name__ == "__main__":
 
 # ========== Macro-processo di "Generazione Completa (dei tests) dei Progetti", per ogni modello ==========
 	curr_config: Dict[str, Any]
-	default_model_config = general_config["def_model_params"]
+	max_corr_times: int = general_config["max_correction_times"]
+	if max_corr_times < 0:
+		raise ValueError("Specificare un numero positivo, o nullo, per indicare il numero di volte massime di correzione")
+
+	default_model_config: Dict[str, Any] = general_config["def_model_params"]
 	general_files_excl: List[str] = general_config["excluded_files"]
 
 	templ_func_prompt_path: str
@@ -100,7 +106,7 @@ if __name__ == "__main__":
 	model_ctxwin: int
 	model_options: Dict[str, Any]
 
-	model_dirname: str
+	model_normname: str
 	prompt_dirname: str
 
 	project_info: Dict[str, Any]
@@ -115,21 +121,25 @@ if __name__ == "__main__":
 	file_poscheck: bool
 	chat_history: ChatHistory = ChatHistory()
 
+	# ========== Creazione della configurazione di condivisa tra ogni modello e progetto ==========
+	curr_config = dict()
+	curr_config["max_corr_times"] = max_corr_times
+
 	# ========== Scorrimento dei modelli da valutare ==========
 	for curr_model in models_config:
 		model_name = curr_model["name"]
 		model_ctxwin = curr_model.get("context_window", default_model_config["context_window"]) #TODO: Aggiungere controllo sull' esistenza di "context_window" (default)
 		model_options = curr_model.get("options", default_model_config["options"]) #TODO: Aggiungere controllo sull' esistenza di "options" (default)
 
-		model_dirname = model_name.replace(":", "_")
+		model_normname = normalize_model_name(model_name)
 		test_dirname = path_join(
 			general_config["gen_tests_dir"],
-			model_dirname
+			model_normname
 		)
 
 		# ========== Lettura degli, eventuali, prompt specifici per modello (o fallback sui generici) ==========
-		if os_fdexists(path_join(prompts_config["prompts_path"], model_dirname)):
-			prompt_dirname = model_dirname
+		if os_fdexists(path_join(prompts_config["prompts_path"], model_normname)):
+			prompt_dirname = model_normname
 		else:
 			prompt_dirname = prompts_config["generic_prompts_dir"]
 
@@ -146,12 +156,14 @@ if __name__ == "__main__":
 			prompts_config["corr_prompt"]
 		)
 
+		# ========== Creazione della configurazione di Ollama specifica per il modello ==========
 		curr_config = configure_ollama(
 			ollama_config["api_url"],
 			ollama_config["userpass_pair"],
 			model_name,
 			ollama_config["connect_timeout"],
-			ollama_config["response_timeout"]
+			ollama_config["response_timeout"],
+			dict_to_use=curr_config
 		)
 		model_options["num_ctx"] = model_ctxwin
 		curr_config["model_options"] = model_options
@@ -189,10 +201,12 @@ if __name__ == "__main__":
 			# ========== Eventuale creazione della tabella del progetto nella cache di "Correzione" ==========
 			corr_conn_cur.execute(f"""
 				CREATE TABLE IF NOT EXISTS "{project_name}" (
+					`corr_type` TEXT,
+					`num_try` INTEGER,
 					`prompt` TEXT,
 					`response` TEXT,
 					`model` TEXT,
-					PRIMARY KEY (`prompt`, `model`)
+					PRIMARY KEY (`corr_type`, `num_try`, `prompt`, `model`)
 				)
 			""")
 

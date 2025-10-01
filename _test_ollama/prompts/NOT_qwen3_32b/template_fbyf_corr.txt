@@ -1,5 +1,5 @@
 # Request:
-Correct the code of the test suite given below by modifying any necessary statement in its code.
+Correct the code of the partial test suite generated before by modifying any necessary statement in its code.
 The focal module "{@Module_Name@}", from which the test suite originates, belongs to a project called "{@Project_Name@}".
 The error encountered is described below in the section "Error Encountered".
 

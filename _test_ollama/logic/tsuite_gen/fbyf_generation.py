@@ -31,14 +31,14 @@ from os.path import (
 
 from tree_sitter import Tree, Node as TreeNode
 
-from chat_history import ChatHistory
+from _test_ollama.logic.tsuite_gen.chat_history import ChatHistory
 
-from prompt_building import (
+from _test_ollama.logic.tsuite_gen.prompt_building import (
 	build_full_fbyf_funcprompt,
 	build_full_fbyf_methprompt
 )
 
-from tsuite_fbyf_correction import (
+from _test_ollama.logic.tsuite_gen.fbyf_correction import (
 	correct_tsuite
 )
 
@@ -261,6 +261,8 @@ def generate_tsuite_modfuncs(
 				print(gen_code)
 
 		if not_skipped:
+			chat_history.add_message("llm", ("```python\n" + gen_code.rstrip("\n") + "\n```"))
+
 			parttsuite_name: str = "test_" + func_name + ".py"
 			temp_parttsuite_name: str = "temp_" + parttsuite_name
 
@@ -513,6 +515,8 @@ def generate_tsuite_testclss(
 					print(gen_code)
 
 			if not_skipped:
+				chat_history.add_message("llm", ("```python\n" + gen_code.rstrip("\n") + "\n```"))
+
 				parttsuite_name: str = "test_" + meth_name + ".py"
 				temp_parttsuite_name: str = "temp_" + parttsuite_name
 

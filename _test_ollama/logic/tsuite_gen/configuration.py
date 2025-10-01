@@ -1,23 +1,22 @@
 from typing import Dict, List, Any
-from functools import reduce
 
 from base64 import b64encode as b64_encode
 
 from json import loads as json_loads
+from os.path import (
+	join as path_join
+)
 
 from re import search as reg_search
 
 from httpx import Timeout as HttpxTimeout
 
+from _test_ollama.logic.utils.json_to_str import (
+	read_json_tobuff
+)
+
 MODEL_PATT: str = r"^[a-zA-z0-9\.\-_]+(?:\:[a-zA-z0-9\.\-_]+)?$"
 
-
-
-def read_json_tobuff(abs_path: str) -> str:
-	buffer: str
-	with open(abs_path, "r") as fp:
-		buffer = reduce(lambda acc, x: acc + x, fp.readlines())
-	return buffer
 
 
 def configure_ollama(
@@ -25,7 +24,8 @@ def configure_ollama(
 		userpass_pair: str,
 		llm_model: str,
 		conn_timeout: str,
-		resp_timeout: str
+		resp_timeout: str,
+		dict_to_use: Dict[str, Any]=None
 ) -> Dict[str, Any]:
 	"""
 		<Descrizione>
@@ -42,9 +42,13 @@ def configure_ollama(
 		llm_model: str
 			Una stringa contenente la coppia "modello:implementazione"
 
+		dict_to_use: Dict[str, Any]
+			Opzionale. Il dizionario variegato, indicizzato su stringhe, da completare con la configurazione di Ollama
+			senza creare un nuovo dizionario di configurazione
+
 		Returns
 		-------
-		Dict[str, str]
+		Dict[str, Any]
 			Un dizionario variegato, indicizzato su stringhe, contenente:
 
 				- "model" (str): Il modello da utilizzare
@@ -55,12 +59,17 @@ def configure_ollama(
 							 dell' header "Authorization")
 				- "timeout" (httpx.Timeout): L' oggetto Timeout da utilizzare per la creazione dell'
 											 oggetto Client di Ollama
+				- ed, eventualmente, se `dict_to_use` non è `None` anche le sue chiavi e i suoi valori
 
 	"""
 	if reg_search(MODEL_PATT, llm_model) is None:
 		raise ValueError("La coppia modello:tag data è malformata o invalida")
 
-	config: Dict[str, Any] = dict()
+	config: Dict[str, Any]
+	if dict_to_use is not None:
+		config = dict_to_use
+	else:
+		config = dict()
 
 	config["api_url"] = "http://" + api_url
 	config["api_auth"] = f'Basic {b64_encode(userpass_pair.encode()).decode()}'
@@ -79,8 +88,9 @@ def configure_ollama(
 	return config
 
 
-def read_gentests_conf() \
-	-> Dict[
+def read_gentests_conf(
+		config_path: str
+) -> Dict[
 		str,
 		Any
 	]:
@@ -99,23 +109,33 @@ def read_gentests_conf() \
 				- "prompts_config" (Dict[str, str]): La configurazione dei nomi dei files relativi ai Template Prompt da utilizzare
 	"""
 	general_config: Dict[str, Any] = json_loads(
-		read_json_tobuff("config/general.json")
+		read_json_tobuff(
+			path_join(config_path, "general.json")
+		)
 	)
 
 	projs_config: Dict[str, Dict[str, Any]] = json_loads(
-		read_json_tobuff("config/projs.json")
+		read_json_tobuff(
+			path_join(config_path, "projs.json")
+		)
 	)
 
 	ollamaauth_config: Dict[str, str] = json_loads(
-		read_json_tobuff("config/ollama.json")
+		read_json_tobuff(
+			path_join(config_path, "ollama.json")
+		)
 	)
 
 	models_config: List[Dict[str, Any]] = json_loads(
-		read_json_tobuff("config/models.json")
+		read_json_tobuff(
+			path_join(config_path, "models.json")
+		)
 	)
 
 	prompts_config: Dict[str, str] = json_loads(
-		read_json_tobuff("config/prompts.json")
+		read_json_tobuff(
+			path_join(config_path, "prompts.json")
+		)
 	)
 
 	return {

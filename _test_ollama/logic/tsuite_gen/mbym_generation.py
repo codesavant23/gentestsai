@@ -20,15 +20,15 @@ from sqlite3 import (
 	Cursor as SqlConnectionCursor
 )
 
-from template_reading import read_templ_frompath
-from code_extraction import (
+from _test_ollama.logic.tsuite_gen.template_reading import read_templ_frompath
+from _test_ollama.logic.tsuite_gen.code_extraction import (
 	extract_fmodule_code,
 	separate_fmodule_code,
 )
 from tree_sitter import Tree
-from chat_history import ChatHistory
+from _test_ollama.logic.tsuite_gen.chat_history import ChatHistory
 
-from tsuite_fbyf_generation import (
+from _test_ollama.logic.tsuite_gen.fbyf_generation import (
 	generate_tsuite_modfuncs,
 	generate_tsuite_testclss
 )

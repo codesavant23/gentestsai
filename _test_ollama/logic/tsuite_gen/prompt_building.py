@@ -35,8 +35,8 @@ def build_full_singleprompt(
     proj_name: str = context_names[0]
     mod_name: str = context_names[1]
 
-    focal_path: str = paths[0]
-    tsuite_path: str = paths[1]
+    focal_path: str = paths[0].rstrip(" \n\t").lstrip(" \n\t")
+    tsuite_path: str = paths[1].rstrip(" \n\t").lstrip(" \n\t")
 
     projname_patt: str = r"{@Project_Name@}"
     full_prompt: str = templ.replace(projname_patt, proj_name)

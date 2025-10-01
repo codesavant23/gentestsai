@@ -1,5 +1,5 @@
 from pprint import pprint
-from typing import Dict, Tuple, List, Iterator, Any
+from typing import Dict, Tuple, List, Iterator, Any, Literal
 
 from re import (
 	Match,
@@ -18,11 +18,11 @@ from sqlite3 import (
 	Cursor as SqlConnectionCursor
 )
 
-from chat_history import ChatHistory
-from template_reading import (
+from _test_ollama.logic.tsuite_gen.chat_history import ChatHistory
+from _test_ollama.logic.tsuite_gen.template_reading import (
 	read_templ_frompath
 )
-from prompt_building import (
+from _test_ollama.logic.tsuite_gen.prompt_building import (
 	build_full_corrprompt
 )
 
@@ -36,16 +36,9 @@ from py_compile import (
 from pylint.lint import (
 	Run as PylRunner
 )
-from errorcollector_pylreporter import (
+from _test_ollama.logic.tsuite_gen.errorcollector_pylreporter import (
 	LintingRelatedProblem,
 	ErrorCollectorPylReporter
-)
-from os import (
-	devnull as os_devnull
-)
-from contextlib import (
-	redirect_stdout,
-	redirect_stderr
 )
 
 from datetime import datetime
@@ -59,6 +52,8 @@ PYTEST_ERROR_PATT: str = r"E\s+(?P<exc_name>[A-Za-z0-9_]+Error):\s+(?P<exc_mess>
 def correct_tsuite_1time(
 		wrong_tsuite: str,
 		error: Tuple[str, str],
+		num_try: int,
+		correction_type: Literal["synt", "lint"],
 		config: Dict[str, Any],
 		chat_history: ChatHistory,
 		templ_path: str,
@@ -66,7 +61,6 @@ def correct_tsuite_1time(
 		context_names: Tuple[str, str],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
-		debug_promptresp: bool = False,
 		debuglog_config: Dict[str, str] = None
 ) -> str:
 	corr_conn: SqlConnection = corr_cache[0]
@@ -82,7 +76,6 @@ def correct_tsuite_1time(
 		context_names
 	)
 
-	chat_history.add_message("context", CONTEXT_PROMPT)
 	chat_history.add_message("user", full_corrprompt)
 
 	print("\n\n##### Chat-History Pre-Response: #####")
@@ -91,17 +84,28 @@ def correct_tsuite_1time(
 	prompt_exists: bool
 	corr_conn_cur.execute(f"""
 		SELECT * FROM `{project_name}`
-		WHERE `prompt` = ?
+		WHERE `corr_type` = ?
+		AND `num_try` = ? 
+		AND `prompt` = ?
 		AND `model` = ?
-	""", [full_corrprompt, config["model"]])
-	rows: List[Tuple[str, str]] = corr_conn_cur.fetchall()
+	""", [
+		correction_type,
+		num_try,
+		full_corrprompt,
+		config["model"]
+	])
+	rows: List[Tuple[str, str, str, str, str]] = corr_conn_cur.fetchall()
 	prompt_exists = len(rows) > 0
 
 	corr_code_match: Match[str]
 	corr_code: str
+
 	if not prompt_exists:
+		prompt_tokens: int = -1
+		resp_tokens: int = -1
+
 		if debug:
-			print("Correcting code of the module '" + context_names[1] + "' (\"" + context_names[0] + "\") ...")
+			print("(Try: "+str(num_try+1)+") Correcting code of the module '" + context_names[1] + "' (\"" + context_names[0] + "\") ...")
 			print("Lunghezza del (Correct) Prompt = " + str(len(reg_split(r"([ \n])+", full_corrprompt)) * 3 / 2) + " tokens")
 
 		oll: OllamaClient = OllamaClient(
@@ -118,11 +122,18 @@ def correct_tsuite_1time(
 		if debug:
 			print("\tReceiving response... ", end="")
 		full_response: str = ""
-		for msg in response:
-			full_response += msg['message']['content']
-			print(msg['message']['content'], end="")
+		for chunk in response:
+			full_response += chunk['message']['content']
+			# Se è arrivato alla fine
+			if "eval_count" in chunk:
+				resp_tokens = chunk["eval_count"]
+				prompt_tokens = chunk["prompt_eval_count"]
+			print(chunk['message']['content'], end="")
 		if debug:
 			print("RECEIVED!")
+
+		if (prompt_tokens + resp_tokens) >= config["model_options"]["num_ctx"]:
+			raise Exception(f"Finestra di contesto saturata (PT = {prompt_tokens}, RT = {resp_tokens})")
 
 		corr_code_match = reg_search(GENCODE_PATT, full_response, RegexFlags.MULTILINE)
 
@@ -143,19 +154,27 @@ def correct_tsuite_1time(
 		corr_code = corr_code_match.group("gen_code")
 
 		corr_conn_cur.execute(f"""
-			INSERT INTO {project_name} (prompt, response, model)
-			VALUES (?, ?, ?);
+			INSERT INTO {project_name} (corr_type, num_try, prompt, response, model)
+			VALUES (?, ?, ?, ?, ?);
 		""",
-		[full_corrprompt, corr_code, config["model"]])
+		[
+			correction_type,
+			num_try,
+			full_corrprompt,
+			corr_code,
+			config["model"]
+		])
 		corr_conn.commit()
 		if debug:
 			print("Correction Cache Updated!", flush=True)
 	else:
-		corr_code = rows[0][1]
+		corr_code = rows[0][3]
 		if debug:
 			print("Correction of error '" + error[0] + "' on '" + context_names[1] + "' (\"" + context_names[0] + "\") test-suite taken by the LLM Correction Cache", flush=True)
 		print("\n\n\t#### Cached Response: ####")
 		print(corr_code)
+
+	chat_history.add_message("llm", ("```python\n" + corr_code.rstrip("\n") + "\n```"))
 
 	return corr_code
 
@@ -183,7 +202,9 @@ def correct_tsuite(
 
 	# ========== Correzione Sintattica della test suite parziale ==========
 	exec_success: bool = False
-	while not exec_success:
+	times_tried: int = 0
+	max_tries: int = config["max_corr_times"]
+	while (not exec_success) and (times_tried < max_tries):
 		try:
 			py_compile(
 				wrong_parttsuite_path,
@@ -201,6 +222,8 @@ def correct_tsuite(
 			curr_code = correct_tsuite_1time(
 				curr_code,
 				(except_name, except_mess),
+				times_tried,
+				"synt",
 				config,
 				chat_history,
 				templ_path,
@@ -215,8 +238,14 @@ def correct_tsuite(
 				fp.write(curr_code)
 				fp.flush()
 
+			times_tried += 1
+
+	if not exec_success:
+		raise Exception("Errore! La test-suite parziale '"+wrong_parttsuite_path+"' non è stata corretta in sintassi")
+
 	# ========== Correzione Non-Sintattica della test suite parziale ==========
 	exec_success = False
+	times_tried = 0
 
 	full_proj_root: str = path_split(absolute_paths[0])[0]
 	pyl_args: List[str] = [
@@ -228,7 +257,7 @@ def correct_tsuite(
 	error_position: Tuple[int, int]
 
 	err_reporter: ErrorCollectorPylReporter = ErrorCollectorPylReporter()
-	while not exec_success:
+	while (not exec_success) and (times_tried < max_tries):
 		with open(wrong_parttsuite_path, "r") as fp:
 			curr_code = fp.read()
 
@@ -238,8 +267,6 @@ def correct_tsuite(
 			reporter=err_reporter,
 			exit=False
 		)
-		#with open(os_devnull, 'w') as fpnull:
-			#with redirect_stdout(fpnull), redirect_stderr(fpnull):
 
 		if err_reporter.has_found_any_problem():
 			error_found = err_reporter.get_found_problems()[0]
@@ -253,6 +280,8 @@ def correct_tsuite(
 			curr_code = correct_tsuite_1time(
 				curr_code,
 				(except_name, except_mess),
+				times_tried,
+				"lint",
 				config,
 				chat_history,
 				templ_path,
@@ -260,14 +289,19 @@ def correct_tsuite(
 				context_names,
 				corr_cache,
 				debug=debug,
-				debug_promptresp=debug_promptresp,
+				#debug_promptresp=debug_promptresp,
 				debuglog_config=debuglog_config
 			)
 
 			with open(wrong_parttsuite_path, "w") as fp:
 				fp.write(curr_code)
 				fp.flush()
+
+			times_tried += 1
 		else:
 			exec_success = True
+
+	if not exec_success:
+		raise Exception("Errore! La test-suite parziale '"+wrong_parttsuite_path+"' non è stata corretta in linting")
 
 	return curr_code
