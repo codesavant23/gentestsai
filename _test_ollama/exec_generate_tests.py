@@ -48,8 +48,7 @@ from logic.tsuite_gen.mbym_generation import (
 SCRIPT_DEBUG: bool = True
 
 
-
-if __name__ == "__main__":
+def generate_tests():
 # ========== Macro-processo di "Configurazione Parametri" del progetto ==========
 	# ========== Lettura dei file di configurazione del progetto ==========
 	all_configs: Dict[str, Any] = read_gentests_conf("config")
@@ -89,7 +88,7 @@ if __name__ == "__main__":
 	corr_conn: SqlConnection = sql_connect(corr_cache_path)
 	corr_conn_cur: SqlConnectionCursor = corr_conn.cursor()
 
-# ========== Macro-processo di "Generazione Completa (dei tests) dei Progetti", per ogni modello ==========
+	# ========== Macro-processo di "Generazione Completa (dei tests) dei Progetti", per ogni modello ==========
 	curr_config: Dict[str, Any]
 	max_corr_times: int = general_config["max_correction_times"]
 	if max_corr_times < 0:
@@ -253,3 +252,8 @@ if __name__ == "__main__":
 							chat_history.clear()
 	corr_conn.close()
 	gen_conn.close()
+
+
+
+if __name__ == "__main__":
+	generate_tests()

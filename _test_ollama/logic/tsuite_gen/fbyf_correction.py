@@ -61,6 +61,7 @@ def correct_tsuite_1time(
 		context_names: Tuple[str, str],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
+		debug_promptresp: bool = False,
 		debuglog_config: Dict[str, str] = None
 ) -> str:
 	corr_conn: SqlConnection = corr_cache[0]
@@ -78,8 +79,9 @@ def correct_tsuite_1time(
 
 	chat_history.add_message("user", full_corrprompt)
 
-	print("\n\n##### Chat-History Pre-Response: #####")
-	pprint(chat_history.history())
+	if debug_promptresp:
+		print("\n\n##### Chat-History Pre-Response: #####")
+		pprint(chat_history.history())
 
 	prompt_exists: bool
 	corr_conn_cur.execute(f"""
@@ -105,8 +107,8 @@ def correct_tsuite_1time(
 		resp_tokens: int = -1
 
 		if debug:
-			print("(Try: "+str(num_try+1)+") Correcting code of the module '" + context_names[1] + "' (\"" + context_names[0] + "\") ...")
-			print("Lunghezza del (Correct) Prompt = " + str(len(reg_split(r"([ \n])+", full_corrprompt)) * 3 / 2) + " tokens")
+			print("(Try #"+str(num_try+1)+") Correcting code of the module '" + context_names[1] + "' (\"" + context_names[0] + "\") ...")
+			print("Length of (Correct.) Prompt = " + str(len(reg_split(r"([ \n])+", full_corrprompt)) * 3 / 2) + " tokens")
 
 		oll: OllamaClient = OllamaClient(
 			host=config["api_url"],
@@ -128,7 +130,8 @@ def correct_tsuite_1time(
 			if "eval_count" in chunk:
 				resp_tokens = chunk["eval_count"]
 				prompt_tokens = chunk["prompt_eval_count"]
-			print(chunk['message']['content'], end="")
+			if debug_promptresp:
+				print(chunk['message']['content'], end="")
 		if debug:
 			print("RECEIVED!")
 
@@ -170,9 +173,10 @@ def correct_tsuite_1time(
 	else:
 		corr_code = rows[0][3]
 		if debug:
-			print("Correction of error '" + error[0] + "' on '" + context_names[1] + "' (\"" + context_names[0] + "\") test-suite taken by the LLM Correction Cache", flush=True)
-		print("\n\n\t#### Cached Response: ####")
-		print(corr_code)
+			print(f"Correction #{str(rows[0][1]+1)} of error '{error[0]}' on '{context_names[1]}' test-suite (\" {context_names[0]} \") taken by the LLM Correction Cache", flush=True)
+		if debug_promptresp:
+			print("\n\n\t#### Cached Response: ####")
+			print(corr_code)
 
 	chat_history.add_message("llm", ("```python\n" + corr_code.rstrip("\n") + "\n```"))
 
@@ -191,7 +195,7 @@ def correct_tsuite(
 		debug: bool = False,
 		debug_promptresp: bool = False,
 		debuglog_config: Dict[str, str] = None
-):
+) -> Tuple[str, bool]:
 	wrong_parttsuite: str
 	with open(wrong_parttsuite_path, "r") as fp:
 		wrong_parttsuite = fp.read()
@@ -231,6 +235,7 @@ def correct_tsuite(
 				context_names,
 				corr_cache,
 				debug=debug,
+				debug_promptresp=debug_promptresp,
 				debuglog_config=debuglog_config
 			)
 
@@ -241,67 +246,67 @@ def correct_tsuite(
 			times_tried += 1
 
 	if not exec_success:
-		raise Exception("Errore! La test-suite parziale '"+wrong_parttsuite_path+"' non è stata corretta in sintassi")
+		curr_code = ""
+	else:
+		# ========== Correzione Non-Sintattica della test suite parziale ==========
+		exec_success = False
+		times_tried = 0
 
-	# ========== Correzione Non-Sintattica della test suite parziale ==========
-	exec_success = False
-	times_tried = 0
+		full_proj_root: str = path_split(absolute_paths[0])[0]
+		pyl_args: List[str] = [
+			"--source-roots="+full_proj_root,
+			wrong_parttsuite_path
+		]
 
-	full_proj_root: str = path_split(absolute_paths[0])[0]
-	pyl_args: List[str] = [
-		"--source-roots="+full_proj_root,
-		wrong_parttsuite_path
-	]
+		error_found: LintingRelatedProblem
+		error_position: Tuple[int, int]
 
-	error_found: LintingRelatedProblem
-	error_position: Tuple[int, int]
+		err_reporter: ErrorCollectorPylReporter = ErrorCollectorPylReporter()
+		while (not exec_success) and (times_tried < max_tries):
+			with open(wrong_parttsuite_path, "r") as fp:
+				curr_code = fp.read()
 
-	err_reporter: ErrorCollectorPylReporter = ErrorCollectorPylReporter()
-	while (not exec_success) and (times_tried < max_tries):
-		with open(wrong_parttsuite_path, "r") as fp:
-			curr_code = fp.read()
-
-		err_reporter.init_reporter()
-		PylRunner(
-			pyl_args,
-			reporter=err_reporter,
-			exit=False
-		)
-
-		if err_reporter.has_found_any_problem():
-			error_found = err_reporter.get_found_problems()[0]
-
-			error_position = error_found.get_code_position()
-			except_name = error_found.get_short_name()
-			except_mess = error_found.get_message() + f" (at line {error_position[0]}, column {error_position[1]})"
-
-			print("Errore di PyLint: " + error_found.build_formatted_message())
-
-			curr_code = correct_tsuite_1time(
-				curr_code,
-				(except_name, except_mess),
-				times_tried,
-				"lint",
-				config,
-				chat_history,
-				templ_path,
-				relative_paths,
-				context_names,
-				corr_cache,
-				debug=debug,
-				#debug_promptresp=debug_promptresp,
-				debuglog_config=debuglog_config
+			err_reporter.init_reporter()
+			PylRunner(
+				pyl_args,
+				reporter=err_reporter,
+				exit=False
 			)
 
-			with open(wrong_parttsuite_path, "w") as fp:
-				fp.write(curr_code)
-				fp.flush()
+			if err_reporter.has_found_any_problem():
+				error_found = err_reporter.get_found_problems()[0]
 
-			times_tried += 1
-		else:
-			exec_success = True
+				error_position = error_found.get_code_position()
+				except_name = error_found.get_short_name()
+				except_mess = error_found.get_message() + f" (at line {error_position[0]}, column {error_position[1]})"
 
-	if not exec_success:
-		raise Exception("Errore! La test-suite parziale '"+wrong_parttsuite_path+"' non è stata corretta in linting")
+				print("Errore di PyLint: " + error_found.build_formatted_message())
 
-	return curr_code
+				curr_code = correct_tsuite_1time(
+					curr_code,
+					(except_name, except_mess),
+					times_tried,
+					"lint",
+					config,
+					chat_history,
+					templ_path,
+					relative_paths,
+					context_names,
+					corr_cache,
+					debug=debug,
+					debug_promptresp=debug_promptresp,
+					debuglog_config=debuglog_config
+				)
+
+				with open(wrong_parttsuite_path, "w") as fp:
+					fp.write(curr_code)
+					fp.flush()
+
+				times_tried += 1
+			else:
+				exec_success = True
+
+		if not exec_success:
+			curr_code = ""
+
+	return (curr_code, exec_success)

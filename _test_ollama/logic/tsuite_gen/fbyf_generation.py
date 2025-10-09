@@ -22,6 +22,7 @@ from shutil import (
 from os import (
 	replace as os_rename,
 	makedirs as os_mkdirs,
+	remove as os_remove
 )
 from os.path import (
 	join as path_join,
@@ -42,14 +43,14 @@ from _test_ollama.logic.tsuite_gen.fbyf_correction import (
 	correct_tsuite
 )
 
+from _test_ollama.logic.tsuite_gen.tests_skipping import (
+	skip_function_tests,
+	skip_method_tests
+)
+
 from ollama import (
 	Client as OllamaClient,
 	ChatResponse
-)
-
-from json import (
-	loads as json_loads,
-	dumps as json_dumps,
 )
 
 from datetime import datetime
@@ -73,7 +74,7 @@ def generate_tsuite_modfuncs(
 		module_funcs: List[str],
 		paths: Dict[str, Tuple[str, str]],
 		context_names: Tuple[str, str],
-		skipped_tests_file: str,
+		skipped_tests_path: str,
 		gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
@@ -97,9 +98,6 @@ def generate_tsuite_modfuncs(
 	gen_code_match: Match[str]
 	gen_code: str = ""
 	corrected_code: str
-
-	mod_funcs_skipd: List[str] = []
-	skipd_tests: Dict[str, Any]
 
 	func_name: str
 
@@ -142,7 +140,7 @@ def generate_tsuite_modfuncs(
 				datetime_now: str = (str(now.day) + "-" + str(now.month) + "-" + str(now.year) + "_" +
 									 str(now.hour) + ":" + str(now.minute) + ":" + str(now.second))
 				print("Generating tests for Function '" + func_name + "' ... Started at: " + datetime_now)
-				print("Lunghezza del (Func.) Prompt = " + str(
+				print("Length of the (Funct.) Prompt = " + str(
 					len(reg_split(r"([ \n])+", full_funcprompt)) * 3 / 2) + " tokens")
 			oll: OllamaClient = OllamaClient(
 				host=config["api_url"],
@@ -214,7 +212,7 @@ def generate_tsuite_modfuncs(
 				now: datetime = datetime.now()
 				datetime_now: str = (str(now.day) + "-" + str(now.month) + "-" + str(now.year) + "_" +
 									 str(now.hour) + ":" + str(now.minute) + ":" + str(now.second))
-				raise ValueError(
+				raise Exception(
 					f"C'è stato un errore!! ( Prompt_Tokens={prompt_tokens} | Resp_Tokens={resp_tokens} )" +
 					f" {datetime_now}"
 				)
@@ -250,7 +248,7 @@ def generate_tsuite_modfuncs(
 					print("Generation Cache Updated!")
 			else:
 				print("Skipped generating tests for '" + func_name + "' as the max context window has been reached")
-				mod_funcs_skipd.append(func_name)
+				skip_function_tests(skipped_tests_path, func_name)
 		else:
 			not_skipped = True
 			gen_code = rows[0][1]
@@ -269,7 +267,7 @@ def generate_tsuite_modfuncs(
 			with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
 				fp.write(gen_code)
 
-			corrected_code = correct_tsuite(
+			corrected_code, not_skipped = correct_tsuite(
 				path_join(tsuite_path, temp_parttsuite_name),
 				config,
 				chat_history,
@@ -282,20 +280,18 @@ def generate_tsuite_modfuncs(
 				debuglog_config=debug_errlog_config
 			)
 
-			with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
-				fp.write(corrected_code)
-			os_rename(
-				path_join(tsuite_path, temp_parttsuite_name),
-				path_join(tsuite_path, parttsuite_name)
-			)
+			if not_skipped:
+				with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
+					fp.write(corrected_code)
+				os_rename(
+					path_join(tsuite_path, temp_parttsuite_name),
+					path_join(tsuite_path, parttsuite_name)
+				)
+			else:
+				skip_function_tests(skipped_tests_path, func_name)
+				os_remove(path_join(tsuite_path, temp_parttsuite_name))
 
 		chat_history.clear()
-
-	if len(mod_funcs_skipd) > 0:
-		with open(skipped_tests_file, "w+") as fskipd:
-			skipd_tests = json_loads(fskipd.read())
-			skipd_tests["functions"] = mod_funcs_skipd
-			json_dumps(skipd_tests)
 
 
 def generate_tsuite_testclss(
@@ -308,7 +304,7 @@ def generate_tsuite_testclss(
 		classes_meths: Dict[str, List[str]],
 		paths: Dict[str, Tuple[str, str]],
 		context_names: Tuple[str, str],
-		skipped_tests_file: str,
+		skipped_tests_path: str,
 		gen_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		corr_cache: Tuple[SqlConnection, SqlConnectionCursor],
 		debug: bool = False,
@@ -341,15 +337,9 @@ def generate_tsuite_testclss(
 	currcode_tree: Tree
 	currcode_tree_root: TreeNode
 
-	mod_cls_skipd: Dict[str, List[str]] = dict()
-	cls_meths_skipd: List[str]
-	skipd_tests: Dict[str, Any]
-
 	chat_history.clear()
 	for fclass in module_classes:
 		fcls_name = reg_search(CLSDEF_PATT, fclass).group("cls_name")
-
-		cls_meths_skipd = []
 
 		cls_dirname = "class_" + fcls_name
 		tsuite_path = path_join(base_tsuite_path, cls_dirname)
@@ -398,7 +388,7 @@ def generate_tsuite_testclss(
 					datetime_now: str = (str(now.day) + "-" + str(now.month) + "-" + str(now.year) + "_" +
 										 str(now.hour) + ":" + str(now.minute) + ":" + str(now.second))
 					print("\tGenerating tests for Method '" + meth_name + "' ... Started at: " + datetime_now)
-					print("\tLunghezza del (Method.) Prompt = " + str(len(reg_split(r"([ \n])+", full_methprompt)) * 3 / 2) + " tokens")
+					print("\tLength of the (Method.) Prompt = " + str(len(reg_split(r"([ \n])+", full_methprompt)) * 3 / 2) + " tokens")
 
 				oll: OllamaClient = OllamaClient(
 					host=config["api_url"],
@@ -470,8 +460,7 @@ def generate_tsuite_testclss(
 					now: datetime = datetime.now()
 					datetime_now: str = (str(now.day) + "-" + str(now.month) + "-" + str(now.year) + "_" +
 										 str(now.hour) + ":" + str(now.minute) + ":" + str(now.second))
-					raise ValueError(f"C'è stato un errore!! ( Prompt_Tokens={prompt_tokens} | Resp_Tokens={resp_tokens} ) " +
-									 f"{datetime_now}")
+					raise Exception(f"C'è stato un errore!! ( Prompt_Tokens={prompt_tokens} | Resp_Tokens={resp_tokens} ) {datetime_now}")
 
 				# Se il modello non è andato in generazione ciclica -> allora la test-suite parziale è stata generata
 				# (e me ne accorgo dalla finestra di contesto perfettamente satura)
@@ -504,7 +493,7 @@ def generate_tsuite_testclss(
 						print("\tGeneration Cache Updated!")
 				else:
 					print("\tSkipped generating tests for '" + meth_name + "' as the max context window has been reached")
-					cls_meths_skipd.append(meth_name)
+					skip_method_tests(skipped_tests_path, fcls_name, meth_name)
 			else:
 				not_skipped = True
 				gen_code = rows[0][1]
@@ -523,7 +512,7 @@ def generate_tsuite_testclss(
 				with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
 					fp.write(gen_code)
 
-				corrected_code = correct_tsuite(
+				corrected_code, not_skipped = correct_tsuite(
 					path_join(tsuite_path, temp_parttsuite_name),
 					config,
 					chat_history,
@@ -537,20 +526,14 @@ def generate_tsuite_testclss(
 					debuglog_config=debug_errlog_config
 				)
 
-				with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
-					fp.write(corrected_code)
-				os_rename(
-					path_join(tsuite_path, temp_parttsuite_name),
-					path_join(tsuite_path, parttsuite_name)
-				)
+				if not_skipped:
+					with open(path_join(tsuite_path, temp_parttsuite_name), "w", encoding="utf-8") as fp:
+						fp.write(corrected_code)
+					os_rename(
+						path_join(tsuite_path, temp_parttsuite_name),
+						path_join(tsuite_path, parttsuite_name)
+					)
+				else:
+					skip_method_tests(skipped_tests_path, fcls_name, meth_name)
 
 			chat_history.clear()
-
-		if len(cls_meths_skipd) > 0:
-			mod_cls_skipd[fcls_name] = cls_meths_skipd
-
-	if len(mod_cls_skipd.keys()) > 0:
-		with open(skipped_tests_file, "w+") as fskipd:
-			skipd_tests = json_loads(fskipd.read())
-			skipd_tests["classes"] = mod_cls_skipd
-			json_dumps(skipd_tests)

@@ -40,7 +40,6 @@ from logic.calc_coverage.llm_cov_calculation import (
 )
 
 
-
 def calculate_venv_pyexe(
 		full_root: str,
 		venv_name: str,
@@ -59,7 +58,7 @@ def calculate_venv_pyexe(
 	return venv_py_exepath
 
 
-if __name__ == "__main__":
+def calculate_coverage():
 	general_config: Dict[str, str] = json_loads(
 		read_json_tobuff("config/general.json")
 	)
@@ -219,3 +218,8 @@ if __name__ == "__main__":
 					cov_run_args=coverage_args.get("run", None),
 					pytest_args=pytest_args
 				)
+
+
+
+if __name__ == "__main__":
+	calculate_coverage()

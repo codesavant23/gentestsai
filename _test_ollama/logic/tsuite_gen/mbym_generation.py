@@ -20,6 +20,7 @@ from sqlite3 import (
 	Cursor as SqlConnectionCursor
 )
 
+from _test_ollama.logic.tsuite_gen.tests_skipping import skipped_testsfile_init
 from _test_ollama.logic.tsuite_gen.template_reading import read_templ_frompath
 from _test_ollama.logic.tsuite_gen.code_extraction import (
 	extract_fmodule_code,
@@ -37,7 +38,7 @@ from _test_ollama.logic.tsuite_gen.fbyf_generation import (
 
 def generate_module_tsuite(
 		module_path: str,
-		skipped_tests_fname: str,
+		skipped_tests_file: str,
 		config: Dict[str, Any],
 		chat_history: ChatHistory,
 		templs_paths: Tuple[str, str, str],
@@ -103,13 +104,11 @@ def generate_module_tsuite(
 	focalmod_path_rel = "./" + (focalmod_path_rel.replace("\\", "/").lstrip("./")) + "/"
 	tsuite_path_rel = "./" + (tsuite_path_rel.replace("\\", "/").lstrip("./")) + "/"
 
-	skipped_tests_file: str = path_join(
+	skipped_tests_path: str = path_join(
 		tsuite_path,
-		skipped_tests_fname
+		skipped_tests_file
 	)
-	with open(skipped_tests_file, "w") as fjson:
-		fjson.write("{}")
-		fjson.flush()
+	skipped_testsfile_init(skipped_tests_path)
 
 	# ========== Generazione Completa (con correzione e scrittura) delle test-suite parziali delle funzioni ==========
 	generate_tsuite_modfuncs(
@@ -124,7 +123,7 @@ def generate_module_tsuite(
 			"relative": (focalmod_path_rel, tsuite_path_rel)
 		},
 		context_names,
-		skipped_tests_file,
+		skipped_tests_path,
 		gen_cache,
 		corr_cache,
 		debug=debug,
@@ -147,7 +146,7 @@ def generate_module_tsuite(
 			"relative": (focalmod_path_rel, tsuite_path_rel)
 		},
 		context_names,
-		skipped_tests_file,
+		skipped_tests_path,
 		gen_cache,
 		corr_cache,
 		debug=debug,
