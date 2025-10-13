@@ -18,11 +18,11 @@ from sqlite3 import (
 	Cursor as SqlConnectionCursor
 )
 
-from _test_ollama.logic.tsuite_gen.chat_history import ChatHistory
-from _test_ollama.logic.tsuite_gen.template_reading import (
+from .chat_history import ChatHistory
+from .template_reading import (
 	read_templ_frompath
 )
-from _test_ollama.logic.tsuite_gen.prompt_building import (
+from .prompt_building import (
 	build_full_corrprompt
 )
 
@@ -36,7 +36,7 @@ from py_compile import (
 from pylint.lint import (
 	Run as PylRunner
 )
-from _test_ollama.logic.tsuite_gen.errorcollector_pylreporter import (
+from .errorcollector_pylreporter import (
 	LintingRelatedProblem,
 	ErrorCollectorPylReporter
 )

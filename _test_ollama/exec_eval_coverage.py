@@ -5,9 +5,9 @@ from os.path import (
 	split as path_split,
 )
 
-from logic.utils.model_name_normalizer import normalize_model_name
+from _test_ollama.logic.utils.model_name_normalizer import normalize_model_name
 
-from logic.utils.json_to_str import read_json_tobuff
+from _test_ollama.logic.utils.json_to_str import read_json_tobuff
 from json import (
 	loads as json_loads,
 )

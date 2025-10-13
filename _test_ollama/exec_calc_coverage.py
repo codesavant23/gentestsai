@@ -4,12 +4,12 @@
 
 from typing import List, Dict, Any
 
-from logic.utils.json_to_str import read_json_tobuff
+from _test_ollama.logic.utils.json_to_str import read_json_tobuff
 from json import (
 	loads as json_loads
 )
 
-from logic.utils.model_name_normalizer import normalize_model_name
+from _test_ollama.logic.utils.model_name_normalizer import normalize_model_name
 
 from os import (
 	name as os_name,
@@ -28,14 +28,14 @@ from tempfile import (
 	TemporaryDirectory
 )
 
-from logic.calc_coverage.focal_proj_configuration import (
+from _test_ollama.logic.calc_coverage.focal_proj_configuration import (
 	configure_project_environ
 )
 
-from logic.calc_coverage.human_cov_calculation import (
+from _test_ollama.logic.calc_coverage.human_cov_calculation import (
 	calculate_human_coverage
 )
-from logic.calc_coverage.llm_cov_calculation import (
+from _test_ollama.logic.calc_coverage.llm_cov_calculation import (
 	calculate_llm_coverage
 )
 

@@ -7,7 +7,7 @@ from re import (
 	search as reg_search,
 )
 
-from logic.utils.model_name_normalizer import normalize_model_name
+from _test_ollama.logic.utils.model_name_normalizer import normalize_model_name
 
 from os import (
 	walk as os_walk,
@@ -21,6 +21,8 @@ from os.path import (
 	altsep as path_altsep,
 	exists as os_fdexists,
 	join as path_join,
+	dirname as path_getdir,
+	abspath as path_absolute,
 	split as path_split,
 	splitext as path_split_ext
 )
@@ -31,9 +33,9 @@ from sqlite3 import (
 	Cursor as SqlConnectionCursor
 )
 
-from logic.tsuite_gen.chat_history import ChatHistory
+from _test_ollama.logic.tsuite_gen.chat_history import ChatHistory
 
-from logic.tsuite_gen.configuration import (
+from _test_ollama.logic.tsuite_gen.configuration import (
 	configure_ollama,
 	read_gentests_conf
 )
@@ -41,17 +43,20 @@ from json import (
 	loads as json_loads
 )
 
-from logic.tsuite_gen.mbym_generation import (
+from _test_ollama.logic.tsuite_gen.mbym_generation import (
 	generate_module_tsuite
 )
 
 SCRIPT_DEBUG: bool = True
+SCRIPT_PATH: str = path_getdir(path_absolute(__file__))
 
 
 def generate_tests():
 # ========== Macro-processo di "Configurazione Parametri" del progetto ==========
 	# ========== Lettura dei file di configurazione del progetto ==========
-	all_configs: Dict[str, Any] = read_gentests_conf("config")
+	all_configs: Dict[str, Any] = read_gentests_conf(
+		path_join(SCRIPT_PATH, "config")
+	)
 
 	general_config: Dict[str, Any] = all_configs["general_config"]
 	projs_config: Dict[str, Dict[str, Any]] = all_configs["projs_config"]
@@ -60,7 +65,7 @@ def generate_tests():
 	prompts_config: Dict[str, str] = all_configs["prompts_config"]
 
 	# ========== DEBUG: Lettura della configurazione di debug ==========
-	with open("debug.json", "r") as fp:
+	with open(path_join(SCRIPT_PATH, "debug.json"), "r") as fp:
 		buffer = reduce(lambda acc, x: acc + x, fp.readlines())
 	debug_config: Dict[str, Dict[str, str]] = json_loads(buffer)
 	debug_log_config: Dict[str, str] = debug_config["curr_resp_log"]

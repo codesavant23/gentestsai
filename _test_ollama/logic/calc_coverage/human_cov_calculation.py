@@ -4,7 +4,7 @@ from os.path import (
 	join as path_join,
 )
 
-from _test_ollama.logic.calc_coverage.cmds_building import (
+from .cmds_building import (
 	build_calc_coverage_cmd,
 	build_report_coverage_cmd,
 	build_cov2json_cmd

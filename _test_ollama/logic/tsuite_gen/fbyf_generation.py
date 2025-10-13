@@ -32,18 +32,18 @@ from os.path import (
 
 from tree_sitter import Tree, Node as TreeNode
 
-from _test_ollama.logic.tsuite_gen.chat_history import ChatHistory
+from .chat_history import ChatHistory
 
-from _test_ollama.logic.tsuite_gen.prompt_building import (
+from .prompt_building import (
 	build_full_fbyf_funcprompt,
 	build_full_fbyf_methprompt
 )
 
-from _test_ollama.logic.tsuite_gen.fbyf_correction import (
+from .fbyf_correction import (
 	correct_tsuite
 )
 
-from _test_ollama.logic.tsuite_gen.tests_skipping import (
+from .tests_skipping import (
 	skip_function_tests,
 	skip_method_tests
 )

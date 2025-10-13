@@ -11,7 +11,7 @@ from re import search as reg_search
 
 from httpx import Timeout as HttpxTimeout
 
-from _test_ollama.logic.utils.json_to_str import (
+from ..utils.json_to_str import (
 	read_json_tobuff
 )
 
