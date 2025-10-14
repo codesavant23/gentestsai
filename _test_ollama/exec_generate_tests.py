@@ -72,7 +72,10 @@ def generate_tests():
 	debug_errlog_config: Dict[str, str] = debug_config["post_resp_log"]
 	cache_config: Dict[str, str] = debug_config["caching"]
 
-	project_names: List[str] = list(projs_config.keys())
+	if not os_fdexists(debug_log_config["log_path"]):
+		os_mkdirs(debug_log_config["log_path"])
+	if not os_fdexists(debug_errlog_config["promptresp_log_path"]):
+		os_mkdirs(debug_errlog_config["promptresp_log_path"])
 
 	# ========== DEBUG: Calcolo delle path delle caches ==========
 	gen_cache_path: str = path_join(cache_config["cache_root"], cache_config["gen_cache_db"])
@@ -128,6 +131,8 @@ def generate_tests():
 	# ========== Creazione della configurazione di condivisa tra ogni modello e progetto ==========
 	curr_config = dict()
 	curr_config["max_corr_times"] = max_corr_times
+
+	project_names: List[str] = list(projs_config.keys())
 
 	# ========== Scorrimento dei modelli da valutare ==========
 	for curr_model in models_config:

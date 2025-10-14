@@ -1,5 +1,5 @@
 {
-	"api_url": "158.110.146.224:1337",
+	"api_url": "158.110.146.250:41508",
 	"userpass_pair": "ollama:3UHn2uyu1sxgAy15",
 	"connect_timeout": "10000",
 	"response_timeout": "1200000"
