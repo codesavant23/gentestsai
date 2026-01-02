@@ -1,8 +1,4 @@
-[
-	{
-		"name": "qwen3:32b"
-	},
-	{
-		"name": "llama3.1:latest"
-	}
-]
+{
+	"qwen3:32b": {},
+	"llama3.1:latest": {}
+}

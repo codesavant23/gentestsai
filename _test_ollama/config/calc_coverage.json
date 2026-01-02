@@ -1,6 +1,5 @@
 {
 	"covconfig_dir": "config_coverage",
-	"covconfig_main_file": "main.sh",
 	"pytest_args_file": "pytest_args.json",
 	"coverage_args_file": "coverage_args.json"
 }
