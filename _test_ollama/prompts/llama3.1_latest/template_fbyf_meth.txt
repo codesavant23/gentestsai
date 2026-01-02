@@ -1,0 +1,230 @@
+# Request:
+Generate tests, and necessary imports, only for the method '{@Method_Name@}', part of the focal class, and focal module, whose code is provided below.
+The focal class is called "{@Class_Name@}" and belongs to the module called "{@Module_Name@}" of a project called "{@Project_Name@}".
+
+## Very Important:
+* Suppose that the generated code will reside in the following relative path: "{@Suite_Path@}".
+* Suppose that the focal module resides in the following relative path: "{@Focal_Path@}".
+* You must follow the response format specified below for your answer.
+* Do not modify any of the module's code to achieve the goal.
+* Do not generate any code except for tests and necessary imports.
+
+# Response Format:
+```python
+<generated_code_here>
+```
+
+# Example:
+
+## Example Focal Module:
+```python
+from typing import List, Dict, Any
+
+
+class ShoppingCart:
+	def __init__(self, tax_rate: float = 0.22, shipping: float = 5.0, free_shipping_threshold: float = 50.0):
+		"""
+		Creates, and initializes, a new shopping cart.
+
+		Args:
+			tax_rate: float
+				VAT percentage to apply to the subtotal (Default is 0.22).
+			shipping: float
+				Shipping cost to add.
+			free_shipping_threshold: float
+				Threshold above which shipping is free.
+		"""
+		self._items: List[Dict[str, Any]] = list()
+		self._tax_rate: float = tax_rate
+		self._ship_fee: float = shipping
+		self._free_ship_threshold: float = free_shipping_threshold
+
+
+	def add_item(self, name: str, price: float, quantity: int = 1, discount: float = 0.0):
+		"""
+		Adds a new product to the shopping cart.
+
+		Args:
+			name: str
+				Name of the product.
+			price: float
+				Unitary price of the product.
+			quantity: int
+				Product quantity (Default is 1).
+			discount: float
+				Discount percentage (Default is 0.0)
+		"""
+		if (price < 0) or (quantity <= 0) or (not (0.0 <= discount <= 1.0)):
+			raise ValueError("Invalid data for the product given")
+
+		self._items.append({
+			"name": name,
+			"price": price,
+			"quantity": quantity,
+			"discount": discount
+		})
+
+
+	def remove_item(self, name: str):
+		"""
+		Removes an existing product from the shopping cart.
+
+		Rules:
+			- If `name` contains the name of a product that doesn't exist, a ValueError exception is raised
+
+		Args:
+			name: str
+				Name of the product to remove from the shopping cart.
+		"""
+		i: int = 0
+		prod_index: int = -1
+		prod_exists: bool = False
+		while (not prod_exists) and (i < len(self._items)):
+			if item["name"] == name:
+				prod_exists = True
+				prod_index = i
+
+		if not prod_exists:
+			raise ValueError("The product with name '" + name + "' doesn't exist")
+
+		del self._items[prod_index]
+
+
+	def calculate_total(self) -> float:
+		"""
+		Calculate the final price of the entire cart.
+
+		Returns:
+			float
+				Final cart total.
+		"""
+		if (len(self._items) == 0):
+			return 0.0
+
+		subtotal: float = 0.0
+		for item in self._items:
+			subtotal += item["price"] * item["quantity"] * (1 - item["discount"])
+
+		taxed_total = subtotal * (1 + self.tax_rate)
+
+		actual_ship: float = self._ship_fee
+		if subtotal >= self._free_ship_threshold:
+			actual_ship = 0.0
+
+		return round(taxed_total + actual_ship, 2)
+```
+
+## Example Answer (only for the method 'calculate_total' of the class "ShoppingCart"):
+```python
+import pytest
+from shopping_cart import ShoppingCart
+
+
+def test_empty_cart():
+	cart = ShoppingCart()
+
+	# Empty cart -> Total = 0.0
+	assert cart.calculate_total() == 0.0
+
+
+def test_invalid_price():
+	cart = ShoppingCart()
+
+	# Invalid item "Gray Coat" (with invalid price) -> ValueError Exception
+	cart.add_item("Gray Coat", -3.7, quantity=1)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+	cart.remove_item("Gray Coat")
+
+	# Invalid item "White Coat" (with invalid price) -> ValueError Exception
+	cart.add_item("White Coat", 0)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+
+
+def test_invalid_discount():
+	cart = ShoppingCart()
+
+	# Invalid carts (with items that have invalid discounts) -> ValueError Exception
+
+	cart.add_item("T-Shirt 'Hey'", 67.8)
+	cart.add_item("T-Shirt 'Hola'", 21.0, discount=-0.4)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+	cart.remove_item("T-Shirt 'Hey'")
+	cart.remove_item("T-Shirt 'Hola'")
+
+	cart.add_item("Yellow Sneakers", 11.99, quantity=4, discount=1.3)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+	cart.remove_item("Yellow Sneakers")
+
+	cart.add_item("USB Cable", 3.99, quantity=3, discount=-5.0)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+
+
+def test_invalid_quantity():
+	cart = ShoppingCart()
+
+	# Invalid carts (with invalid quantities) -> ValueError Exception
+	cart1_inv_quantity = [{"price": 34.5, "quantity": 0}]
+	cart2_inv_quantity = [{"price": 15.9, "quantity": -7}]
+
+	cart.add_item("Ceramic Sink", 34.5, quantity=0)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+	cart.remove_item("Ceramic Sink")
+
+	cart.add_item("Rug", 15.9, quantity=-7)
+	with pytest.raises(ValueError):
+		cart.calculate_total()
+
+
+def test_1item_nodiscount():
+	cart = ShoppingCart(tax_rate=0.10, shipping=3.3)
+
+	# One item, without discount
+	cart.add_item("Tennis Racket", 10.0, quantity=2)
+
+	# Subtotal = 20, VAT = 2.0, shipping = 3.3 -> Total = 25.3
+	assert cart.calculate_total() == 25.3
+
+
+def test_1item_discount():
+	cart = ShoppingCart()
+
+	# One item, with discount
+	cart.add_item("TV", 50.0, quantity=1, discount=0.2)
+
+	# Subtotal = 40, VAT = 8.8, shipping = 5.0 -> Total = 53.8
+	assert cart.calculate_total() == 53.8
+
+
+def test_free_shipping():
+	cart = ShoppingCart()
+
+	# Subtotal = 60 -> Free shipping
+	cart.add_item("Winter Blanket", 30.0, discount=0.2)
+
+	# Total = Subtotal + 13.2 + 0.0 = 73.2
+	assert cart.calculate_total() == 73.2
+
+
+def test_1plusitems():
+	cart = ShoppingCart()
+
+	# More than one item, some of them with discount
+	cart.add_item("Denim Jeans", 20.0, quantity=1)
+	cart.add_item("White Socks", 15.0, quantity=2, discount=0.1)
+
+	# Subtotal = 47, VAT = 10.34, Shipping = 5.0 -> Total = 62.34
+	assert cart.calculate_total() == 62.34
+```
+
+# Focal module:
+```python
+{@Focal_Code@}
+```
+
+# Answer (only for the method '{@Method_Name@}' of the class "{@Class_Name@}"):

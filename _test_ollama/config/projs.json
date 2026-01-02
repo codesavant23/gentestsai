@@ -1,0 +1,37 @@
+{
+	"detectron2": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\detectron2\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\detectron2-main\\detectron2-main\\tests\\"
+	},
+	"agno": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\agno\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\agno-main\\agno-main\\libs\\agno\\tests\\"
+	},
+	"optuna": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\optuna-master\\optuna-master\\optuna\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\optuna-master\\optuna-master\\tests\\"
+	},
+	"fastapi": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\fastapi-master\\fastapi-master\\fastapi\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\fastapi-master\\fastapi-master\\tests\\"
+	},
+	"httpie": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\httpie-cli-master\\cli-master\\httpie\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\httpie-cli-master\\cli-master\\tests\\"
+	},
+	"scrapy": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\scrapy-master\\scrapy-master\\scrapy\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\scrapy-master\\scrapy-master\\tests\\"
+	},
+	"saleor": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\saleor-main\\saleor-main\\saleor\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\saleor-main\\saleor-main\\saleor\\tests\\",
+		"focal_excluded": [
+			"C:\\Users\\filip\\Desktop\\Thesis_Repos\\saleor-main\\saleor-main\\saleor\\tests\\"
+		]
+	},
+	"pytext": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\pytext-main\\pytext\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\pytext-main\\tests\\"
+	}
+}

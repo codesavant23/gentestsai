@@ -1,0 +1,16 @@
+{
+	"def_model_params": {
+		"context_window": 131072,
+		"options": {
+			"temperature": 0,
+			"num_predict": -2,
+			"num_gpu": 100
+		}
+	},
+	"max_correction_times": 10,
+    "gen_tests_dir": "gen_tests",
+	"skipped_tests_file": "skipped.json",
+	"excluded_files": [
+		"__init__.py"
+	]
+}

@@ -1,0 +1,24 @@
+# Request:
+Correct the code of the partial test suite generated before by modifying any necessary statement in its code.
+The focal module "{@Module_Name@}", from which the test suite originates, belongs to a project called "{@Project_Name@}".
+The error encountered is described below in the section "Error Encountered".
+
+## Very Important:
+* Suppose that the focal module resides in the following path: "{@Focal_Path@}"
+* Suppose that the test suite resides in the following path: "{@Suite_Path@}"
+* Once the code is corrected, it must be runnable without any error.
+* You must follow the response format specified below for your answer.
+
+# Response Format:
+```python
+<corrected_test_suite_code_here>
+```
+
+# Error Encountered:
+The error encountered is shortly described as "{@Exception_Name@}".
+It has the following associated message:
+```console
+{@Exception_Message@}
+```
+
+# Answer:
