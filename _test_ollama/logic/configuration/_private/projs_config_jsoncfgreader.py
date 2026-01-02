@@ -5,7 +5,11 @@ from ..import AJsonConfigReader
 from pathlib import Path as SystemPath
 # ======================================== #
 
-from ..exceptions import WrongConfigFileFormatError, FieldDoesntExistsError
+from ..exceptions import (
+	WrongConfigFileFormatError,
+	FieldDoesntExistsError,
+	InvalidConfigValueError
+)
 
 
 
@@ -137,25 +141,25 @@ class ProjectsJsonConfigReader(AJsonConfigReader):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				InvalidConfigValueError
 					Si verifica se:
 					
 						- La path non è sintatticamente valida
 						- La path fornita non esiste
-						
+						- La path dei prompts generici esiste ma non si hanno i permessi necessari
 		"""
 		prompts_path: SystemPath
 		try:
 			prompts_path = SystemPath(path)
 			prompts_path.stat()
 		except FileNotFoundError:
-			raise WrongConfigFileFormatError()
+			raise InvalidConfigValueError()
 		except PermissionError:
-			pass
+			raise InvalidConfigValueError()
 		except OSError:
-			raise WrongConfigFileFormatError()
-		
-		
+			raise InvalidConfigValueError()
+
+
 	@classmethod
 	def _assert_focal_excl(
 			cls,
@@ -173,7 +177,7 @@ class ProjectsJsonConfigReader(AJsonConfigReader):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				InvalidConfigValueError
 					Si verifica se almeno una delle paths di "focal_excluded" è invalida
 		"""
 		for path in focal_excl:

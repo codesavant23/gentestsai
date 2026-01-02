@@ -11,7 +11,8 @@ from pathlib import Path as SystemPath
 
 from ..exceptions import (
 	WrongConfigFileFormatError,
-	FieldDoesntExistsError
+	FieldDoesntExistsError,
+	InvalidConfigValueError
 )
 
 
@@ -130,22 +131,23 @@ class PromptsJsonConfigReader(AJsonConfigReader):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				InvalidConfigValueError()
 					Si verifica se:
 					
 						- La base path fornita non esiste (o la path non è sintatticamente valida)
 						- La path dei prompts generici non esiste (o la path non è sintatticamente valida)
+						- La path dei prompts generici esiste ma non si hanno i permessi necessari
 		"""
 		prompts_path: SystemPath
 		try:
 			prompts_path = SystemPath(self._base_path, self._gen_dirname)
 			prompts_path.stat()
 		except FileNotFoundError:
-			raise WrongConfigFileFormatError()
+			raise InvalidConfigValueError()
 		except PermissionError:
-			pass
+			raise InvalidConfigValueError()
 		except OSError:
-			raise WrongConfigFileFormatError()
+			raise InvalidConfigValueError()
 	
 			
 	def _assert_templates(self):
@@ -154,7 +156,7 @@ class PromptsJsonConfigReader(AJsonConfigReader):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				InvalidConfigValueError
 					Si verifica se, almeno in una directory, almeno uno dei files dei template prompts
 					non esiste
 		"""
@@ -167,4 +169,4 @@ class PromptsJsonConfigReader(AJsonConfigReader):
 				files_exists = files_exists and os_fdexists(path_join(curr_path, self._corr_fname))
 				
 				if not files_exists:
-					raise WrongConfigFileFormatError()
+					raise InvalidConfigValueError()

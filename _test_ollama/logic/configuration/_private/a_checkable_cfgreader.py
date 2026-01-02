@@ -125,7 +125,7 @@ class ACheckableConfigReader(IConfigReader):
 						- Il file di configurazione contiene campi non previsti dal formato specificato
 						  dai discendenti di questa classe astratta
 
-				InvalidConfigurationValueError
+				InvalidConfigValueError
 					Si verifica se:
 					
 						- La semantica di uno o più campi obbligatori è errata
