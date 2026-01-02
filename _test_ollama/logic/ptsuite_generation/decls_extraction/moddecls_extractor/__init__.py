@@ -1,0 +1,3 @@
+from _private.i_moddecls_extractor import IModuleDeclsExtractor
+from _private.a_mutable_moddeclsextr import AMutableModuleDeclsExtractor
+from _private.treesitter_moddeclsextr import TreeSitterModuleDeclsExtractor
