@@ -1,9 +1,9 @@
 from typing import Set, Dict, TextIO
 from abc import abstractmethod
 
-from . import ACheckableLogger
+from logic.ptsuite_generation.logger import ACheckableLogger
 
-from .exceptions import NotWritableStreamError
+from logic.ptsuite_generation.logger.exceptions import NotWritableStreamError
 
 
 

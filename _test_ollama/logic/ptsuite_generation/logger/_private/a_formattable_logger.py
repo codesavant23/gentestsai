@@ -1,10 +1,10 @@
 from typing import Set, Dict
 from abc import abstractmethod
-from . import ILogger
+from logic.ptsuite_generation.logger import ILogger
 
 from string import Formatter as StrFormatter
 
-from .exceptions import FormatNotSetError
+from logic.ptsuite_generation.logger.exceptions import FormatNotSetError
 
 
 

@@ -1,8 +1,8 @@
 from typing import TextIO
 
-from . import ATemporalLogger
+from logic.ptsuite_generation.logger import ATemporalLogger
 
-from .exceptions import InvalidStreamTypeError
+from logic.ptsuite_generation.logger.exceptions import InvalidStreamTypeError
 
 
 

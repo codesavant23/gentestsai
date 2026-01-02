@@ -1,10 +1,10 @@
 from typing import TextIO, Set, Dict
 from abc import abstractmethod
-from . import AMutableLogger
+from logic.ptsuite_generation.logger import AMutableLogger
 
 from datetime import datetime as DateTime
 
-from .exceptions import InvalidFormatError
+from logic.ptsuite_generation.logger.exceptions import InvalidFormatError
 
 
 

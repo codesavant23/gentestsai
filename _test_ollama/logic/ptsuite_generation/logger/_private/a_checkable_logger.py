@@ -1,9 +1,9 @@
 from typing import TextIO, Dict, Set
 from abc import abstractmethod
 
-from . import AFormattableLogger
+from logic.ptsuite_generation.logger import AFormattableLogger
 
-from .exceptions import NotWritableStreamError
+from logic.ptsuite_generation.logger.exceptions import NotWritableStreamError
 
 
 
