@@ -1,16 +1,16 @@
 from typing import TextIO, Set, Dict
 from abc import abstractmethod
-from logic.ptsuite_generation.logger import AMutableLogger
+from .. import AMutableFormattableLogger
 
 from datetime import datetime as DateTime
 
-from logic.ptsuite_generation.logger.exceptions import InvalidFormatError
+from ..exceptions import InvalidFormatError
 
 
 
-class ATemporalLogger(AMutableLogger):
+class ATemporalFormattableLogger(AMutableFormattableLogger):
 	"""
-		Rappresenta un `AMutableLogger` che registra, insieme ai messaggi, forniti
+		Rappresenta un `AMutableFormattableLogger` che registra, insieme ai messaggi, forniti
 		la data associata alla registrazione del messaggio.
 		
 		I placeholders del formato specifici implementati sono i seguenti:
@@ -36,7 +36,7 @@ class ATemporalLogger(AMutableLogger):
 			stream: TextIO
 	):
 		"""
-			Costruisce un nuovo ATemporalLogger associandolo allo stream di output
+			Costruisce un nuovo ATemporalFormattableLogger associandolo allo stream di output
 			fornito
 			
 			Parameters

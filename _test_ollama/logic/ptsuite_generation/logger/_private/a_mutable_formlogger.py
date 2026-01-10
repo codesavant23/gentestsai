@@ -1,13 +1,12 @@
 from typing import Set, Dict, TextIO
 from abc import abstractmethod
+from ._a_base_formlogger import _ABaseFormattableLogger
 
-from logic.ptsuite_generation.logger import ACheckableLogger
-
-from logic.ptsuite_generation.logger.exceptions import NotWritableStreamError
-
+from ..exceptions import NotWritableStreamError
 
 
-class AMutableLogger(ACheckableLogger):
+
+class AMutableFormattableLogger(_ABaseFormattableLogger):
 	"""
 		Rappresenta un `ACheckableLogger` che ha la capacità di variare lo stream di output
 		su cui registrare i messaggi.
@@ -21,7 +20,7 @@ class AMutableLogger(ACheckableLogger):
 	        stream: TextIO
 	):
 		"""
-			Costruisce un nuovo AMutableLogger associandolo allo stream di output
+			Costruisce un nuovo AMutableFormattableLogger associandolo allo stream di output
 			fornito
 			
 			Parameters

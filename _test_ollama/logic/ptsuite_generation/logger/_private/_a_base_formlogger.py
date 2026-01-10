@@ -1,30 +1,57 @@
-from typing import Set, Dict
+from typing import Set, Dict, TextIO
 from abc import abstractmethod
-from logic.ptsuite_generation.logger import ILogger
+from .. import IFormattableLogger
 
 from string import Formatter as StrFormatter
 
-from logic.ptsuite_generation.logger.exceptions import FormatNotSetError
+from ..exceptions import (
+	NotWritableStreamError,
+	FormatNotSetError
+)
 
 
 
-class AFormattableLogger(ILogger):
+class _ABaseFormattableLogger(IFormattableLogger):
 	"""
-		Rappresenta un `ILogger` che ha la capacità di formattare il messaggio di logging
-		che viene scritto sullo stream di output.
-		
-		La stringa di formato di base (ovvero specificata da questa classe astratta) definisce come:
-			
-			- "{message}": Il placeholder che contiene il messaggio fornito al metodo `.log(...)`
+		Rappresenta un `IFormattableLogger` di base, ovvero che contiene la logica
+		di controllo comune ad ogni `IFormattableLogger`.
 		
 		Il tipo di stream di output è specificato dai discendenti di questa classe astratta.
-		Gli altri placeholders del formato sono specificati dai discendenti di questa classe astratta.
+		Altri placeholders del formato sono specificati dai discendenti di questa classe astratta.
 	"""
 	
-	def __init__(self):
+	def __init__(
+			self,
+			stream: TextIO
+	):
 		"""
-			Costruisce un nuovo AFormattableLogger
+			Costruisce un nuovo AFormattableLogger fornendo lo stream di output
+			da verificare prima di associarlo a questo logger
+			
+			Parameters
+			----------
+				stream: TextIO
+					Un oggetto `TextIO` rappresentante lo stream di output da verificare
+			
+			Raises
+			------
+				NotWritableStreamError
+					Si verifica se lo stream fornito:
+					
+						- Lo stream fornito non è uno di output
+						- Lo stream fornito è chiuso
+			
+				InvalidStreamTypeError
+					Si verifica se lo stream fornito è di un tipo invalido rispetto al tipo di stream
+					specificato dai discendenti di questa classe astratta
 		"""
+		if (not stream.writable()) or stream.closed:
+			raise NotWritableStreamError()
+		
+		self._ap__assert_stream_type(stream)
+		
+		self._stream: TextIO = stream
+		
 		self._format: str = None
 		self._parser: StrFormatter = StrFormatter()
 
@@ -73,12 +100,38 @@ class AFormattableLogger(ILogger):
 			format_vars["message"] = message
 			log_message = str.format_map(self._format, format_vars)
 			
-		self._ap__write_log(log_message)
+		self._stream.write(log_message)
+		self._stream.flush()
 		
 		
 	##	============================================================
 	##						ABSTRACT METHODS
 	##	============================================================
+	
+	
+	@abstractmethod
+	def _ap__assert_stream_type(
+			self,
+			stream: TextIO
+	):
+		"""
+			Verifica che lo stream di output fornito rispetti il tipo di stream di output
+			specificato dai discendenti di questa classe astratta.
+
+			Se la verifica ha successo quest' operazione è equivalente ad una no-op
+			
+			Parameters
+			----------
+				stream: TextIO
+					Un oggetto `TextIO` rappresentante lo stream di output da verificare
+					
+			Raises
+			------
+				InvalidStreamTypeError
+					Si verifica se lo stream fornito è di un tipo invalido rispetto al tipo di stream
+					specificato dai discendenti di questa classe astratta
+		"""
+		pass
 	
 	
 	@abstractmethod
@@ -116,19 +169,6 @@ class AFormattableLogger(ILogger):
 				InvalidFormatError
 					Si verifica se è stato fornito un formato con placeholders differenti
 					da quelli accettabili dai discendenti di questa classe astratta
-		"""
-		pass
-	
-	
-	@abstractmethod
-	def _ap__write_log(self, log_message: str):
-		"""
-			Scrive sullo stream di output il messaggio, opzionalmente formattato
-			
-			Parameters
-			----------
-				log_message: str
-					Una stringa contenente il messaggio di log da scrivere sullo stream di output
 		"""
 		pass
 	

@@ -1,13 +1,13 @@
 from typing import List, TextIO
-from logic.ptsuite_generation.logger import ATemporalLogger
+from .. import ATemporalFormattableLogger
 
-from logic.ptsuite_generation.logger.exceptions import InvalidStreamTypeError
+from ..exceptions import InvalidStreamTypeError
 
 
 
-class TextFileMutableLogger(ATemporalLogger):
+class TextFileMutableFormattableLogger(ATemporalFormattableLogger):
 	"""
-		Rappresenta `ATemporalLogger` che registra messaggi su un file testuale.
+		Rappresenta `ATemporalFormattableLogger` che registra messaggi su un file testuale.
 	"""
 	
 	def __init__(

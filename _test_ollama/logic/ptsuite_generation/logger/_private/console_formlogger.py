@@ -1,12 +1,11 @@
 from typing import TextIO
+from .. import ATemporalFormattableLogger
 
-from logic.ptsuite_generation.logger import ATemporalLogger
-
-from logic.ptsuite_generation.logger.exceptions import InvalidStreamTypeError
-
+from ..exceptions import InvalidStreamTypeError
 
 
-class ConsoleLogger(ATemporalLogger):
+
+class ConsoleLogger(ATemporalFormattableLogger):
 	"""
 		Rappresenta `ACheckableLogger` che ha la capacità di scrivere su Console
 		(`stdout` e `stderr`)
