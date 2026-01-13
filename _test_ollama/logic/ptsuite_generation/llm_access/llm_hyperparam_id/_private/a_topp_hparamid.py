@@ -1,0 +1,34 @@
+from abc import abstractmethod
+from .. import ILlmHyperParamId
+
+
+
+class ATopPHyperParamId(ILlmHyperParamId):
+	"""
+		Rappresenta un `ILlmHyperParamId` che descrive l' iperparametro
+		top-p.
+		
+		Ogni iperparametro "Top-P" ha nome "top-p".
+		
+		I modelli e/o le specifiche APIs, a cui appartengono l' iperparametro specifico, sono descritti/e
+		dai discendenti di questa interfaccia
+	"""
+	
+	
+	def name(self) -> str:
+		return "top-p"
+	
+	
+	##	============================================================
+	##						ABSTRACT METHODS
+	##	============================================================
+
+	
+	@abstractmethod
+	def id(self) -> str:
+		pass
+	
+	
+	##	============================================================
+	##						PRIVATE METHODS
+	##	============================================================
