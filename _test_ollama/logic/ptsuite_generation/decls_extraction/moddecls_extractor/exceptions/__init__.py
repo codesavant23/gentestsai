@@ -1,1 +1,1 @@
-from incmodcode_error import IncorrectModuleCodeError
+from ._private.incmodcode_error import IncorrectModuleCodeError
