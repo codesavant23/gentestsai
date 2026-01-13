@@ -54,15 +54,38 @@ class IFormattableLogger(ABC):
 	
 	
 	@abstractmethod
-	def unset_format(self):
+	def unset_format(self) -> str:
 		"""
-			Elimina la stringa di formato precedentemente impostata così da riportare il messaggio
-			registrato senza nessuna formattazione
+			Disassocia la stringa di formato precedentemente impostata, restituendola, così da riportare
+			il messaggio registrato senza nessuna formattazione
+			
+			Returns
+			-------
+				str
+					Una stringa rappresentante la stringa di formato precedentemente impostata
 			
 			Raises
 			------
 				FormatNotSetError
 					Si verifica se non c'è una stringa di formato impostata alla chiamata di
 					questa operazione
+		"""
+		pass
+	
+	
+	@abstractmethod
+	def set_messages_sep(self, new_sep: str):
+		"""
+			Imposta un nuovo separatore per i messaggi di logging
+			
+			Parameters
+			----------
+				new_sep: str
+					Una stringa contenente il nuovo separatore per i messaggi di logging
+					
+			Raises
+			------
+				ValueError
+					Si verifica se il parametro `new_sep` ha valore `None`
 		"""
 		pass

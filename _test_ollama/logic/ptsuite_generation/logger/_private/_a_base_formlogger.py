@@ -54,13 +54,15 @@ class _ABaseFormattableLogger(IFormattableLogger):
 		
 		self._format: str = None
 		self._parser: StrFormatter = StrFormatter()
+		
+		self._sep: str = None
 
 
 	def set_format(
 			self,
 			format_str: str
 	):
-		if (format_str is None) or (format_str == ""):
+		if (format_str is None):
 			raise ValueError()
 		
 		placehs: Set[str] = {
@@ -74,11 +76,20 @@ class _ABaseFormattableLogger(IFormattableLogger):
 		self._format = format_str
 	
 	
-	def unset_format(self):
+	def unset_format(self) -> str:
 		if self._format is None:
 			raise FormatNotSetError()
 		
+		old_format: str = self._format
 		self._format = None
+		return old_format
+	
+	
+	def set_messages_sep(self, new_sep: str):
+		if (self._sep is None):
+			raise ValueError()
+		
+		self._sep = new_sep
 	
 	
 	def log(
@@ -100,7 +111,7 @@ class _ABaseFormattableLogger(IFormattableLogger):
 			format_vars["message"] = message
 			log_message = str.format_map(self._format, format_vars)
 			
-		self._stream.write(log_message)
+		self._stream.write(log_message + self._sep)
 		self._stream.flush()
 		
 		

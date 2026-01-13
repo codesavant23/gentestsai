@@ -8,7 +8,7 @@ from ..exceptions import NotWritableStreamError
 
 class AMutableFormattableLogger(_ABaseFormattableLogger):
 	"""
-		Rappresenta un `ACheckableLogger` che ha la capacità di variare lo stream di output
+		Rappresenta un `IFormattableLogger` che ha la capacità di variare lo stream di output
 		su cui registrare i messaggi.
 		
 		Il tipo di stream di output utilizzato è specificato dai discendenti di questa classe astratta.
