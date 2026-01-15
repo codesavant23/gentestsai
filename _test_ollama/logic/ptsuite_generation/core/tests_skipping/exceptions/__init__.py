@@ -1,1 +1,1 @@
-from invalidskipdtfile_error import InvalidSkippedTestsFileError
+from ._private.invalidskipdtfile_error import InvalidSkippedTestsFileError
