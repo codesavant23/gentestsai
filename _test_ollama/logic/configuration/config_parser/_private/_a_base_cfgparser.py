@@ -4,11 +4,14 @@ from .. import IConfigParser
 
 # ============ Path Utilities ============ #
 from os.path import splitext as path_split_ext
-from pathlib import Path as SystemPath
 # ======================================== #
 
-from logic.configuration.config_parser.exceptions import (
-	ConfigFileNotValidatedError,
+from ....utils.path_validator import (
+	PathValidator,
+	EPathValidationErrorType
+)
+
+from ..exceptions import (
 	InvalidConfigFilepathError,
 	WrongConfigFileTypeError
 )
@@ -49,8 +52,8 @@ class _ABaseConfigParser(IConfigParser):
 				InvalidConfigFilepathError
 					Si verifica se:
 					
-						- Non esiste un file alla path fornita
 						- La path del file di configurazione fornita risulta invalida sintatticamente
+						- Non esiste un file alla path fornita
 						- Non è possibile aprire il file di configurazione
 		"""
 		if cfgfile_path is None:
@@ -59,9 +62,9 @@ class _ABaseConfigParser(IConfigParser):
 			raise ValueError()
 		
 		try:
-			prompts_path = SystemPath(cfgfile_path)
-			prompts_path.stat()
-		except (FileNotFoundError,
+			PathValidator().assert_path(cfgfile_path)
+		except (NotADirectoryError,
+				FileNotFoundError,
 		        PermissionError,
 		        OSError):
 			raise InvalidConfigFilepathError()

@@ -1,9 +1,10 @@
 from typing import List, Dict, Set, Any, Tuple
 from ._a_base_cfgvalidator import _ABaseConfigValidator
 
-# ============ Path Utilities ============ #
-from pathlib import Path as SystemPath
-# ======================================== #
+from ....utils.path_validator import (
+	EPathValidationErrorType,
+	PathValidator
+)
 
 from ..exceptions import (
 	FieldDoesntExistsError,
@@ -13,7 +14,7 @@ from ..exceptions import (
 
 
 
-class ProjectsJsonConfigReader(_ABaseConfigValidator):
+class ProjectsConfigValidator(_ABaseConfigValidator):
 	"""
 		Rappresenta un `IConfigValidator` per il file di configurazione dei progetti focali di cui
 		verranno generati i tests.
@@ -21,10 +22,10 @@ class ProjectsJsonConfigReader(_ABaseConfigValidator):
 		Il file di configurazione letto è un dizionario contenente:
 		
 			-   Un entry dizionario per ogni progetto focale la cui chiave è il nome del progetto.
-				Il dizionario contiene, obbligatoriamente:
+				Ogni dizionario contiene, obbligatoriamente:
 				
 					* "focal_root" (str): La Focal Project Root Path del progetto
-					* "tests_root" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Generazione"
+					* "tests_root" (str): La Tests Project Root Path del progetto
 					
 				e può contenere, opzionalmente:
 					
@@ -34,12 +35,17 @@ class ProjectsJsonConfigReader(_ABaseConfigValidator):
 	_REQ_FIELDS: Set[str] = {"focal_root", "tests_root"}
 	_OPT_FIELDS: Set[str] = {"focal_excluded"}
 	
+	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida (progetto "{proj_name}")'
+	_NOTEX_ERROR: str = 'La path specificata dal parametro "{param}" non esiste (progetto "{proj_name}")'
+	_PERM_ERROR: str = 'Non si può accedere alla path specificata dal parametro "{param}" (progetto "{proj_name}")'
+	_UNRE_ERROR: str = 'La path specificata dal parametro "{param}" non è raggiungibile (progetto "{proj_name}")'
+	
 	def __init__(
 			self,
 			config_dict: Dict[str, Any]
 	):
 		"""
-			Costruisce un nuovo ProjectsJsonConfigReader leggendo il file di configurazione alla path
+			Costruisce un nuovo ProjectsConfigValidator leggendo il file di configurazione alla path
 			specificata.
 			
 			Parameters
@@ -57,6 +63,8 @@ class ProjectsJsonConfigReader(_ABaseConfigValidator):
 						- Il dizionario fornito è vuoto
 		"""
 		super().__init__(config_dict)
+		
+		self._pathval: PathValidator = PathValidator()
 	
 	
 	def _p__efields_strict(self) -> bool:
@@ -110,9 +118,8 @@ class ProjectsJsonConfigReader(_ABaseConfigValidator):
 	##	============================================================
 
 
-	@classmethod
 	def _assert_path(
-			cls,
+			self,
 			path_totest: str,
 			proj_name: str,
 			param: str
@@ -137,29 +144,41 @@ class ProjectsJsonConfigReader(_ABaseConfigValidator):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				InvalidConfigValueError
 					Si verifica se:
 					
 						- La path non è sintatticamente valida
 						- La path fornita non esiste
+						- La path fornita è inaccessibile
 		"""
-		path: SystemPath
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.SYNTACTIC,
+			self._SYNT_ERROR.format(param=param, proj_name=proj_name)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.NOTEXISTS,
+			self._NOTEX_ERROR.format(param=param, proj_name=proj_name)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.PERMISSION,
+			self._PERM_ERROR.format(param=param, proj_name=proj_name)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.INACCESSIBLE,
+			self._UNRE_ERROR.format(param=param, proj_name=proj_name)
+		)
+		
 		try:
-			path = SystemPath(path_totest)
-			path.stat()
-		except NotADirectoryError:
-			raise InvalidConfigValueError(f'La path specificata dal parametro "{param}" è invalida (progetto "{proj_name}")')
-		except FileNotFoundError:
-			raise InvalidConfigValueError(f'La path specificata dal parametro "{param}" non esiste (progetto "{proj_name}")')
-		except PermissionError:
-			raise InvalidConfigValueError(f'Non si può accedere alla path specificata dal parametro "{param}" (progetto "{proj_name}")')
-		except OSError:
-			raise InvalidConfigValueError(f'La path specificata dal parametro "{param}" non è raggiungibile (progetto "{proj_name}")')
+			self._pathval.assert_path(path_totest)
+		except (NotADirectoryError,
+		        FileNotFoundError,
+		        PermissionError,
+		        OSError):
+			raise InvalidConfigValueError()
 
 
-	@classmethod
 	def _assert_focal_excl(
-			cls,
+			self,
 			focal_excl: List[str],
 			proj_name: str
 	):
@@ -182,4 +201,4 @@ class ProjectsJsonConfigReader(_ABaseConfigValidator):
 					Si verifica se almeno una delle paths di "focal_excluded" è invalida
 		"""
 		for path in focal_excl:
-			cls._assert_path(path, proj_name, "focal_excluded")
+			self._assert_path(path, proj_name, "focal_excluded")

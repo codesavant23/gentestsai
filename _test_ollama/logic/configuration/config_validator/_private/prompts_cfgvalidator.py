@@ -6,6 +6,11 @@ from os.path import join as path_join
 from pathlib import Path as SystemPath
 # ======================================== #
 
+from ....utils.path_validator import (
+	PathValidator,
+	EPathValidationErrorType
+)
+
 from ..exceptions import (
 	InvalidConfigValueError
 )
@@ -25,12 +30,16 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 			- "meth_fname" (str): Il nome del file che contiene il template prompt per metodi
 			- "corr_fname" (str): Il nome del file che contiene il template prompt per correzioni
 	"""
-
 	_ALL_FIELDS: Set[str] = {
 		"prompts_path",
 		"generic_dirname",
 		"func_prompt", "meth_prompt", "corr_prompt"
 	}
+	
+	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
+	_NOTEX_ERROR: str = 'La path specificata dal parametro "{param}" non esiste'
+	_PERM_ERROR: str = 'Non si può accedere alla path specificata dal parametro "{param}"'
+	_UNRE_ERROR: str = 'La path specificata dal parametro "{param}" non è raggiungibile'
 
 	def __init__(
 			self,
@@ -55,6 +64,8 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 						- Il dizionario fornito è vuoto
 		"""
 		super().__init__(config_dict)
+		
+		self._pathval: PathValidator = PathValidator()
 	
 	
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:
@@ -89,9 +100,8 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 	##	============================================================
 
 	
-	@classmethod
 	def _assert_path(
-			cls,
+			self,
 			path_totest: str,
 			param: str
 	):
@@ -112,29 +122,41 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				InvalidConfigValueError
 					Si verifica se:
 					
 						- La path non è sintatticamente valida
 						- La path fornita non esiste
+						- La path fornita è inaccessibile
 		"""
-		path: SystemPath
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.SYNTACTIC,
+			self._SYNT_ERROR.format(param=param)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.NOTEXISTS,
+			self._NOTEX_ERROR.format(param=param)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.PERMISSION,
+			self._PERM_ERROR.format(param=param)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.INACCESSIBLE,
+			self._UNRE_ERROR.format(param=param)
+		)
+		
 		try:
-			path = SystemPath(path_totest)
-			path.stat()
-		except NotADirectoryError:
-			raise InvalidConfigValueError(f'La path specificata dal parametro "{param}" è invalida')
-		except FileNotFoundError:
-			raise InvalidConfigValueError(f'La path specificata dal parametro "{param}" non esiste')
-		except PermissionError:
-			raise InvalidConfigValueError(f'Non si può accedere alla path specificata dal parametro "{param}"')
-		except OSError:
-			raise InvalidConfigValueError(f'La path specificata dal parametro "{param}" non è raggiungibile')
+			self._pathval.assert_path(path_totest)
+		except (NotADirectoryError,
+		        FileNotFoundError,
+		        PermissionError,
+		        OSError):
+			raise InvalidConfigValueError()
 	
 		
-	@classmethod
 	def _assert_templates(
-			cls,
+			self,
 			base_path: str,
 			func_fname: str,
 			meth_fname: str,
@@ -167,16 +189,15 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 		error_on: str
 		for curr_path, dirs, files in prompts_path.walk(top_down=True):
 			if curr_path != prompts_path:
-				
-				cls._assert_path(
+				self._assert_path(
 					path_join(curr_path, func_fname),
 					"func_prompt"
 				)
-				cls._assert_path(
+				self._assert_path(
 					path_join(curr_path, meth_fname),
 					"meth_prompt"
 				)
-				cls._assert_path(
+				self._assert_path(
 					path_join(curr_path, corr_fname),
 					"corr_prompt"
 				)

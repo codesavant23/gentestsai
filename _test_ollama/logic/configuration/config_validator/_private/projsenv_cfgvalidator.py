@@ -22,6 +22,11 @@ from os.path import join as path_join
 from pathlib import Path as SystemPath
 # ======================================== #
 
+from ....utils.path_validator import (
+	PathValidator,
+	EPathValidationErrorType
+)
+
 from ..exceptions import (
 	WrongConfigFileFormatError,
 	FieldDoesntExistsError,
@@ -39,6 +44,11 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			- "envconfig_dir" (str): L' eventuale nome della directory che contiene i files di configurazione per gli ambienti focali
 			- "os_image" (str): L' immagine 'base' di docker da cui derivare ogni immagine degli ambienti focali
 			- "python_version" (str): La versione di fallback dell' interprete Python da utilizzare (nel caso in cui il progetto non ne abbia una specifica)
+			- "tools" (Dict[str, str]): Dizionario che contiene le path/directories relative ai tools da utilizzare nell' ambiente focale. Contiene:
+			
+				* "tools_root" (str): La root path che contiene i tools da aggiungere all' interno di ogni ambiente focale
+				* "linting" (str): Il nome della directory che contiene i tools per eseguire la verifica di linting all' interno dell' ambiente focale
+				
 			- "project" (Dict[str, str]): Dizionario che contiene i parametri relativi ad ogni progetto focale. Contiene:
 			
 				* "dockerfile" (str): Il nome del dockerfile, creato da GenTestsAI, che costruirà l' immagine dell' ambiente focale
@@ -52,7 +62,12 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	_OUTER_FIELDS: Set[str] = {
 		"envconfig_dir",
 		"os_image", "python_version",
+		"tools",
 		"project"
+	}
+	_TOOLS_FIELDS: Set[str] = {
+		"tools_root",
+		"linting"
 	}
 	_1PROJ_FIELDS: Set[str] = {
 		"dockerfile",
@@ -60,6 +75,11 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		"external_deps_file", "python_deps_file",
 		"pre_extdeps_script", "post_extdeps_script"
 	}
+	
+	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
+	_NOTEX_ERROR: str = 'La path specificata dal parametro "{param}" non esiste'
+	_PERM_ERROR: str = 'Non si può accedere alla path specificata dal parametro "{param}"'
+	_UNRE_ERROR: str = 'La path specificata dal parametro "{param}" non è raggiungibile'
 	
 	def __init__(
 			self,
@@ -106,6 +126,8 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		
 		self._full_roots: List[str] = full_roots
 		self._dhub_vers: str = docker_hub_vers
+		
+		self._pathval: PathValidator = PathValidator()
 	
 	
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:
@@ -113,21 +135,29 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
-		_OUTER_FIELDS: Set[str] = {
-			"envconfig_dir",
-			"os_image", "python_version",
-			"project"
-		}
 		envconfig_dir: str = config_read["envconfig_dir"]
 		os_image: str = config_read["os_image"]
 		py_version: str = config_read["python_version"]
 		project: Dict[str, str] = config_read["project"]
+		tools: Dict[str, str] = config_read["tools"]
 		
-		oneproj_fields = set(project.keys())
-		if oneproj_fields < self._1PROJ_FIELDS:
+		proj_fields = set(project.keys())
+		if proj_fields < self._1PROJ_FIELDS:
 			raise FieldDoesntExistsError()
-		if oneproj_fields > self._1PROJ_FIELDS:
+		if proj_fields > self._1PROJ_FIELDS:
 			raise WrongConfigFileFormatError()
+		
+		tools_fields = set(tools.keys())
+		if tools_fields < self._TOOLS_FIELDS:
+			raise FieldDoesntExistsError()
+		if tools_fields > self._TOOLS_FIELDS:
+			raise WrongConfigFileFormatError()
+		
+		tools_root: str = tools["tools_root"]
+		linting_tools: str = tools["linting"]
+		
+		self._assert_path(tools_root, "tools_root")
+		self._assert_path(linting_tools, "linting")
 		
 		is_pyvers_valid: bool = reg_search(r"[0-9]+\.[0-9]+(\.[0-9]+)?", py_version) is not None
 		if not is_pyvers_valid:
@@ -146,6 +176,22 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		#self._assert_base_image_exists(os_image, image, tag)
 		"""
 		
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.SYNTACTIC,
+			'La path specificata dal parametro "dockerfile" è invalida'
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.NOTEXISTS,
+			'Il dockerfile specificato da "dockerfile" non esiste'
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.PERMISSION,
+			'Non si può accedere alla path specificata dal parametro "dockerfile"'
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.INACCESSIBLE,
+			'La path specificata dal parametro "dockerfile" non è raggiungibile'
+		)
 		envconfig_root: str
 		dockf_path: str
 		path: SystemPath
@@ -153,18 +199,14 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			envconfig_root = path_join(full_root, envconfig_dir)
 			if os_fdexists(envconfig_root):
 				dockf_path = path_join(full_root, project["dockerfile"])
-
+				
 				try:
-					path = SystemPath(dockf_path)
-					path.stat()
-				except NotADirectoryError:
-					raise InvalidConfigValueError(f'La path specificata dal parametro "dockerfile" è invalida')
-				except FileNotFoundError:
-					raise InvalidConfigValueError(f'Il dockerfile specificato da "dockerfile" non esiste')
-				except PermissionError:
-					raise InvalidConfigValueError(f'Non si può accedere alla path specificata dal parametro "dockerfile"')
-				except OSError:
-					raise InvalidConfigValueError(f'La path specificata dal parametro "dockerfile" non è raggiungibile')
+					self._pathval.assert_path(dockf_path)
+				except (NotADirectoryError,
+				        FileNotFoundError,
+				        PermissionError,
+				        OSError):
+					raise InvalidConfigValueError()
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
@@ -178,6 +220,61 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	##	============================================================
 	##						PRIVATE METHODS
 	##	============================================================
+	
+	
+	def _assert_path(
+			self,
+			path_totest: str,
+			param: str
+	):
+		"""
+			Verifica che la path fornita sia:
+				
+				- Corretta sintatticamente ed esista nel sistema operativo.
+				- Sia raggiungibile
+				- Sia accessibile
+			
+			Parameters
+			----------
+				path_totest: str
+					Una stringa contenente la path di cui verificare l' esistenza e la correttezza sintattica
+					
+				param: str
+					Una stringa contenente il parametro di cui verificare la path data
+			
+			Raises
+			------
+				InvalidConfigValueError
+					Si verifica se:
+					
+						- La path non è sintatticamente valida
+						- La path fornita non esiste
+						- La path fornita è inaccessibile
+		"""
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.SYNTACTIC,
+			self._SYNT_ERROR.format(param=param)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.NOTEXISTS,
+			self._NOTEX_ERROR.format(param=param)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.PERMISSION,
+			self._PERM_ERROR.format(param=param)
+		)
+		self._pathval.set_error_msg(
+			EPathValidationErrorType.INACCESSIBLE,
+			self._UNRE_ERROR.format(param=param)
+		)
+		
+		try:
+			self._pathval.assert_path(path_totest)
+		except (NotADirectoryError,
+		        FileNotFoundError,
+		        PermissionError,
+		        OSError):
+			raise InvalidConfigValueError()
 
 
 	def _assert_base_image_exists(

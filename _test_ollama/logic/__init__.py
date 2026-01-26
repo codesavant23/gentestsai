@@ -1,9 +1,5 @@
-"""import utils
-import tsuite_gen
+import utils
+import configuration
+import focalproj_configuration
+import ptsuite_generation
 import calc_coverage
-
-__all__ = [
-	utils,
-	tsuite_gen,
-	calc_coverage
-]"""

@@ -1,0 +1,17 @@
+{
+	"envconfig_dir": "config_proj_environment",
+	"os_image": "debian:trixie-slim",
+	"python_version": "3.10",
+	"tools": {
+		"tools_root": "C:\\Users\\filip\\Desktop\\Python_Projects\\gentestsai\\_test_ollama\\docker\\tools",
+		"linting": "gtsai_linting_tools"
+	},
+	"project": {
+		"dockerfile": "Dockerfile",
+		"python_version_file": "python_version.txt",
+		"external_deps_file": "ext_deps.txt",
+		"python_deps_file": "python_deps.txt",
+		"pre_extdeps_script": "pre_extdeps.sh",
+		"post_extdeps_script": "post_extdeps.sh"
+	}
+}
