@@ -71,6 +71,9 @@ class ATransactDockfBuilder(_ABaseDockfBuilder):
 			Finalizza la transazione di comandi shell iniziata e scrive tutti i comandi shell
 			in un' unica istruzione `RUN`.
 			Tutti i comandi vengono concatenati con il separatore `"&&"`.
+			
+			Se nessun comando è stato inserito nella transazione allora quest' operazione
+			è equivalente ad una no-op
 
 			Raises
 			------

@@ -1,1 +1,3 @@
 from bimagenotset_error import BaseImageNotSetError
+from focalprojnotset_error import FocalProjectNotSetError
+from defpyversnotset_error import DefaultPythonVersionNotSetError

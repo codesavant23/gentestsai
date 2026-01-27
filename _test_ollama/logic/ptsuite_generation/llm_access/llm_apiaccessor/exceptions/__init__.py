@@ -1,3 +1,5 @@
+from ._private.accsornotinited_error import AccessorNotInitedError
+
 from ._private.modelnotselected_error import ModelNotSelectedError
 from ._private.invalidprompt_error import InvalidPromptError
 

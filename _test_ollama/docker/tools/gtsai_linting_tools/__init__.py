@@ -1,0 +1,2 @@
+from ptsuite_1time_lintingchecker import PartialTsuite1TimeLintingChecker
+import exceptions

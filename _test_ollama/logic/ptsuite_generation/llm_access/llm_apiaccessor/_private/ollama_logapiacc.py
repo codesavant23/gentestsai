@@ -14,6 +14,11 @@ from httpx import (
 
 from ....logger import ATemporalFormattableLogger
 from ....logger.exceptions import FormatNotSetError
+
+from ...llm_api import (
+	ILlmApi,
+	OllamaApi
+)
 from ...llm_chat import ILlmChat
 from ...llm_hyperparam_id import (
 	AWantsThinkingHyperParamId, OllamaThinkHyperParamId,
@@ -31,7 +36,7 @@ from ..exceptions import (
 
 
 
-class OllamaLlmApiAccessor(ALoggableLlmApiAccessor):
+class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 	"""
 		Rappresenta un `ALoggableLlmApiAccessor` per la piattaforma di inferenza
 		"Ollama"
@@ -47,7 +52,7 @@ class OllamaLlmApiAccessor(ALoggableLlmApiAccessor):
 			logger_sep: str="\n",
 	):
 		"""
-			Costruisce un nuovo OllamaLlmApiAccessor associandolo alla prima chat da utilizzare
+			Costruisce un nuovo OllamaLoggableApiAccessor associandolo alla prima chat da utilizzare
 			per effettuare le richieste
 			
 			Parameters
@@ -73,7 +78,7 @@ class OllamaLlmApiAccessor(ALoggableLlmApiAccessor):
 					
 				logger: ATemporalFormattableLogger
 					Opzionale. Default = `None`. Un oggetto `ATemporalFormattableLogger` rappresentante
-					il logger da utilizzare per registrare i passaggi effettuati da questo OllamaLlmApiAccessor
+					il logger da utilizzare per registrare i passaggi effettuati da questo OllamaLoggableApiAccessor
 					durante ogni richiesta effettuata
 					
 				logger_sep: str
@@ -203,8 +208,8 @@ class OllamaLlmApiAccessor(ALoggableLlmApiAccessor):
 		return full_response
 	
 	
-	def _ap__accepted_api(self) -> str:
-		return "ollama"
+	def _ap__accepted_api(self) -> ILlmApi:
+		return OllamaApi()
 
 
 	##	============================================================

@@ -3,6 +3,7 @@ from abc import abstractmethod
 from ._a_base_llmapiacc import _ABaseLlmApiAccessor
 
 from ....logger import ATemporalFormattableLogger
+from ...llm_api import ILlmApi
 from ...llm_chat import ILlmChat
 from ...llm_hyperparam import ILlmHyperParam
 from ...llm_specimpl import ILlmSpecImpl
@@ -53,7 +54,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 			self._logger_sep = logger_sep if logger_sep is not None else "\n"
 	
 	
-	def _ap__prompt(
+	def _ap__prompt_spec(
 			self,
 			chat: ILlmChat,
 			model: ILlmSpecImpl,
@@ -72,7 +73,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 	
 	
 	@abstractmethod
-	def _ap__accepted_api(self) -> str:
+	def _ap__accepted_api(self) -> ILlmApi:
 		pass
 	
 	

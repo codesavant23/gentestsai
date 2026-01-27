@@ -6,10 +6,7 @@ from .. import IConfigParser
 from os.path import splitext as path_split_ext
 # ======================================== #
 
-from ....utils.path_validator import (
-	PathValidator,
-	EPathValidationErrorType
-)
+from ....utils.path_validator import PathValidator
 
 from ..exceptions import (
 	InvalidConfigFilepathError,
@@ -20,7 +17,7 @@ from ..exceptions import (
 
 class _ABaseConfigParser(IConfigParser):
 	"""
-		Rappresenta un `IConfigParser` di base, ovver che contiene la logica di controllo
+		Rappresenta un `IConfigParser` di base, ovvero che contiene la logica di controllo
 		comune ad ogni `IConfigParser`.
 		
 		Il tipo del file di configurazione letto è specificato dai discendenti di questa classe astratta.
@@ -63,11 +60,8 @@ class _ABaseConfigParser(IConfigParser):
 		
 		try:
 			PathValidator().assert_path(cfgfile_path)
-		except (NotADirectoryError,
-				FileNotFoundError,
-		        PermissionError,
-		        OSError):
-			raise InvalidConfigFilepathError()
+		except Exception as err:
+			raise InvalidConfigFilepathError(err.args[0])
 		
 		self._cfg_path = cfgfile_path
 	

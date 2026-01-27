@@ -9,6 +9,7 @@ from ...llm_hyperparam_id import ILlmHyperParamId
 from ...llm_specimpl import ILlmSpecImpl
 
 from ..exceptions import (
+	AccessorNotInitedError,
 	ModelNotSelectedError,
 	IncompatibleApiError,
 	IncompatibleHyperparamError,
@@ -32,38 +33,28 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 			chat: ILlmChat
 	):
 		"""
-			Costruisce un nuovo _ABaseLlmApiAccessor associandolo alla
-			prima chat da utilizzare per effettuare le richieste
-			
-			Parameters
-			----------
-				chat: ILlmChat
-					Un oggetto `ILlmChat` rappresentante la chat da utilizzare per
-					le successive interazioni con il prossimo modello scelto.
-					L' oggetto `ILlmChat` viene interamente gestito da questo `ILlmApiAccessor`
-					azzerandolo ad ogni nuovo modello scelto.
-					Alla fine della costruzione la chat sarà già stata azzerata
-					
-			Raises
-			------
-				ValueError
-					Si verifica se `chat` ha valore `None`
-					
-				IncompatibleApiError
-					Si verifica se l' API rappresentata da questo oggetto è incompatibile
-					con le APIs di `chat`
+			Costruisce un nuovo _ABaseLlmApiAccessor
 		"""
+		self._inited: bool = False
+		
+		self._model: ILlmSpecImpl = None
+		self._hparams: List[ILlmHyperParam] = list()
+		self._repr_api: ILlmApi = None
+		self._chat: ILlmChat = None
+	
+	
+	def init_accsor(self, chat: ILlmChat):
 		if chat is None:
 			raise ValueError()
 		
-		self._repr_api: ILlmApi = self._ap__accepted_api()
+		self._repr_api = self._ap__accepted_api()
 		if self._repr_api not in chat.compat_apis():
 			raise IncompatibleApiError()
-			
-		self._model: ILlmSpecImpl = None
-		self._hparams: List[ILlmHyperParam] = list()
-		self._chat: ILlmChat = chat
+		
+		self._chat = chat
 		self._chat.clear()
+		
+		self._inited = True
 	
 	
 	def set_chat(
@@ -71,6 +62,8 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 			chat: ILlmChat,
 			erase: bool = True
 	):
+		if not self._inited:
+			raise AccessorNotInitedError()
 		if chat is None:
 			raise ValueError()
 		if self._repr_api not in chat.compat_apis():
@@ -85,6 +78,8 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 			self,
 			model: ILlmSpecImpl
 	):
+		if not self._inited:
+			raise AccessorNotInitedError()
 		if model is None:
 			raise ValueError()
 		if self._repr_api in model.compat_apis():
@@ -96,6 +91,8 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 	
 	
 	def add_hyperparam(self, hparam: ILlmHyperParam):
+		if not self._inited:
+			raise AccessorNotInitedError()
 		if hparam is None:
 			raise ValueError()
 		if self._model is None:
@@ -111,6 +108,8 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 	
 	
 	def remove_hyperparam(self, hparam: ILlmHyperParam):
+		if not self._inited:
+			raise AccessorNotInitedError()
 		if hparam is None:
 			raise ValueError()
 		if self._model is None:
@@ -129,13 +128,15 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 			user_prompt: str,
 			timeout: int
 	) -> str:
+		if not self._inited:
+			raise AccessorNotInitedError()
 		if self._model is None:
 			raise ModelNotSelectedError()
 		if (user_prompt is None) or (user_prompt == "") or (timeout < 1):
 			raise ValueError()
 		
 		self._chat.add_prompt(user_prompt)
-		response: str = self._ap__prompt(
+		response: str = self._ap__prompt_spec(
 			self._chat.chat_messages(),
 			self._model,
 			self._hparams,
@@ -152,7 +153,7 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 
 
 	@abstractmethod
-	def _ap__prompt(
+	def _ap__prompt_spec(
 			self,
 			chat: ILlmChat,
 			model: ILlmSpecImpl,
@@ -220,7 +221,7 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 	@abstractmethod
 	def _ap__accepted_api(self) -> ILlmApi:
 		"""
-			Restituisce l' identificativo dell' API associata a questo ILlmApiAccessor
+			Restituisce l' oggetto che identifica dell' API associata a questo ILlmApiAccessor.
 			
 			Returns
 			-------

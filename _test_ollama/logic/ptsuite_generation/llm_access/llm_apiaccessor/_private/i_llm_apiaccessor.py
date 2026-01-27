@@ -11,12 +11,41 @@ class ILlmApiAccessor(ABC):
 		Rappresenta un oggetto che permette, tramite l' utilizzo di una qualsiasi API che fornisce LLMs,
 		l' interazione con un LLM.
 
-		E' necessario, dopo la creazione di un ILlmApiAccessor, eseguire l' operazione `.select_model(...)`
-		per la selezione del primo modello con cui avverranno le interazioni.
+		E' necessario, dopo la creazione di un ILlmApiAccessor, eseguire:
+		
+			- L' operazione `.init_accsor(...)` per l' associazione con la prima chat da utilizzare per le richieste
+			- L' operazione `.select_model(...)` per la selezione del primo modello con cui avverranno le interazioni
 
 		La specifica API a cui è legato ogni oggetto ILlmApiAccessor è descritta dai discendenti di questa interfaccia.
 	"""
-
+	
+	
+	@abstractmethod
+	def init_accsor(self, chat: ILlmChat):
+		"""
+			Inizializza questo ILlmApiAccessor associandolo alla prima chat da utilizzare
+			per effettuare le richieste
+			
+			Parameters
+			----------
+				chat: ILlmChat
+					Un oggetto `ILlmChat` rappresentante la chat da utilizzare per
+					le successive interazioni con il prossimo modello scelto.
+					L' oggetto `ILlmChat` viene completamente gestito da questo `ILlmApiAccessor`
+					azzerandolo ad ogni nuovo modello scelto.
+					Alla fine di questa operazione la chat sarà già stata azzerata
+					
+			Raises
+			------
+				ValueError
+					Si verifica se `chat` ha valore `None`
+					
+				IncompatibleApiError
+					Si verifica se l' API rappresentata da questo oggetto è incompatibile
+					con le APIs di `chat`
+		"""
+		pass
+		
 
 	@abstractmethod
 	def set_chat(self, chat: ILlmChat, erase: bool=True):
@@ -37,6 +66,9 @@ class ILlmApiAccessor(ABC):
 					
 			Raises
 			------
+				AccessorNotInitedError
+					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+			
 				ValueError
 					Si verifica se il parametro `chat` ha valore `None`
 					
@@ -65,6 +97,9 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
+				AccessorNotInitedError
+					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+			
 				ValueError
 					Si verifica se `model` ha valore None
 					
@@ -88,6 +123,9 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
+				AccessorNotInitedError
+					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+			
 				ModelNotSelectedError
 					Si verifica se non è stato selezionato nessun modello per questo ILlmApiAccessor
 			
@@ -117,6 +155,9 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
+				AccessorNotInitedError
+					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+			
 				ModelNotSelectedError
 					Si verifica se non è stato selezionato nessun modello per questo ILlmApiAccessor
 			
@@ -153,6 +194,9 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
+				AccessorNotInitedError
+					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+			
 				ChatNeverSelectedError
 					Si verifica se non è mai stato impostato un oggetto chat da utilizzare
 			
