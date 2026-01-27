@@ -1,7 +1,7 @@
 {
-    "prompts_path": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\prompts\\",
-    "generic_prompts_dir": "generic",
-    "func_prompt": "template_fbyf_func.txt",
-    "meth_prompt": "template_fbyf_meth.txt",
-    "corr_prompt": "template_fbyf_corr.txt"
+    "base_path": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\prompts\\",
+    "generic_dirname": "generic",
+    "func_fname": "template_fbyf_func.txt",
+    "meth_fname": "template_fbyf_meth.txt",
+    "corr_fname": "template_fbyf_corr.txt"
 }

@@ -15,6 +15,7 @@ class OllamaGeneralConfigValidator(AGeneralConfigValidator):
 			- In "default_model_params":
 				
 				* "num_predict": Il valore di fallback del parametro "num_predict" di Ollama
+				* "num_gpu": Il valore di fallback del parametro "num_gpu" di Ollama
 	"""
 	
 	def __init__(
@@ -58,6 +59,14 @@ class OllamaGeneralConfigValidator(AGeneralConfigValidator):
 				raise InvalidConfigValueError()
 			
 			if num_predict < -2:
+				raise InvalidConfigValueError()
+			
+		num_gpu: int = config_read["num_gpu"].get("num_gpu", None)
+		if num_predict is not None:
+			if not isinstance(num_gpu, int):
+				raise InvalidConfigValueError()
+			
+			if num_gpu < 0:
 				raise InvalidConfigValueError()
 
 

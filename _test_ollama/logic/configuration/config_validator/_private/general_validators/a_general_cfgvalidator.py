@@ -32,7 +32,7 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 				* "funcs_gen" (str): Nome del file che contiene elenca le funzioni saltate durante la generazione
 				* "meths_gen" (str): Nome del file che contiene elenca i metodi saltati durante la generazione
 				* "funcs_corr" (str): Nome del file che elenca le funzioni saltati durante la correzione
-				* "funcs_corr" (str): Nome del file che elenca i metodi saltati durante la correzione
+				* "meths_corr" (str): Nome del file che elenca i metodi saltati durante la correzione
 				
 			- "always_excluded" (List[str]): La lista di files, o directories, da non considerare nell' intero processo di GenTestsAI
 			

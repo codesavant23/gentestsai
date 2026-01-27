@@ -8,9 +8,9 @@
 	},
 	"project": {
 		"dockerfile": "Dockerfile",
-		"python_version_file": "python_version.txt",
-		"external_deps_file": "ext_deps.txt",
+		"pyversion_file": "python_version.txt",
 		"python_deps_file": "python_deps.txt",
+		"ext_deps_file": "ext_deps.txt",
 		"pre_extdeps_script": "pre_extdeps.sh",
 		"post_extdeps_script": "post_extdeps.sh"
 	}

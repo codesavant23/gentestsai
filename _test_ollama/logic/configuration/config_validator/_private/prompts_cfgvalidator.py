@@ -33,7 +33,7 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 	_ALL_FIELDS: Set[str] = {
 		"prompts_path",
 		"generic_dirname",
-		"func_prompt", "meth_prompt", "corr_prompt"
+		"func_fname", "meth_fname", "corr_fname"
 	}
 	
 	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
@@ -73,17 +73,17 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
-		prompts_path: str = config_read["prompts_path"]
+		base_path: str = config_read["base_path"]
 		generic_dirname: str = config_read["generic_dirname"]
 		
-		func_prompt: str = config_read["func_prompt"]
-		meth_prompt: str = config_read["meth_prompt"]
-		corr_prompt: str = config_read["corr_prompt"]
+		func_fname: str = config_read["func_fname"]
+		meth_fname: str = config_read["meth_fname"]
+		corr_fname: str = config_read["corr_fname"]
 	
-		self._assert_path(prompts_path, "prompts_path")
+		self._assert_path(base_path, "base_path")
 		self._assert_templates(
-			prompts_path,
-			func_prompt, meth_prompt, corr_prompt
+			base_path,
+			func_fname, meth_fname, corr_fname
 		)
 	
 	
@@ -185,19 +185,19 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 					Si verifica se, almeno in una directory, almeno uno dei files dei template prompts
 					non esiste
 		"""
-		prompts_path: SystemPath = SystemPath(base_path)
+		base_path: SystemPath = SystemPath(base_path)
 		error_on: str
-		for curr_path, dirs, files in prompts_path.walk(top_down=True):
-			if curr_path != prompts_path:
+		for curr_path, dirs, files in base_path.walk(top_down=True):
+			if curr_path != base_path:
 				self._assert_path(
 					path_join(curr_path, func_fname),
-					"func_prompt"
+					"func_fname"
 				)
 				self._assert_path(
 					path_join(curr_path, meth_fname),
-					"meth_prompt"
+					"meth_fname"
 				)
 				self._assert_path(
 					path_join(curr_path, corr_fname),
-					"corr_prompt"
+					"corr_fname"
 				)

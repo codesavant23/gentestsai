@@ -53,7 +53,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			
 				* "dockerfile" (str): Il nome del dockerfile, creato da GenTestsAI, che costruirà l' immagine dell' ambiente focale
 				* "pyversion_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene la versione dell' interprete Python specifica per il progetto
-				* "external_deps_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene le dipendenze non-Python del progetto focale
+				* "ext_deps_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene le dipendenze non-Python del progetto focale
 				* "python_deps_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene le dipendenze Python del progetto focale
 				* "pre_extdeps_script" (str): L' eventuale nome dello script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze Python del progetto focale
 				* "post_extdeps_script" (str): L' eventuale nome dello script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze Python del progetto focale
@@ -72,7 +72,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	_1PROJ_FIELDS: Set[str] = {
 		"dockerfile",
 		"pyversion_file",
-		"external_deps_file", "python_deps_file",
+		"ext_deps_file", "python_deps_file",
 		"pre_extdeps_script", "post_extdeps_script"
 	}
 	
