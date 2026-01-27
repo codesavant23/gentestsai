@@ -12,8 +12,8 @@ from httpx import (
 	ConnectTimeout as HttpxConnectTimeoutError
 )
 
-from ....logger import ATemporalFormattableLogger
-from ....logger.exceptions import FormatNotSetError
+from .....utils.logger import ATemporalFormattableLogger
+from .....utils.logger.exceptions import FormatNotSetError
 
 from ...llm_api import (
 	ILlmApi,

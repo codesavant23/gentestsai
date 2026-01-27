@@ -2,7 +2,7 @@ from typing import List
 from abc import abstractmethod
 from ._a_base_llmapiacc import _ABaseLlmApiAccessor
 
-from ....logger import ATemporalFormattableLogger
+from .....utils.logger import ATemporalFormattableLogger
 from ...llm_api import ILlmApi
 from ...llm_chat import ILlmChat
 from ...llm_hyperparam import ILlmHyperParam
