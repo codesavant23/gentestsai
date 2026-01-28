@@ -22,7 +22,6 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 	
 	def __init__(
 			self,
-			chat: ILlmChat,
 			logger: ATemporalFormattableLogger=None,
 			logger_sep: str="\n"
 	):
@@ -40,13 +39,8 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 				logger_sep: str
 					Opzionale. Default = `\\n`. Una stringa contenente il separatore da utilizzare per i
 					messaggi di logging che verranno registrati.
-					
-			Raises
-			------
-				ValueError
-					Si verifica se il parametro `chat` ha valore `None`
 		"""
-		super().__init__(chat)
+		super().__init__()
 		
 		self._logger: ATemporalFormattableLogger = logger
 		self._logger_sep: str = None
@@ -132,8 +126,12 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 					Si verifica se `user_prompt` è invalido per l' API rappresentata
 					
 				ApiResponseError
-					Si verifica se la richiesta fornita all' API produce un errore sconosciuto
-					ma appartenente al suo dominio
+					Si verifica se la richiesta fornita all' API produce un errore di risposta
+					appartenente al suo dominio.
+					Si utilizza l' attributo `args[0]`, di tipo stringa, per distinguere la natura dell' errore:
+					
+						- "known": La natura dell' errore è descritta dalla piattaforma di inferenza
+						- "unknown": La natura dell' errore non è descritta dalla piattaforma di inferenza ed è sconosciuta
 					
 				SaturatedContextWindowError
 					Si verifica se viene saturata la finestra di contesto durante l' interazione

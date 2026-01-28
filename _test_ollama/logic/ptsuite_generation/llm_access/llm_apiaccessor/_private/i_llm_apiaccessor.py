@@ -13,46 +13,24 @@ class ILlmApiAccessor(ABC):
 
 		E' necessario, dopo la creazione di un ILlmApiAccessor, eseguire:
 		
-			- L' operazione `.init_accsor(...)` per l' associazione con la prima chat da utilizzare per le richieste
+			- L' operazione `.set_chat(...)` per l' associazione con la chat da utilizzare per le richieste (inzialmente la prima)
 			- L' operazione `.select_model(...)` per la selezione del primo modello con cui avverranno le interazioni
 
 		La specifica API a cui è legato ogni oggetto ILlmApiAccessor è descritta dai discendenti di questa interfaccia.
 	"""
-	
-	
-	@abstractmethod
-	def init_accsor(self, chat: ILlmChat):
-		"""
-			Inizializza questo ILlmApiAccessor associandolo alla prima chat da utilizzare
-			per effettuare le richieste
-			
-			Parameters
-			----------
-				chat: ILlmChat
-					Un oggetto `ILlmChat` rappresentante la chat da utilizzare per
-					le successive interazioni con il prossimo modello scelto.
-					L' oggetto `ILlmChat` viene completamente gestito da questo `ILlmApiAccessor`
-					azzerandolo ad ogni nuovo modello scelto.
-					Alla fine di questa operazione la chat sarà già stata azzerata
-					
-			Raises
-			------
-				ValueError
-					Si verifica se `chat` ha valore `None`
-					
-				IncompatibleApiError
-					Si verifica se l' API rappresentata da questo oggetto è incompatibile
-					con le APIs di `chat`
-		"""
-		pass
 		
 
 	@abstractmethod
-	def set_chat(self, chat: ILlmChat, erase: bool=True):
+	def set_chat(
+			self,
+			chat: ILlmChat,
+			erase_now: bool=True,
+			erase_model: bool=True
+	):
 		"""
 			Cambia la chat utilizzata per le prossime interazioni tramite questo
-			ILlmApiAccessor. Opzionalmente si può scegliere di non cancellare la chat
-			associata.
+			ILlmApiAccessor. Opzionalmente si può scegliere di non cancellare
+			i messaggi della chat associata
 			
 			Parameters
 			----------
@@ -60,15 +38,16 @@ class ILlmApiAccessor(ABC):
 					Un oggetto `ILlmChat` rappresentante la nuova chat da associare per le
 					prossime interazioni
 					
-				erase: bool
+				erase_now: bool
 					Opzionale. Default = `True`. Un booleano che indica se cancellare tutti i messaggi
 					dalla nuova chat associata
 					
+				erase_model: bool
+					Opzionale. Default = `True`. Un booleano che indica se cancellare tutti i messaggi
+					della nuova chat associata ad ogni cambio di modello
+					
 			Raises
 			------
-				AccessorNotInitedError
-					Si verifica se questo ILlmApiAccessor non è stato inizializzato
-			
 				ValueError
 					Si verifica se il parametro `chat` ha valore `None`
 					
@@ -97,8 +76,8 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
-				AccessorNotInitedError
-					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+				ChatNeverSelectedError
+					Si verifica se non è mai stato impostato un oggetto chat da utilizzare
 			
 				ValueError
 					Si verifica se `model` ha valore None
@@ -123,8 +102,8 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
-				AccessorNotInitedError
-					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+				ChatNeverSelectedError
+					Si verifica se non è mai stato impostato un oggetto chat da utilizzare
 			
 				ModelNotSelectedError
 					Si verifica se non è stato selezionato nessun modello per questo ILlmApiAccessor
@@ -155,8 +134,8 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
-				AccessorNotInitedError
-					Si verifica se questo ILlmApiAccessor non è stato inizializzato
+				ChatNeverSelectedError
+					Si verifica se non è mai stato impostato un oggetto chat da utilizzare
 			
 				ModelNotSelectedError
 					Si verifica se non è stato selezionato nessun modello per questo ILlmApiAccessor
@@ -172,19 +151,15 @@ class ILlmApiAccessor(ABC):
 
 
 	@abstractmethod
-	def prompt(self, user_prompt: str, timeout: int) -> str:
+	def prompt(self, timeout: int) -> str:
 		"""
 			Effettua una singola interazione con il modello selezionato fornendogli il
 			prompt dato come argomento
 
 			Parameters
 			----------
-				user_prompt: str
-					Una stringa, single-line o multi-line, contenente il prompt da fornire
-					al modello selezionato per effettuare l' interazione
-					
 				timeout: int
-					Un intero rappresentante il timeout in millisecondi dopo il quale
+					Un intero rappresentante il timeout di risposta (in millisecondi) dopo il quale
 					dichiarare la risposta fallita
 
 			Returns
@@ -194,26 +169,22 @@ class ILlmApiAccessor(ABC):
 
 			Raises
 			------
-				AccessorNotInitedError
-					Si verifica se questo ILlmApiAccessor non è stato inizializzato
-			
 				ChatNeverSelectedError
 					Si verifica se non è mai stato impostato un oggetto chat da utilizzare
 			
 				ModelNotSelectedError
 					Si verifica se non è stato selezionato nessun modello per questo ILlmApiAccessor
 					
-				ValueError
-					Si verifica se `user_prompt` ha valore None
-	
 				InvalidPromptError
-					Si verifica se `user_prompt` è invalido per l' API rappresentata
+					Si verifica se il prompt di richiesta è invalido per l' API rappresentata
 				
 				ApiConnectionError
-					Si verifica se avviene un errore di connessione con la piattaforma di inferenza
-					appartenente al suo dominio.
-					Nel caso in cui questo errore riguardi un timeout connessione viene fornito,
-					nell' attributo `args[0]`, la stringa "timeout"
+					Si verifica se avviene un errore di connessione con la piattaforma di inferenza.
+					L' errore è appartenente al suo dominio.
+					Si utilizza l' attributo `args[0]`, di tipo stringa, per distinguere la natura dell' errore:
+					
+						- "timeout": La natura dell' errore riguarda il timeout di connesione
+						- "other": La natura dell' errore è di altro tipo (comprensibile dalle altre componenti di `args`)
 				
 				ResponseTimedOutError
 					Si verifica se scatta il tempo `timeout` indicato e non è stata ricevuta
@@ -222,8 +193,10 @@ class ILlmApiAccessor(ABC):
 				ApiResponseError
 					Si verifica se la richiesta fornita all' API produce un errore di risposta
 					appartenente al suo dominio.
-					Nel caso di un errore sconosciuto viene fornita, nell' attributo `args`,
-					la stringa `"unknown"`
+					Si utilizza l' attributo `args[0]`, di tipo stringa, per distinguere la natura dell' errore:
+					
+						- "known": La natura dell' errore è descritta dalla piattaforma di inferenza
+						- "unknown": La natura dell' errore non è descritta dalla piattaforma di inferenza ed è sconosciuta
 					
 				SaturatedContextWindowError
 					Si verifica se viene saturata la finestra di contesto durante l' interazione

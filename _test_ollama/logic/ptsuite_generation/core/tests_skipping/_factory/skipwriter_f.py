@@ -19,8 +19,9 @@ class SkipWriterFactory:
 		pass
 		
 		
+	@classmethod
 	def create(
-			self, 
+			cls,
 			file_type: ESkippedTestsFtypeFormat, 
 			skipdtests_path: str
 	) -> ISkipWriter:
@@ -55,8 +56,9 @@ class SkipWriterFactory:
 					Si verifica se il file è invalido per tipo o formato
 		"""
 		obj: _ABaseSkipWriter
-		if file_type == ESkippedTestsFtypeFormat.JSON_LIST:
-			obj = JsonListSkipWriter(skipdtests_path)
+		match file_type:
+			case ESkippedTestsFtypeFormat.JSON_LIST:
+				obj = JsonListSkipWriter(skipdtests_path)
 		
 		obj._P__objinit()
 		return obj

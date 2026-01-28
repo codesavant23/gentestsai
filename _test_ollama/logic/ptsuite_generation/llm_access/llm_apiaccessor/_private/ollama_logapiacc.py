@@ -152,7 +152,7 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 			raise gensai_exc
 		except ConnectionError as ollama_err:
 			gensai_exc: ApiConnectionError = ApiConnectionError()
-			gensai_exc.args = ollama_err.args
+			gensai_exc.args = ("other",) + ollama_err.args
 			gensai_exc.errno = ollama_err.errno
 			raise gensai_exc
 		
@@ -191,13 +191,13 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 			raise gensai_exc
 		except OllamaApiResponseError as ollama_err:
 			gensai_exc: ApiResponseError = ApiResponseError()
-			gensai_exc.args = ollama_err.args
+			gensai_exc.args = ("known",) + ollama_err.args
 			raise gensai_exc
 		
 		if logger is not None:
 			logger.set_format(log_format)
 			logger.set_messages_sep(self._logger_sep)
-			logger.log("Fine della risposta.")
+			logger.log(f'{self._logger_sep}Fine della risposta.')
 
 		if (prompt_tokens == -1) or (resp_tokens == -1):
 			raise ApiResponseError("unknown")

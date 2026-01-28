@@ -18,9 +18,10 @@ class PtsuiteCacheAccessorFactory:
 		"""
 		pass
 		
-		
+	
+	@classmethod
 	def create(
-			self,
+			cls,
 			tech: ECacheAccessorType,
 	        cache_path: str
 	) -> IPtsuiteCacheAccessor:
@@ -59,8 +60,9 @@ class PtsuiteCacheAccessorFactory:
 					con la tecnologia implementativa richiesta
 		"""
 		obj: _ABaseCacheAccessor
-		if tech == ECacheAccessorType.SQLITE3:
-			obj = Sqlite3CacheAccessor(cache_path)
+		match tech:
+			case ECacheAccessorType.SQLITE3:
+				obj = Sqlite3CacheAccessor(cache_path)
 			
 		obj._P__objinit()
 		return obj
