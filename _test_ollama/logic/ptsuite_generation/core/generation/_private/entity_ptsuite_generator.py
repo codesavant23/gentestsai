@@ -1,6 +1,3 @@
-# ============== OS Utilities ============== #
-from os import remove as os_remove
-# ========================================== #
 # ============= RegEx Utilities ============ #
 from regex import (
 	search as reg_search,
@@ -8,6 +5,8 @@ from regex import (
 	RegexFlag as RegexFlags,
 )
 # ========================================== #
+
+from .....utils.logger import ATemporalFormattLogger
 
 from ....llm_access.llm_apiaccessor import ALoggableLlmApiAccessor
 from ....llm_access.llm_apiaccessor.exceptions import (
@@ -17,11 +16,15 @@ from ....llm_access.llm_apiaccessor.exceptions import (
 )
 
 from ...exceptions import WrongResponseFormatError
-from ..exceptions import InvalidPreviousGenerationError
+from ..exceptions import (
+	GenerationInProgressError,
+	GenerationNotStartedError,
+	GenerationNeverPerformedError
+)
 
 
 
-class EntityPartialTsuiteGenerator:
+class EntityPTsuiteGenerator:
 	"""
 		Rappresenta un oggetto in grado di richiedere ad un LLM di generare una test-suite parziale,
 		relativa ad una singola entità di codice.
@@ -41,10 +44,11 @@ class EntityPartialTsuiteGenerator:
 			self,
 			max_tries: int,
 			llm_accsor: ALoggableLlmApiAccessor,
+			logger: ATemporalFormattLogger = None,
 			response_format: str = None
 	):
 		"""
-			Costruisce un nuovo EntityPartialTsuiteGenerator associandolo ad un `ALoggableLlmApiAccessor`
+			Costruisce un nuovo EntityPTsuiteGenerator associandolo ad un `ALoggableLlmApiAccessor`
 			con cui effettuerà le richieste di generazione ai LLMs che gli sono/verranno impostati
 
 			Parameters
@@ -55,6 +59,11 @@ class EntityPartialTsuiteGenerator:
 			
 				llm_accsor: ALoggableLlmApiAccessor
 					Un oggetto `ALoggableLlmApiAccessor` che verrà utilizzato per effettuare le richieste di generazione
+					
+				logger: ATemporalFormattLogger
+					Opzionale. Default = `None`. Un oggetto `ATemporalFormattLogger` rappresentante l' eventuale logger
+					da utilizzare per registrare le fasi di ogni tentativo di generazione (non per registrare le fasi
+					della richiesta al LLM di ogni tentativo)
 					
 				response_format: str
 					Opzionale. Default = `None`. Una stringa RegEx contenente il formato da utilizzare per identificare
@@ -78,40 +87,61 @@ class EntityPartialTsuiteGenerator:
 				raise ValueError()
 			self._resp_regex = response_format
 		
-		self._tried_generation: bool = False
-		self._skipped: bool = False
+		self._gen_everperf: bool = False
+		self._gen_inprogr: bool = False
+		self._times_tried: int = 0
+		self._try_succ: bool = False
+		self._resp_tout: int = 0
 		
 		self._last_genresp: str = ""
-		self._tempfile_path: str = None
 		self._max_tries: int = max_tries
-		self._llm_platf: ALoggableLlmApiAccessor = llm_accsor
 		
-
-	def has_gen_succeeded(self) -> bool:
+		self._llm_platf: ALoggableLlmApiAccessor = llm_accsor
+		self._logger: ATemporalFormattLogger = logger
+		
+		
+	def has_gen_terminated(self) -> bool:
 		"""
-			Verifica se l' ultima generazione effettuata ha avuto successo così da riuscire
-			a generare una test-suite parziale funzionante
+			Verifica se la serie di tentativi di generazione in corso è terminata
+			o per riuscita della generazione, o per raggiungimento dei tentativi massimi
+			
+			Returns
+			-------
+				bool
+					Un booleano che indica se la serie di tentativi iniziata precedentemente,
+					è terminata
+		"""
+		if not self._gen_everperf:
+			raise GenerationNeverPerformedError()
+		
+		return not self._gen_inprogr
+	
+	
+	def has_gen_succ(self) -> bool:
+		"""
+			Verifica se l' ultimo tentativo di generazione effettuato ha avuto successo
+			così da riuscire a generare una test-suite parziale
 
 			Returns
 			-------
 				bool
-					Un booleano che indica se l' ultima test-suite parziale di cui è stata tentata la
-					generazione è riuscita fornendo una test-suite parziale funzionante
+					Un booleano che indica se l' ultima test-suite parziale di cui
+					è stata tentata la generazione è riuscita
 
 			Raises
 			------
-				InvalidPreviousGenerationError
-					Si verifica se:
-						
-						- Si tenta di eseguire quest' operazione quando non è mai stato effettuata nessuna richiesta di generazione in precedenza
-						- Si tenta di eseguire quest' operazione quando l' ultima richiesta di generazione è terminata con un' eccezione
+				GenerationInProgressError
+					Si verifica se
 		"""
-		if not self._tried_generation:
-			raise InvalidPreviousGenerationError()
-		return not self._skipped
+		if self._gen_inprogr:
+			raise GenerationInProgressError()
+		if not self._gen_everperf:
+			raise GenerationNeverPerformedError()
+		
+		return not self._try_succ
 
 
-	def get_last_generation(self) -> str:
+	def get_lastgen(self) -> str:
 		"""
 			Restituisce il codice risultante dall' ultimo tentativo di generazione di una test-suite parziale.
 
@@ -132,41 +162,73 @@ class EntityPartialTsuiteGenerator:
 						- Si tenta di eseguire quest' operazione quando non è mai stato effettuata nessuna richiesta di correzione in precedenza
 						- Si tenta di eseguire quest' operazione quando l' ultima richiesta di correzione è terminata con un' eccezione
 		"""
-		if not self._tried_generation:
-			raise InvalidPreviousGenerationError()
+		if self._gen_inprogr:
+			raise GenerationInProgressError()
+		if not self._gen_everperf:
+			raise GenerationNeverPerformedError()
 		
-		gen_code: str = reg_search(
-			self._resp_regex,
-			self._last_genresp,
-			RegexFlags.MULTILINE
-		).group("gen_code")
+		gen_code: str = ""
+		if self._last_genresp is not None:
+			gen_code = reg_search(
+				self._resp_regex,
+				self._last_genresp,
+				RegexFlags.MULTILINE
+			).group("gen_code")
+		
 		return gen_code
-
-
-	def generate_partial_tsuite(
+		
+		
+	def start_new_generation(
 			self,
 			resp_timeout: int
 	):
 		"""
-			Genera una test-suite parziale di una specifica entità (funzione o metodo) richiedendola
-			ad uno specifico Large Language Model.
-			Viene loggato ogni tentativo del processo di generazione
+			Inizia una nuova serie di tentativi di generazione di una test-suite parziale
+			azzerando i risultati della serie di generazione precedente.
+			La riuscita finale della generazione NON è garantita.
 			
-			ASSUNZIONE: Si assume che il prompt di richiesta sia stato impostato nell' oggetto chat
-			associato all' `ALoggableLlmApiAccessor` fornito a questo EntityPartialTsuiteGenerator
-
 			Parameters
 			----------
 				resp_timeout: int
-					Un intero rappresentante il timeout in millisecondi dopo il quale dichiarare la risposta fallita
-
-			Returns
-			-------
-				str
-					Una stringa contenente il codice della test-suite parziale generata dal LLM
-
+					Un intero rappresentante il timeout in millisecondi dopo il quale
+					dichiarare la risposta fallita
+					
 			Raises
 			------
+				GenerationInProgressError
+					Si verifica se è stata già iniziata una serie di tentativi di generazione
+					senza essere terminata
+		"""
+		if self._gen_inprogr:
+			raise GenerationInProgressError()
+		
+		if not self._gen_everperf:
+			self._gen_everperf = True
+		self._gen_inprogr = True
+		
+		self._times_tried = 1
+		self._try_succ = False
+		self._last_genresp = None
+		self._resp_tout = resp_timeout
+		if self._logger is not None:
+			self._logger.log(
+				f"Inzio di una nuova serie di tentativi di generazione"
+			)
+		
+		
+	def perform_gen_try(self):
+		"""
+			Effettua un singolo tentativo di generazione di una test-suite parziale di una specifica entità
+			(funzione o metodo) richiedendola ad uno specifico Large Language Model.
+			
+			ASSUNZIONE: Si assume che il prompt di richiesta sia stato impostato nell' oggetto chat
+			associato all' `ALoggableLlmApiAccessor` fornito a questo EntityPTsuiteGenerator
+			
+			Raises
+			------
+				GenerationNotStartedError
+					Si verifica se non è stata iniziata una serie di tentativi di generazione
+				
 				ChatNeverSelectedError
 					Si verifica se non è stato mai associato una chat all' `ALoggableLlmApiAccessor` fornito
 			
@@ -187,28 +249,38 @@ class EntityPartialTsuiteGenerator:
 					
 				WrongResponseFormatError
 					Si verifica se il formato di risposta di almeno uno dei tentativi di generazione
-					non è conforme al formato associato a questo EntityPartialTsuiteGenerator (o di default)
-		"""
-		self._skipped = False
-		self._tried_generation = False
+					non è conforme al formato associato a questo EntityPTsuiteGenerator (o di default)
 		
-		resp_match: Match[str]
-		gen_success: bool = False
-		times_tried: int = 1	
-		while ((not gen_success) and (times_tried <= self._max_tries)):
+		"""
+		if not self._gen_inprogr:
+			raise GenerationNotStartedError()
+		
+		if (not self._try_succ) and (self._times_tried <= self._max_tries):
 			try:
-				response = self._llm_platf.prompt(resp_timeout)
+				if self._logger is not None:
+					self._logger.log(
+						f"Inzio del tentativo di generazione no. {self._times_tried}/{self._max_tries}"
+					)
+					
+				response = self._llm_platf.prompt(self._resp_tout)
 				
-				resp_match = reg_search(self._resp_regex, response)
+				resp_match: Match[str] = reg_search(self._resp_regex, response)
 				if resp_match is None:
 					raise WrongResponseFormatError()
 				
 				self._last_genresp = resp_match.group("gen_code")
-				gen_success = True
+				self._try_succ = True
+				
+				if self._logger is not None:
+					self._logger.log(
+						f"Tentativo di generazione no. {self._times_tried}/{self._max_tries} riuscito con successo"
+					)
 			except (ApiResponseError, SaturatedContextWindowError,
 			        ResponseTimedOutError):
-				os_remove(self._tempfile_path)
-				times_tried += 1
-
-		self._tried_generation = True
-		self._skipped = not gen_success
+				self._times_tried += 1
+		else:
+			self._gen_inprogr = False
+			if self._logger is not None:
+				self._logger.log(
+					f"Fine della serie di tentativi di generazione"
+				)

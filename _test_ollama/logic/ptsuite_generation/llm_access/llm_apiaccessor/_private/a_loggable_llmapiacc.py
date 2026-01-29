@@ -2,7 +2,7 @@ from typing import List
 from abc import abstractmethod
 from ._a_base_llmapiacc import _ABaseLlmApiAccessor
 
-from .....utils.logger import ATemporalFormattableLogger
+from .....utils.logger import ATemporalFormattLogger
 from ...llm_api import ILlmApi
 from ...llm_chat import ILlmChat
 from ...llm_hyperparam import ILlmHyperParam
@@ -22,7 +22,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 	
 	def __init__(
 			self,
-			logger: ATemporalFormattableLogger=None,
+			logger: ATemporalFormattLogger=None,
 			logger_sep: str="\n"
 	):
 		"""
@@ -31,7 +31,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 			
 			Parameters
 			----------
-				logger: ATemporalFormattableLogger
+				logger: ATemporalFormattLogger
 					Opzionale. Default = `None`. Un oggetto `ATemporalFormattableLogger` rappresentante il logger
 					da utilizzare per registrare i passaggi effettuati da questo `ILlmApiAccessor`
 					durante ogni richiesta effettuata
@@ -42,7 +42,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 		"""
 		super().__init__()
 		
-		self._logger: ATemporalFormattableLogger = logger
+		self._logger: ATemporalFormattLogger = logger
 		self._logger_sep: str = None
 		if logger is not None:
 			self._logger_sep = logger_sep if logger_sep is not None else "\n"
@@ -78,7 +78,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 			model: ILlmSpecImpl,
 			hparams: List[ILlmHyperParam],
 			timeout: int,
-			logger: ATemporalFormattableLogger=None
+			logger: ATemporalFormattLogger=None
 	) -> str:
 		"""
 			Effettua una singola interazione, tramite l' API specifica, con il modello selezionato fornendogli
@@ -110,7 +110,7 @@ class ALoggableLlmApiAccessor(_ABaseLlmApiAccessor):
 					Un intero rappresentante il timeout in millisecondi dopo il quale
 					dichiarare la risposta fallita
 					
-				logger: ATemporalFormattableLogger
+				logger: ATemporalFormattLogger
 					Opzionale. Default = `None`. Un oggetto `ATemporalFormattableLogger` rappresentante il logger da utilizzare
 					per registrare i passaggi effettuati da questo `ILlmApiAccessor` durante
 					ogni richiesta effettuata

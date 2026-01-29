@@ -12,7 +12,7 @@ from httpx import (
 	ConnectTimeout as HttpxConnectTimeoutError
 )
 
-from .....utils.logger import ATemporalFormattableLogger
+from .....utils.logger import ATemporalFormattLogger
 from .....utils.logger.exceptions import FormatNotSetError
 
 from ...llm_api import (
@@ -39,16 +39,23 @@ from ..exceptions import (
 class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 	"""
 		Rappresenta un `ALoggableLlmApiAccessor` per la piattaforma di inferenza
-		"Ollama"
+		"Ollama".
+		
+		Vengono loggati i seguenti step dell' intera fase di richiesta al LLM:
+			- Inizio del tentativo di connessione
+			- Riuscita del tentativo di connessione
+			- Inizio della sotto-fase di ricevimento della risposta
+			- Ogni "chunk" della risposta ricevuta (a scelta indipendentemente dal logger)
+			- Fine della sotto-fase di ricevimento della risposta
 	"""
 	
 	def __init__(
 			self,
-			chat: ILlmChat,
 			address: str,
 			auth: str,
 			conn_timeout: int,
-			logger: ATemporalFormattableLogger=None,
+			logger: ATemporalFormattLogger=None,
+			log_resp: bool=False,
 			logger_sep: str="\n",
 	):
 		"""
@@ -57,13 +64,6 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 			
 			Parameters
 			----------
-				chat: ILlmChat
-					Un oggetto `ILlmChat` rappresentante la prima chat da utilizzare per
-					le interazioni con il prossimo modello scelto.
-					L' oggetto `ILlmChat` viene interamente gestito da questo `ILlmApiAccessor`
-					azzerandolo ad ogni nuovo modello scelto.
-					Alla fine della costruzione la chat sarà già stata azzerata
-					
 				address: str
 					Una stringa contenente l' indirizzo (URL assoluto, IPv4 o IPv6) che identifica
 					il server Ollama su cui è ospitata la piattaforma di inferenza
@@ -76,7 +76,7 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 					Un intero rappresentante il timeout in millisecondi dopo il quale
 					dichiarare un tentativo di connessione fallito
 					
-				logger: ATemporalFormattableLogger
+				logger: ATemporalFormattLogger
 					Opzionale. Default = `None`. Un oggetto `ATemporalFormattableLogger` rappresentante
 					il logger da utilizzare per registrare i passaggi effettuati da questo OllamaLoggableApiAccessor
 					durante ogni richiesta effettuata
@@ -85,17 +85,27 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 					Opzionale. Default = `\\n`. Una stringa contenente il separatore da utilizzare per i
 					messaggi di logging che verranno registrati.
 					
+				log_resp: bool
+					Opzionale. Default = `False`. Un booleano che indica se è necessario loggare anche
+					i "chunks" della risposta che vengono ricevuti
+					
 			Raises
 			------
 				ValueError
-					Si verifica se almeno uno tra `chat`, `address` e `auth` hanno valore `None`
+					Si verifica se:
+						
+						- Almeno uno tra `chat`, `address` e `auth` hanno valore `None`
+						- Il parametro `log_resp` ha valore `True` ma non è stato fornito un logger
 		"""
-		super().__init__(chat, logger, logger_sep)
+		super().__init__(logger, logger_sep)
 		self._logger_sep: str = logger_sep
 		
+		if log_resp and (logger is None):
+			raise ValueError()
 		if (address is None) or (auth is None):
 			raise ValueError()
 		
+		self._log_resp: bool = log_resp
 		self._o_addr: str = address
 		self._o_auth: str = auth
 		self._conn_tout: int = conn_timeout
@@ -109,7 +119,7 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 			model: ILlmSpecImpl,
 			hparams: List[ILlmHyperParam],
 			timeout: int,
-			logger: ATemporalFormattableLogger=None
+			logger: ATemporalFormattLogger=None
 	) -> str:
 		options_param: Dict[str, Any] = {
 			hparam.param_id().name(): hparam.to_effvalue()
@@ -176,15 +186,21 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 		try:
 			if logger is not None:
 				logger.log("Inizio della risposta ...")
+			if self._log_resp:
 				log_format = logger.unset_format()
 				logger.set_messages_sep("")
+				
 			for chunk in response_iter:
-				full_response += chunk
-				logger.log(chunk['message']['content'])
+				full_response += chunk['message']['content']
+				if self._log_resp:
+					logger.log(chunk['message']['content'])
 				# Se è arrivato alla fine
 				if "eval_count" in chunk:
 					resp_tokens = chunk["eval_count"]
 					prompt_tokens = chunk["prompt_eval_count"]
+					if self._log_resp:
+						logger.log(f'{self._logger_sep}')
+						
 		except HttpxTimeoutError as httpx_tout_err:
 			gensai_exc: ResponseTimedOutError = ResponseTimedOutError()
 			gensai_exc.args = httpx_tout_err.args
@@ -194,10 +210,11 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 			gensai_exc.args = ("known",) + ollama_err.args
 			raise gensai_exc
 		
-		if logger is not None:
+		if self._log_resp:
 			logger.set_format(log_format)
 			logger.set_messages_sep(self._logger_sep)
-			logger.log(f'{self._logger_sep}Fine della risposta.')
+		if logger is not None:
+			logger.log(f'Fine della risposta.')
 
 		if (prompt_tokens == -1) or (resp_tokens == -1):
 			raise ApiResponseError("unknown")
