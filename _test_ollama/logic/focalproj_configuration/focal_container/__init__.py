@@ -1,2 +1,2 @@
 import exceptions
-from focal_container import FocalContainer
+from ._private.focal_container import FocalContainer
