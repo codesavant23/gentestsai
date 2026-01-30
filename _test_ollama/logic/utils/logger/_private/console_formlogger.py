@@ -1,11 +1,11 @@
 from typing import TextIO
-from .. import ATemporalFormattableLogger
+from .. import ATemporalFormattLogger
 
 from ..exceptions import InvalidStreamTypeError
 
 
 
-class ConsoleLogger(ATemporalFormattableLogger):
+class ConsoleLogger(ATemporalFormattLogger):
 	"""
 		Rappresenta `ACheckableLogger` che ha la capacità di scrivere su Console
 		(`stdout` e `stderr`)

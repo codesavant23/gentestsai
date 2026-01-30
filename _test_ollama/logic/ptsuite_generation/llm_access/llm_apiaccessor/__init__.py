@@ -1,4 +1,3 @@
 import exceptions
 from ._private.i_llm_apiaccessor import ILlmApiAccessor
-from ._private.a_loggable_llmapiacc import ALoggableLlmApiAccessor
-from ._private.ollama_logapiacc import OllamaLoggableApiAccessor
+from ._private.ollama_logapiacc import OllamaLlmApiAccessor

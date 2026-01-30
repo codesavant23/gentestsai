@@ -1,13 +1,13 @@
 from typing import List, TextIO
-from .. import ATemporalFormattableLogger
+from .. import ATemporalFormattLogger
 
 from ..exceptions import InvalidStreamTypeError
 
 
 
-class TextFileMutableFormattableLogger(ATemporalFormattableLogger):
+class TextFileMutableFormattableLogger(ATemporalFormattLogger):
 	"""
-		Rappresenta `ATemporalFormattableLogger` che registra messaggi su un file testuale.
+		Rappresenta `ATemporalFormattLogger` che registra messaggi su un file testuale.
 	"""
 	
 	def __init__(

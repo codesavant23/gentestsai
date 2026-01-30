@@ -1,4 +1,4 @@
-class GenerationInProgressError(Exception):
+class PromptingSessionInProgressError(Exception):
 	"""
 		Rappresenta un' eccezione (non-exiting) che si verifica quando si richiede
 		che non sia stata iniziata nessuna serie di tentativi di generazione mentre,

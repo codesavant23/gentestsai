@@ -6,7 +6,7 @@ from ..exceptions import NotWritableStreamError
 
 
 
-class AMutableFormattableLogger(_ABaseFormattableLogger):
+class AMutableFormattLogger(_ABaseFormattableLogger):
 	"""
 		Rappresenta un `IFormattableLogger` che ha la capacità di variare lo stream di output
 		su cui registrare i messaggi.
@@ -20,7 +20,7 @@ class AMutableFormattableLogger(_ABaseFormattableLogger):
 	        stream: TextIO
 	):
 		"""
-			Costruisce un nuovo AMutableFormattableLogger associandolo allo stream di output
+			Costruisce un nuovo AMutableFormattLogger associandolo allo stream di output
 			fornito
 			
 			Parameters

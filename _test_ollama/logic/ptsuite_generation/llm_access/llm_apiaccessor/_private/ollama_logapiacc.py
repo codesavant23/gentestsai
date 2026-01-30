@@ -1,5 +1,5 @@
 from typing import List, Dict, Iterator, Any
-from .. import ALoggableLlmApiAccessor
+from ._a_base_llmapiacc import _ABaseLlmApiAccessor
 
 from ollama import (
 	Client as OllamaClient,
@@ -36,10 +36,9 @@ from ..exceptions import (
 
 
 
-class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
+class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 	"""
-		Rappresenta un `ALoggableLlmApiAccessor` per la piattaforma di inferenza
-		"Ollama".
+		Rappresenta un `ILlmApiAccessor` per la piattaforma di inferenza "Ollama".
 		
 		Vengono loggati i seguenti step dell' intera fase di richiesta al LLM:
 			- Inizio del tentativo di connessione
@@ -59,7 +58,7 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 			logger_sep: str="\n",
 	):
 		"""
-			Costruisce un nuovo OllamaLoggableApiAccessor associandolo alla prima chat da utilizzare
+			Costruisce un nuovo OllamaLlmApiAccessor associandolo alla prima chat da utilizzare
 			per effettuare le richieste
 			
 			Parameters
@@ -78,7 +77,7 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 					
 				logger: ATemporalFormattLogger
 					Opzionale. Default = `None`. Un oggetto `ATemporalFormattableLogger` rappresentante
-					il logger da utilizzare per registrare i passaggi effettuati da questo OllamaLoggableApiAccessor
+					il logger da utilizzare per registrare i passaggi effettuati da questo OllamaLlmApiAccessor
 					durante ogni richiesta effettuata
 					
 				logger_sep: str
@@ -97,8 +96,11 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 						- Almeno uno tra `chat`, `address` e `auth` hanno valore `None`
 						- Il parametro `log_resp` ha valore `True` ma non è stato fornito un logger
 		"""
-		super().__init__(logger, logger_sep)
-		self._logger_sep: str = logger_sep
+		super().__init__()
+		
+		self._logger: ATemporalFormattLogger = logger
+		if logger is not None:
+			self._logger_sep = logger_sep if logger_sep is not None else "\n"
 		
 		if log_resp and (logger is None):
 			raise ValueError()
@@ -113,7 +115,7 @@ class OllamaLoggableApiAccessor(ALoggableLlmApiAccessor):
 		self._numctx_param: AContextWindowHyperParamId = OllamaNumCtxHyperParamId()
 	
 	
-	def _ap__prompt_withlog(
+	def _ap__prompt_spec(
 			self,
 			chat: ILlmChat,
 			model: ILlmSpecImpl,

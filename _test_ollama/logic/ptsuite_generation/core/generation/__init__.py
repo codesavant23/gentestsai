@@ -1,2 +1,1 @@
-import exceptions
-from ._private.entity_ptsuite_generator import EntityPTsuiteGenerator
+from ._private.entity_ptsuite_generator import EntityPtsuiteGenerator

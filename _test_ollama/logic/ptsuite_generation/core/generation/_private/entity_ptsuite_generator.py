@@ -8,23 +8,23 @@ from regex import (
 
 from .....utils.logger import ATemporalFormattLogger
 
-from ....llm_access.llm_apiaccessor import ALoggableLlmApiAccessor
+from ....llm_access.llm_apiaccessor import ILlmApiAccessor
 from ....llm_access.llm_apiaccessor.exceptions import (
 	ResponseTimedOutError,
 	ApiResponseError,
 	SaturatedContextWindowError,
 )
 
-from ...exceptions import WrongResponseFormatError
-from ..exceptions import (
-	GenerationInProgressError,
-	GenerationNotStartedError,
-	GenerationNeverPerformedError
+from ...exceptions import (
+	WrongResponseFormatError,
+	PromptingSessionInProgressError,
+	PromptingSessionNotStartedError,
+	PromptingSessionNeverPerformedError
 )
 
 
 
-class EntityPTsuiteGenerator:
+class EntityPtsuiteGenerator:
 	"""
 		Rappresenta un oggetto in grado di richiedere ad un LLM di generare una test-suite parziale,
 		relativa ad una singola entità di codice.
@@ -43,13 +43,18 @@ class EntityPTsuiteGenerator:
 	def __init__(
 			self,
 			max_tries: int,
-			llm_accsor: ALoggableLlmApiAccessor,
+			llm_accsor: ILlmApiAccessor,
 			logger: ATemporalFormattLogger = None,
 			response_format: str = None
 	):
 		"""
-			Costruisce un nuovo EntityPTsuiteGenerator associandolo ad un `ALoggableLlmApiAccessor`
-			con cui effettuerà le richieste di generazione ai LLMs che gli sono/verranno impostati
+			Costruisce un nuovo EntityPtsuiteGenerator associandolo ad un `ILlmApiAccessor`
+			con cui effettuerà le richieste di generazione ai LLMs che gli verranno, o sono stati,
+			impostati.
+			
+			Eventualmente viene anche associato al logger utilizzato per registrare le fasi di ogni
+			tentativo di generazione, e al formato di risposta differente da quello di default
+			(formato di default: `self.GENCODE_PATT`)
 
 			Parameters
 			----------
@@ -57,8 +62,8 @@ class EntityPTsuiteGenerator:
 					Un intero che indica il nuovo numero di tentativi massimi da
 					effettuare nelle richieste
 			
-				llm_accsor: ALoggableLlmApiAccessor
-					Un oggetto `ALoggableLlmApiAccessor` che verrà utilizzato per effettuare le richieste di generazione
+				llm_accsor: ILlmApiAccessor
+					Un oggetto `ILlmApiAccessor` che verrà utilizzato per effettuare le richieste di generazione
 					
 				logger: ATemporalFormattLogger
 					Opzionale. Default = `None`. Un oggetto `ATemporalFormattLogger` rappresentante l' eventuale logger
@@ -96,7 +101,7 @@ class EntityPTsuiteGenerator:
 		self._last_genresp: str = ""
 		self._max_tries: int = max_tries
 		
-		self._llm_platf: ALoggableLlmApiAccessor = llm_accsor
+		self._llm_platf: ILlmApiAccessor = llm_accsor
 		self._logger: ATemporalFormattLogger = logger
 		
 		
@@ -110,9 +115,15 @@ class EntityPTsuiteGenerator:
 				bool
 					Un booleano che indica se la serie di tentativi iniziata precedentemente,
 					è terminata
+					
+			Raises
+			------
+				PromptingSessionNeverPerformedError
+					Si verifica se non è mai stata iniziata una serie di tentativi
+					di generazione
 		"""
 		if not self._gen_everperf:
-			raise GenerationNeverPerformedError()
+			raise PromptingSessionNeverPerformedError()
 		
 		return not self._gen_inprogr
 	
@@ -130,13 +141,13 @@ class EntityPTsuiteGenerator:
 
 			Raises
 			------
-				GenerationInProgressError
-					Si verifica se
+				PromptingSessionInProgressError
+					Si verifica se non è in corso una serie di tentativi di generazione
 		"""
 		if self._gen_inprogr:
-			raise GenerationInProgressError()
+			raise PromptingSessionInProgressError()
 		if not self._gen_everperf:
-			raise GenerationNeverPerformedError()
+			raise PromptingSessionNeverPerformedError()
 		
 		return not self._try_succ
 
@@ -145,27 +156,29 @@ class EntityPTsuiteGenerator:
 		"""
 			Restituisce il codice risultante dall' ultimo tentativo di generazione di una test-suite parziale.
 
-			Per verificare la correttezza del codice restituito è necessario utilizzare l'operazione
-			`.has_corr_succeeded(...)`
+			Per verificare la buona riuscita dell' ultima serie di tentativi è necessario utilizzare
+			l'operazione `.has_gen_succ(...)`
 
 			Returns
 			-------
 				str
 					Una stringa contenente il codice dell' ultimo tentativo di correzione dell' ultima test-suite parziale
-					di cui è stata tentata la correzione
+					di cui è stata tentata la correzione.
+					Viene restituita una stringa vuota se l' ultima serie di tentativi non è andata a
+					buon fine
 
 			Raises
 			------
-				InvalidPreviousGenerationError
-					Si verifica se:
-
-						- Si tenta di eseguire quest' operazione quando non è mai stato effettuata nessuna richiesta di correzione in precedenza
-						- Si tenta di eseguire quest' operazione quando l' ultima richiesta di correzione è terminata con un' eccezione
+				PromptingSessionInProgressError
+					Si verifica se è in corso una serie di tentativi di generazione
+					
+				PromptingSessionNeverPerformedError
+					Si verifica se non è mai stata eseguita nessuna serie di tentativi
 		"""
 		if self._gen_inprogr:
-			raise GenerationInProgressError()
+			raise PromptingSessionInProgressError()
 		if not self._gen_everperf:
-			raise GenerationNeverPerformedError()
+			raise PromptingSessionNeverPerformedError()
 		
 		gen_code: str = ""
 		if self._last_genresp is not None:
@@ -195,12 +208,12 @@ class EntityPTsuiteGenerator:
 					
 			Raises
 			------
-				GenerationInProgressError
+				PromptingSessionInProgressError
 					Si verifica se è stata già iniziata una serie di tentativi di generazione
 					senza essere terminata
 		"""
 		if self._gen_inprogr:
-			raise GenerationInProgressError()
+			raise PromptingSessionInProgressError()
 		
 		if not self._gen_everperf:
 			self._gen_everperf = True
@@ -222,18 +235,18 @@ class EntityPTsuiteGenerator:
 			(funzione o metodo) richiedendola ad uno specifico Large Language Model.
 			
 			ASSUNZIONE: Si assume che il prompt di richiesta sia stato impostato nell' oggetto chat
-			associato all' `ALoggableLlmApiAccessor` fornito a questo EntityPTsuiteGenerator
+			associato all' `ILlmApiAccessor` fornito a questo EntityPtsuiteGenerator
 			
 			Raises
 			------
-				GenerationNotStartedError
+				PromptingSessionNotStartedError
 					Si verifica se non è stata iniziata una serie di tentativi di generazione
 				
 				ChatNeverSelectedError
-					Si verifica se non è stato mai associato una chat all' `ALoggableLlmApiAccessor` fornito
+					Si verifica se non è stato mai associato una chat all' `ILlmApiAccessor` fornito
 			
 				ModelNotSelectedError
-					Si verifica se non è stato selezionato nessun modello per l' `ALoggableLlmApiAccessor` fornito
+					Si verifica se non è stato selezionato nessun modello per l' `ILlmApiAccessor` fornito
 					
 				ApiConnectionError
 					Si verifica se avviene un errore di connessione con la piattaforma di inferenza.
@@ -245,15 +258,14 @@ class EntityPTsuiteGenerator:
 					
 				InvalidPromptError
 					Si verifica se il prompt di richiesta è invalido per l' API rappresentata dall'
-					`ALoggableLlmApiAccessor` fornito
+					`ILlmApiAccessor` fornito
 					
 				WrongResponseFormatError
-					Si verifica se il formato di risposta di almeno uno dei tentativi di generazione
-					non è conforme al formato associato a questo EntityPTsuiteGenerator (o di default)
-		
+					Si verifica se il formato di risposta non è conforme al formato associato
+					a questo EntityPtsuiteGenerator
 		"""
 		if not self._gen_inprogr:
-			raise GenerationNotStartedError()
+			raise PromptingSessionNotStartedError()
 		
 		if (not self._try_succ) and (self._times_tried <= self._max_tries):
 			try:

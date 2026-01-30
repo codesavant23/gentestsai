@@ -1,6 +1,6 @@
 from typing import TextIO, Set, Dict
 from abc import abstractmethod
-from .. import AMutableFormattableLogger
+from .. import AMutableFormattLogger
 
 from datetime import datetime as DateTime
 
@@ -8,9 +8,9 @@ from ..exceptions import InvalidFormatError
 
 
 
-class ATemporalFormattableLogger(AMutableFormattableLogger):
+class ATemporalFormattLogger(AMutableFormattLogger):
 	"""
-		Rappresenta un `AMutableFormattableLogger` che registra, insieme ai messaggi, forniti
+		Rappresenta un `AMutableFormattLogger` che registra, insieme ai messaggi, forniti
 		la data associata alla registrazione del messaggio.
 		
 		I placeholders del formato specifici implementati sono i seguenti:
@@ -36,7 +36,7 @@ class ATemporalFormattableLogger(AMutableFormattableLogger):
 			stream: TextIO
 	):
 		"""
-			Costruisce un nuovo ATemporalFormattableLogger associandolo allo stream di output
+			Costruisce un nuovo ATemporalFormattLogger associandolo allo stream di output
 			fornito
 			
 			Parameters
