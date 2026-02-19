@@ -1,4 +1,4 @@
-from .. import AOllamaLlmSpecImpl
+from ..a_ollama_specimpl import AOllamaLlmSpecImpl
 
 
 

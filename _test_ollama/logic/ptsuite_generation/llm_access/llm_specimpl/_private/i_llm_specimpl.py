@@ -2,7 +2,7 @@ from typing import Set
 from abc import ABC, abstractmethod
 
 from ...llm_api import ILlmApi
-from ...llm_hyperparam_id import ILlmHyperParamId
+from ...llm_hyperparam.id import ILlmHyperParamId
 
 
 
@@ -33,6 +33,7 @@ class ILlmSpecImpl(ABC):
 				str
 					Una stringa, single-line, contenente il nome del modello della specifica
 					implementazione rappresentata da questo ILlmSpecImpl.
+					Esso è l' identificatore del modello che viene usato dalle specifiche API
 		"""
 		pass
 

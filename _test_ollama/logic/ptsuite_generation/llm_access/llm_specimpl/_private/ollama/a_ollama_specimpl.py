@@ -6,15 +6,9 @@ from ....llm_api import (
 	ILlmApi,
 	OllamaApi
 )
-from ....llm_hyperparam_id import (
+from ....llm_hyperparam.id import (
 	ILlmHyperParamId,
-	OllamaTemperatureHyperParamId,
-	OllamaNumPredictHyperParamId,
-	OllamaTopKHyperParamId,
-	OllamaTopPHyperParamId,
-	OllamaSeedHyperParamId,
-	OllamaNumCtxHyperParamId,
-	OllamaThinkHyperParamId
+	ILlmHyperParamIdFactory, LlmHyperParamIdFactoryResolver
 )
 
 
@@ -28,14 +22,16 @@ class AOllamaLlmSpecImpl(ILlmSpecImpl):
 		"""
 			Costruisce un nuovo AOllamaLlmSpecImpl
 		"""
+		hparamid_f: ILlmHyperParamIdFactory = LlmHyperParamIdFactoryResolver.resolve("ollama")
 		self._ollama_hparams: Set[ILlmHyperParamId] = {
-			OllamaTemperatureHyperParamId(),
-			OllamaNumPredictHyperParamId(),
-			OllamaTopKHyperParamId(),
-			OllamaTopPHyperParamId(),
-			OllamaSeedHyperParamId(),
-			OllamaNumCtxHyperParamId(),
-			OllamaThinkHyperParamId()
+			hparamid_f.create("temperature"),
+			hparamid_f.create("top-k"),
+			hparamid_f.create("top-p"),
+			hparamid_f.create("gen_seed"),
+			hparamid_f.create("context_window"),
+			hparamid_f.create("think"),
+			hparamid_f.create("num_predict"),
+			hparamid_f.create("num_gpu")
 		}
 		self._compat_apis: Set[ILlmApi] = {OllamaApi()}
 	
