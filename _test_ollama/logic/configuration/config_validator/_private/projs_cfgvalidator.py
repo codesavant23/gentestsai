@@ -8,7 +8,7 @@ from ....utils.path_validator import (
 
 from ..exceptions import (
 	FieldDoesntExistsError,
-	WrongConfigFileFormatError,
+	ConfigExtraFieldsError,
 	InvalidConfigValueError
 )
 
@@ -102,7 +102,7 @@ class ProjectsConfigValidator(_ABaseConfigValidator):
 				self._REQ_FIELDS.difference(config_fields))
 			)
 			if extra_fields != self._OPT_FIELDS:
-				raise WrongConfigFileFormatError()
+				raise ConfigExtraFieldsError()
 			
 			focal_excl = project.get("focal_excluded", None)
 			if focal_excl is not None:

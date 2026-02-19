@@ -1,5 +1,5 @@
 # Request:
-Correct the code of the partial test suite generated before by modifying any necessary statement in its code. The last generated function/method is "{@Function_Name@}".
+Correct the code of the partial test suite generated before by modifying any necessary statement in its code. The last generated function/method is "{@Entity_Name@}".
 The focal module "{@Module_Name@}", from which the test suite originates, belongs to a project called "{@Project_Name@}".
 The error encountered is described below in the section "Error Encountered".
 This is fix attempt number {@Try_Number@}.

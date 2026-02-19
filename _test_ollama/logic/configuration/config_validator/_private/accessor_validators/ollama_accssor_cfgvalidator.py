@@ -20,8 +20,7 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 				
 				* "api_addr" (str): L' indirizzo (come coppia, separata da ":", con porta) del server Ollama da utilizzare
 				* "userpass_pair" (str): La coppia, separata da ":", nome utente e password da utilizzare nel server Ollama
-				* "connect_timeout" (int): Il timeout di attesa massimo per la connessione al server Ollama
-				* "response_timeout" (int): Il timeout di attesa massimo per il ricevimento della risposta
+				* "connect_timeout" (int): Il timeout di attesa massimo per la connessione al server Ollama (in millisecondi)
 	"""
 	
 	def __init__(
@@ -57,7 +56,6 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 		self._api_addr: str = None
 		self._userpass_pair: str = None
 		self._conn_tout: int = None
-		self._resp_tout: int = None
 	
 	
 	def _ap__assert_purperrors(self, config_read: Dict[str, Any]):
@@ -71,7 +69,6 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 		self._api_addr = config_read["api_addr"]
 		self._userpass_pair = config_read["userpass_pair"]
 		self._conn_tout = config_read["connect_timeout"]
-		self._resp_tout = config_read["response_timeout"]
 		
 		if not isinstance(self._api_addr, str):
 			raise InvalidConfigValueError()
@@ -83,9 +80,7 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 		
 		if not isinstance(self._conn_tout, int):
 			raise InvalidConfigValueError()
-		if not isinstance(self._resp_tout, int):
-			raise InvalidConfigValueError()
-		self._assert_timeouts()
+		self._pf_assert_timeout(self._conn_tout)
 
 
 	##	============================================================
@@ -99,7 +94,7 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				ConfigExtraFieldsError
 					Si verifica se non è rispettato il formato richiesto per il campo
 		"""
 		urltoparse_str: str = self._api_addr if "://" in self._api_addr else f"http://{self._api_addr}"
@@ -116,23 +111,10 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				ConfigExtraFieldsError
 					Si verifica se non è rispettato il formato richiesto per il campo
 		"""
 		user, token = self._user_token.strip("\n\t ").split(":")
 		
 		if (user == "") or (token == ""):
-			raise InvalidConfigValueError()
-
-
-	def _assert_timeouts(self):
-		"""
-			Verifica che i timeouts, di connessione e risposta, siano validi
-			
-			Raises
-			------
-				WrongConfigFileFormatError
-					Si verifica se almeno uno dei due timeouts è minore di 1
-		"""
-		if (self._conn_tout < 1) or (self._resp_tout < 1):
 			raise InvalidConfigValueError()

@@ -2,7 +2,13 @@ from typing import List, Dict, Set, Tuple, Any
 from abc import abstractmethod
 from .._a_platspec_cfgvalidator import _APlatSpecConfigValidator
 
-from ...exceptions import InvalidConfigValueError
+from .....utils.modelname_hasher import EHashingAlgorithm
+
+from ...exceptions import (
+	InvalidConfigValueError,
+	FieldDoesntExistsError,
+	ConfigExtraFieldsError
+)
 
 
 
@@ -25,6 +31,11 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 				
 			- "max_gen_times" (int): Numero massimo di tentativi di generazione di una test-suite parziale
 			- "max_corr_times" (int): Numero massimo di tentativi di correzione di una test-suite parziale
+			- "model_names" (Dict[str, str]): Dizionario dei parametri riguardanti la normalizzazione dei nomi dei modelli. Contiene:
+			
+				* "hashing_alg" (str): L' algortimo di hashing da utilizzare per creare i digest dei nomi dei LLMs
+				* "digest_len" (int): Il numero di caratteri da utilizzare dei digest (i primi `"digest_len"` caratteri)
+			
 			- "gen_tests_dir" (str): Nome della directory, nella Full Project Root Path, che conterrà i tests generati dai LLMs
 			- "skipped_tests" (Dict[str, str]): Dizionario dei parametri rigurdanti eventuali tests saltati. Contiene:
 			
@@ -42,6 +53,7 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 	_ALL_FIELDS_NOPLAT: Set[str] = {
 		"default_model_params",
 		"max_gen_times", "max_corr_times",
+		"model_names",
 		"skipped_tests",
 		"gen_tests_dir",
 		"always_excluded"
@@ -51,6 +63,9 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 		"top-k", "top-p",
 		"context_window",
 		"think",
+	}
+	_LLMNAME_FIELDS: Set[str] = {
+		"hashing_alg", "digest_len",
 	}
 	_SKIPD_FIELDS: Set[str] = {
 		"file_format",
@@ -82,14 +97,7 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 		"""
 		super().__init__(config_dict)
 		
-		self._llm_params: Dict[str, Any] = None
-		self._max_gen: int = -1
-		self._max_corr: int = -1
-		self._gentests_dirname: str = None
-		self._skipd_tests: Dict[str, str] = None
-		self._alw_excl: List[str] = None
-	
-	
+		
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:
 		return (self._ALL_FIELDS_NOPLAT, set())
 	
@@ -125,6 +133,18 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 				(max_gens <= 0) or (max_corrs <= 0) or
 				(gen_dirname != "")
 		):
+			raise InvalidConfigValueError()
+		
+		model_names: Dict[str, str] = config_read["model_names"]
+		modelnames_fields = set(model_names.keys())
+		if modelnames_fields < self._LLMNAME_FIELDS:
+			raise FieldDoesntExistsError()
+		if modelnames_fields > self._LLMNAME_FIELDS:
+			raise ConfigExtraFieldsError()
+		hashing_alg: str = model_names["hashing_alg"]
+		try:
+			EHashingAlgorithm[hashing_alg.upper().replace("-","_")]
+		except KeyError:
 			raise InvalidConfigValueError()
 		
 		skipd_tests: Dict[str, str] = config_read["skipped_tests"]
@@ -219,7 +239,7 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 			
 			Raises
 			------
-				WrongConfigFileFormatError
+				ConfigExtraFieldsError
 					Si verifica se il formato del campo non è corretto
 		"""
 		for key, value in skipd_tests.items():

@@ -1,2 +1,3 @@
 from ._private.wrongcfgfiletype_error import WrongConfigFileTypeError
+from ._private.wrongcfgfileformat_error import WrongConfigFileFormatError
 from ._private.invalidcfgfilepath_error import InvalidConfigFilepathError

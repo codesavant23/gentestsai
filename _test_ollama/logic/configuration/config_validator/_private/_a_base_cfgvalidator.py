@@ -4,7 +4,7 @@ from .. import IConfigValidator
 
 from ..exceptions import (
 	FieldDoesntExistsError,
-	WrongConfigFileFormatError
+	ConfigExtraFieldsError
 )
 
 
@@ -62,7 +62,7 @@ class _ABaseConfigValidator(IConfigValidator):
 			all_fields: Set[str] = mand_fields.union(opt_fields)
 			has_extra_fields: bool = config_fields.difference(all_fields) != set()
 			if has_extra_fields:
-				raise WrongConfigFileFormatError()
+				raise ConfigExtraFieldsError()
 		
 		self._ap__assert_mandatory(self._dict)
 		self._ap__assert_optional(self._dict)
@@ -170,7 +170,7 @@ class _ABaseConfigValidator(IConfigValidator):
 		
 			Raises
 			------
-				WrongConfigFileFormatError
+				ConfigExtraFieldsError
 					Si verifica se il file di configurazione contiene campi non previsti dallo scopo
 					specificato dai discendenti di questa classe astratta
 			

@@ -14,16 +14,22 @@ class IConfigParser(ABC):
 
 
 	@abstractmethod
-	def read_config(self) -> Dict[str, Any]:
+	def read_config(self, cfgfile_path: str) -> Dict[str, Any]:
 		"""
-			Effettua la validazione del file di configurazione che si vuole parsare verificando:
+			Effettua il parsing del file di configurazione alla path specificata, verificando:
 				
 				- Se, eventualmente, l' estensione è quella richiesta dal tipo
 				- Se il contenuto è valido per il tipo specificato dai discendenti di questa interfaccia
 				- Se il file di configurazione è rappresentabile come un dizionario Python
 				
-			Successivamente legge il file di configurazione associato restituendolo come dizionario
-			Python con valori variegati
+			Successivamente legge il file di configurazione restituendolo come dizionario Python
+			di valori variegati
+			
+			Parameters
+			----------
+				cfgfile_path: str
+					Una stringa contenente la path del file di configurazione di cui effettuare
+					il parsing
 			
 			Returns
 			-------
@@ -33,6 +39,19 @@ class IConfigParser(ABC):
 					
 			Raises
 			------
+				ValueError
+					Si verifica se:
+					
+						- La path del file di configurazione fornita ha valore `None`
+						- La path del file di configurazione fornita è una stringa vuota
+						
+				InvalidConfigFilepathError
+					Si verifica se:
+					
+						- La path del file di configurazione fornita risulta invalida sintatticamente
+						- Non esiste un file alla path fornita
+						- Non è possibile aprire il file di configurazione
+			
 				WrongConfigFileTypeError
 					Si verifica se:
 						
@@ -42,7 +61,6 @@ class IConfigParser(ABC):
 						  di questa interfaccia
 						  
 				WrongConfigFileFormatError
-					Si verifica se il file di configurazione non è rappresentabile
-					come un dizionario Python
+					Si verifica se il file di configurazione non è rappresentabile come un dizionario Python
 		"""
 		pass

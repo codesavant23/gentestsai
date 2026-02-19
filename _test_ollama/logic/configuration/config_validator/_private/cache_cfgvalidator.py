@@ -18,12 +18,18 @@ class CacheConfigValidator(_ABaseConfigValidator):
 		per i processi di "Generazione" e "Correzione" di GenTestsAI.
 		
 		Il file di configurazione letto sarà composto da un dizionario contenente:
+			- "caches_type" (str): La tecnologia implementativa da utilizzare per le caches di memorizzazione
 			- "cache_root" (str): La root path che contiene le caches che verranno utilizzate
-			- "gen_cache" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Generazione"
-			- "corr_cache" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Correzione"
+			- "gen_func_cache" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Generazione" (per le sole funzioni)
+			- "gen_meth_cache" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Generazione" (per i soli metodi)
+			- "corr_synt_cache" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Correzione Sintattica"
+			- "corr_lint_cache" (str): Se esiste nel file letto, il nome del file che contiene la cache legata al processo di "Correzione Linting"
 	"""
-	_REQ_FIELDS: Set[str] = {"cache_root"}
-	_OPT_FIELDS: Set[str] = {"gen_cache", "corr_cache"}
+	_REQ_FIELDS: Set[str] = {"caches_type", "cache_root"}
+	_OPT_FIELDS: Set[str] = {
+		"gen_func_cache", "gen_meth_cache",
+		"corr_synt_cache", "corr_lint_cache"
+	}
 	
 	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
 	_NOTEX_ERROR: str = 'La path specificata dal parametro "{param}" non esiste'
@@ -54,10 +60,6 @@ class CacheConfigValidator(_ABaseConfigValidator):
 		"""
 		super().__init__(config_dict)
 		
-		self._cache_root: str = None
-		self._gen_fname: str = None
-		self._corr_fname: str = None
-		
 		self._pathval: PathValidator = PathValidator()
 	
 	
@@ -66,6 +68,8 @@ class CacheConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
+		if "caches_type" not in config_read:
+			raise InvalidConfigValueError()
 		if "cache_root" not in config_read:
 			raise InvalidConfigValueError()
 		cache_root: str = config_read["cache_root"]
@@ -74,15 +78,25 @@ class CacheConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
-		gen_cache: str = config_read.get("gen_cache", None)
-		if gen_cache is not None:
-			if not isinstance(gen_cache, str):
-				self._assert_path("gen_cache", gen_cache)
+		genf_cache: str = config_read.get("gen_func_cache", None)
+		if genf_cache is not None:
+			if not isinstance(genf_cache, str):
+				self._assert_path("gen_func_cache", genf_cache)
+				
+		genm_cache: str = config_read.get("gen_meth_cache", None)
+		if genm_cache is not None:
+			if not isinstance(genm_cache, str):
+				self._assert_path("gen_meth_cache", genm_cache)
 		
-		corr_cache: str = config_read.get("corr_cache", None)
-		if corr_cache is not None:
-			if not isinstance(corr_cache, str):
-				self._assert_path("corr_cache", corr_cache)
+		corrs_cache: str = config_read.get("corr_synt_cache", None)
+		if corrs_cache is not None:
+			if not isinstance(corrs_cache, str):
+				self._assert_path("corr_synt_cache", corrs_cache)
+		
+		corrl_cache: str = config_read.get("corr_lint_cache", None)
+		if corrl_cache is not None:
+			if not isinstance(corrl_cache, str):
+				self._assert_path("corr_lint_cache", corrl_cache)
 	
 	
 	def _ap__assert_purperrors(self, config_read: Dict[str, Any]):

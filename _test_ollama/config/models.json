@@ -1,4 +1,4 @@
 {
-	"qwen3:32b": {},
-	"llama3.1:latest": {}
+	"qwen3-32b-q4_k_m": {},
+	"llama3.1-8b-q4_k_m": {}
 }

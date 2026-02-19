@@ -1,3 +1,2 @@
-import exceptions
-import config_parser
-import config_validator
+from . import config_parser
+from . import config_validator

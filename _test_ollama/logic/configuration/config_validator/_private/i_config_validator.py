@@ -23,7 +23,7 @@ class IConfigValidator(ABC):
 					Si verifica se il file di configurazione rappresentato ha uno più campi
 					obbligatori mancanti
 			
-				WrongConfigFileFormatError
+				ConfigExtraFieldsError
 					Si verifica se il file di configurazione contiene campi non previsti
 					dallo scopo specificato dai discendenti di questa interfaccia
 

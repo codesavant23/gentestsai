@@ -1,22 +1,22 @@
-from typing import TextIO
+from typing import TextIO, Literal
 from .. import ATemporalFormattLogger
 
 from ..exceptions import InvalidStreamTypeError
 
 
 
-class ConsoleLogger(ATemporalFormattLogger):
+class ConsoleTemporalFormattLogger(ATemporalFormattLogger):
 	"""
-		Rappresenta `ACheckableLogger` che ha la capacità di scrivere su Console
+		Rappresenta un `ATemporalFormattLogger` che ha la capacità di scrivere su Console
 		(`stdout` e `stderr`)
 	"""
 	
 	def __init__(
 			self,
-	        stream: TextIO
+	        stream: TextIO,
 	):
 		"""
-			Costruisce un nuovo ACheckableLogger fornendo lo stream di output
+			Costruisce un nuovo ConsoleTemporalFormattLogger fornendo lo stream di output
 			da associare
 			
 			Parameters

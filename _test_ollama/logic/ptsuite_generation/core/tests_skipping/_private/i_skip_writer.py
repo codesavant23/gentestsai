@@ -19,7 +19,9 @@ class ISkipWriter(ABC):
 	):
 		"""
 			Scrive sul file associato, dei tests saltati, che il tentativo di produrre, tramite LLM,
-			una test-suite parziale, legata all' entità specificata, non è andato a buon fine
+			una test-suite parziale, legata all' entità specificata, non è andato a buon fine.
+			
+			Il flush sul file viene sempre eseguito al termine di questa operazione
 			
 			Parameters
 			----------

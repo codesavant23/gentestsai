@@ -1,5 +1,5 @@
 # Request:
-Generate tests, and necessary imports, only for the function '{@Function_Name@}', part of the focal module whose code is provided below.
+Generate tests, and necessary imports, only for the function '{@Entity_Name@}', part of the focal module whose code is provided below.
 The focal module is called "{@Module_Name@}" and belongs to a project called "{@Project_Name@}".
 
 ## Very Important:
@@ -201,4 +201,4 @@ def test_1plusitems():
 {@Focal_Code@}
 ```
 
-# Answer (only for the function '{@Function_Name@}'):
+# Answer (only for the function '{@Entity_Name@}'):

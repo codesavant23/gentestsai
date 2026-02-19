@@ -1,5 +1,5 @@
-import utils
-import configuration
-import focalproj_configuration
-import ptsuite_generation
-import calc_coverage
+from . import utils
+from . import configuration
+from . import focalproj_configuration
+from . import ptsuite_generation
+from . import calc_coverage

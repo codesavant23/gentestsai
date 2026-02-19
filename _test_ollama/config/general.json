@@ -9,6 +9,10 @@
 		"num_predict": -2,
 		"num_gpu": 100
 	},
+	"model_names": {
+		"hashing_alg": "sha-256",
+		"digest_len": 32
+	},
 	"max_gen_times": 10,
 	"max_corr_times": 10,
     "gen_tests_dir": "gen_tests",

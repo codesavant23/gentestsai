@@ -6,8 +6,13 @@
 		"tools_root": "C:\\Users\\filip\\Desktop\\Python_Projects\\gentestsai\\_test_ollama\\docker\\tools",
 		"linting": "gtsai_linting_tools"
 	},
+	"environ": {
+		"lint_executer": "exec_linting_check.py",
+		"path_prefix": "/app/",
+		"tools_root": "/etc/container/tools/"
+	},
 	"project": {
-		"dockerfile": "Dockerfile",
+		"dockerfile": "Dockerfile.gtsai",
 		"pyversion_file": "python_version.txt",
 		"python_deps_file": "python_deps.txt",
 		"ext_deps_file": "ext_deps.txt",

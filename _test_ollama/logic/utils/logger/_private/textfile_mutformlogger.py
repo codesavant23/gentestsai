@@ -5,9 +5,9 @@ from ..exceptions import InvalidStreamTypeError
 
 
 
-class TextFileMutableFormattableLogger(ATemporalFormattLogger):
+class TextfileMutableFormattableLogger(ATemporalFormattLogger):
 	"""
-		Rappresenta `ATemporalFormattLogger` che registra messaggi su un file testuale.
+		Rappresenta un `ATemporalFormattLogger` che registra messaggi su un file testuale.
 	"""
 	
 	def __init__(
@@ -15,7 +15,7 @@ class TextFileMutableFormattableLogger(ATemporalFormattLogger):
 	        stream: TextIO
 	):
 		"""
-			Costruisce un nuovo TextFileMutableLogger
+			Costruisce un nuovo TextfileMutableFormattableLogger
 			
 			Parameters
 			----------
@@ -32,6 +32,11 @@ class TextFileMutableFormattableLogger(ATemporalFormattLogger):
 					specificato dai discendenti di questa classe astratta
 		"""
 		super().__init__(stream)
+		
+	
+	##	============================================================
+	##						PRIVATE METHODS
+	##	============================================================
 	
 	
 	def _ap__assert_stream_type(self, stream: TextIO):

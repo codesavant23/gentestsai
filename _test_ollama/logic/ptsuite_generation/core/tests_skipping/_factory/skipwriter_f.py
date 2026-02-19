@@ -1,7 +1,6 @@
-from .. import (
-	ISkipWriter,
-	ESkippedTestsFtypeFormat
-)
+from .. import ISkipWriter
+from .e_skipdtests_filetype import ESkippedTestsFtypeFormat
+
 from .._private._a_base_skipwriter import _ABaseSkipWriter
 from .._private.jsonlist_skipwriter import JsonListSkipWriter
 
@@ -12,12 +11,6 @@ class SkipWriterFactory:
 		Rappresenta una factory per ogni `ISkipWriter`
 	"""
 	
-	def __init__(self):
-		"""
-			Costruisce un nuovo SkipWriterFactory
-		"""
-		pass
-		
 		
 	@classmethod
 	def create(

@@ -1,1 +1,1 @@
-import focalenv_configurator
+from . import focalenv_configurator

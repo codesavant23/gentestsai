@@ -1,2 +1,2 @@
-import classdecls_extractor
-import moddecls_extractor
+from . import classdecls_extractor
+from . import moddecls_extractor

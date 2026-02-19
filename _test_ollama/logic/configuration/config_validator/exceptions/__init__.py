@@ -1,3 +1,3 @@
 from ._private.invalidcfgvalue_error import InvalidConfigValueError
 from ._private.fielddoesntexists_error import FieldDoesntExistsError
-from ._private.wrongcfgfileformat_error import WrongConfigFileFormatError
+from ._private.extrafcfgfileformat_error import ConfigExtraFieldsError

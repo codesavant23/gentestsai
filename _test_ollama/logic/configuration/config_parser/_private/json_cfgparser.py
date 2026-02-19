@@ -7,7 +7,7 @@ from json import (
 )
 # ============================================ #
 
-from logic.configuration.config_parser.exceptions import (
+from ..exceptions import (
 	WrongConfigFileTypeError,
 	WrongConfigFileFormatError,
 )
@@ -22,36 +22,11 @@ class JsonConfigParser(_ABaseConfigParser):
 		indicizzato da stringhe
 	"""
 	
-	def __init__(
-			self,
-			file_path: str
-	):
+	def __init__(self):
 		"""
-			Costruisce un nuovo JsonConfigParser fornendogli la path del file di
-			configurazione che verrà associato a questo parser
-			
-			Parameters
-			----------
-				file_path: str
-					Una stringa rappresentante la path assoluta contenente il file di configurazione
-					da associare e parsare
-			
-			Raises
-			------
-				ValueError
-					Si verifica se:
-					
-						- La path del file di configurazione fornita ha valore `None`
-						- La path del file di configurazione fornita è una stringa vuota
-						
-				InvalidConfigFilepathError
-					Si verifica se:
-					
-						- Non esiste un file alla path fornita
-						- La path del file di configurazione fornita risulta invalida sintatticamente
-						- Non è possibile aprire il file di configurazione
+			Costruisce un nuovo JsonConfigParser
 		"""
-		super().__init__(file_path)
+		super().__init__()
 		
 		self._json_dec: JSONDecoder = JSONDecoder()
 	

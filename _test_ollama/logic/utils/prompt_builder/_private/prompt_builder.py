@@ -7,6 +7,7 @@ from regex import (
 )
 
 from ..exceptions import (
+	TemplateNotSetError,
 	InvalidPlaceholderError,
 	IncompletePromptError
 )
@@ -15,7 +16,7 @@ from ..exceptions import (
 
 class PromptBuilder:
 	"""
-		Rappresenta un oggetto in grado di costruire un Full Prompt dato un template di cui
+		Rappresenta un oggetto in grado di costruire un full prompt dato un template di cui
 		sostituirne i placeholders.
 
 		I placeholders accettati da questo costruttore di full prompts sono identificati con il wrapping
@@ -31,7 +32,7 @@ class PromptBuilder:
 
 	def __init__(
 			self,
-			template_prompt: str,
+			template_prompt: str = None,
 			init_del: str="{@",
 			end_del: str="@}"
 	):
@@ -41,7 +42,9 @@ class PromptBuilder:
 			Parameters
 			----------
 				template_prompt: str
-					Una stringa contenente il template prompt su cui basarsi
+					Opzionale. Default = `None`. Una stringa contenente il template prompt su cui basarsi.
+					Se il template prompt non viene fornito ora è necessario fornirlo in seguito,
+					tramite il metodo `.`
 
 				init_del: str
 					Opzionale. Default = `{@`. Una stringa contenente il delimitatore iniziale per riconoscere
@@ -55,12 +58,34 @@ class PromptBuilder:
 		self._edel: str = end_del
 		self._templ: str = template_prompt
 
-		self._placehs: Dict[str, str] = dict()
-		plach_patt: Pattern = create_pattern(
-			fr"{reg_escape(init_del)}(?P<placeh_name>[A-Za-z0-9_]+){reg_escape(end_del)}"
+		self._placehs: Dict[str, str] = None
+		if self._templ is not None:
+			self._placehs = self._init_placehs_dict(template_prompt, init_del, end_del)
+
+
+	def set_template_prompt(self, template_prompt: str):
+		"""
+			Imposta un nuovo template prompt di cui creare il full prompt,
+			disassociando quello eventualmente impostato in precedenza
+			
+			Raises
+			------
+				ValueError
+					Si verifica se:
+					
+						- Il parametro `template_prompt` ha valore `None`
+						- Il parametro `template_prompt` è una stringa vuota
+		"""
+		if (template_prompt is None) or (template_prompt == ""):
+			raise ValueError()
+		
+		self._templ = template_prompt
+		
+		if self._placehs is not None:
+			del self._placehs
+		self._placehs = self._init_placehs_dict(
+			template_prompt, self._idel, self._edel
 		)
-		for placeh_match in plach_patt.finditer(template_prompt):
-			self._placehs[placeh_match.group("placeh_name")] = None
 
 
 	def does_placeh_exists(
@@ -79,12 +104,37 @@ class PromptBuilder:
 			-------
 				bool
 					Un booleano che indica se il placeholder, con nome `placeh_name`, esiste
+					
+			Raises
+			------
+				TemplateNotSetError
+					Si verifica se non è stato ancora impostato alcun template prompt
+				
 		"""
+		if self._templ is None:
+			raise TemplateNotSetError()
+		
 		if placeh_name in self._placehs:
 			return True
 		else:
 			return False
-
+	
+	
+	def unset_placeholders(self):
+		"""
+			Elimina il valore impostato per ogni placeholder
+			
+			Raises
+			------
+				TemplateNotSetError
+					Si verifica se non è stato ancora impostato alcun template prompt
+		"""
+		if self._templ is None:
+			raise TemplateNotSetError()
+		
+		for key in self._placehs.keys():
+			self._placehs[key] = None
+		
 
 	def set_placeholder(
 			self,
@@ -104,9 +154,14 @@ class PromptBuilder:
 
 			Raises
 			------
+				TemplateNotSetError
+					Si verifica se non è stato ancora impostato alcun template prompt
+					
 				InvalidPlaceholderError
 					Se il placeholder con nome `name` non esiste nel template prompt a cui è associato questo prompt builder
 		"""
+		if self._templ is None:
+			raise TemplateNotSetError()
 		if not self.does_placeh_exists(name):
 			raise InvalidPlaceholderError()
 
@@ -125,16 +180,22 @@ class PromptBuilder:
 
 			Raises
 			------
+				TemplateNotSetError
+					Si verifica se non è stato ancora impostato alcun template prompt
+			
 				IncompletePrompt
 					Se si esegue quest' operazione senza aver sostituito prima tutti i placeholders
 					nel template prompt
 		"""
-		for placeh, value in self._placehs:
+		if self._templ is None:
+			raise TemplateNotSetError()
+		
+		for placeh, value in self._placehs.items():
 			if value is None:
 				raise IncompletePromptError()
 
 		full_prompt: str = self._templ
-		for placeh, value in self._placehs:
+		for placeh, value in self._placehs.items():
 			full_prompt = full_prompt.replace(
 				reg_escape(
 					f"{self._idel}{placeh}{self._edel}"
@@ -143,3 +204,26 @@ class PromptBuilder:
 			)
 
 		return full_prompt
+	
+	
+	##	============================================================
+	##						PRIVATE METHODS
+	##	============================================================
+	
+	
+	@classmethod
+	def _init_placehs_dict(
+			cls,
+			template_prompt: str,
+			init_del: str,
+			end_del: str
+	) -> Dict[str, str]:
+		placehs_dict: Dict[str, str] = dict()
+		
+		plach_patt: Pattern = create_pattern(
+			fr"{reg_escape(init_del)}(?P<placeh_name>[A-Za-z0-9_]+){reg_escape(end_del)}"
+		)
+		for placeh_match in plach_patt.finditer(template_prompt):
+			placehs_dict[placeh_match.group("placeh_name")] = None
+			
+		return placehs_dict

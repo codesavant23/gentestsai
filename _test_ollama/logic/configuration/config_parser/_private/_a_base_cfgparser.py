@@ -24,55 +24,33 @@ class _ABaseConfigParser(IConfigParser):
 		Il formato del file di configurazione letto è specificato dai discendenti di questa classe astratta
 	"""
 	
-	def __init__(
+	def __init__(self):
+		"""
+			Costruisce un nuovo _ABaseConfigReader
+		"""
+		self._path_val: PathValidator = PathValidator()
+
+	
+	def read_config(
 			self,
 			cfgfile_path: str
-	):
-		"""
-			Costruisce un nuovo _ABaseConfigReader fornendogli la path del file di configurazione
-			che verrà associato a questo lettore
-			
-			Parameters
-			----------
-				cfgfile_path: str
-					Una stringa rappresentante la path assoluta contenente il file di configurazione
-					da associare e leggere
-			
-			Raises
-			------
-				ValueError
-					Si verifica se:
-					
-						- La path del file di configurazione fornita ha valore `None`
-						- La path del file di configurazione fornita è una stringa vuota
-						
-				InvalidConfigFilepathError
-					Si verifica se:
-					
-						- La path del file di configurazione fornita risulta invalida sintatticamente
-						- Non esiste un file alla path fornita
-						- Non è possibile aprire il file di configurazione
-		"""
+	) -> Dict[str, Any]:
 		if cfgfile_path is None:
 			raise ValueError()
 		if cfgfile_path == "":
 			raise ValueError()
 		
 		try:
-			PathValidator().assert_path(cfgfile_path)
+			self._path_val.assert_path(cfgfile_path)
 		except Exception as err:
 			raise InvalidConfigFilepathError(err.args[0])
 		
-		self._cfg_path = cfgfile_path
-	
-	
-	def read_config(self) -> Dict[str, Any]:
 		extens: str = self._p__file_extension()
 		if extens != "":
-			if path_split_ext(self._cfg_path)[1].lower() != f".{extens}":
+			if path_split_ext(cfgfile_path)[1].lower() != f".{extens}":
 				raise WrongConfigFileTypeError()
 			
-		return self._ap__read_spec(self._cfg_path)
+		return self._ap__read_spec(cfgfile_path)
 	
 	
 	def _p__file_extension(self) -> str:

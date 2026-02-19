@@ -1,5 +1,5 @@
 # Request:
-Generate tests, and necessary imports, only for the method '{@Method_Name@}', part of the focal class, and focal module, whose code is provided below.
+Generate tests, and necessary imports, only for the method '{@Entity_Name@}', part of the focal class, and focal module, whose code is provided below.
 The focal class is called "{@Class_Name@}" and belongs to the module called "{@Module_Name@}" of a project called "{@Project_Name@}".
 
 ## Very Important:
@@ -227,4 +227,4 @@ def test_1plusitems():
 {@Focal_Code@}
 ```
 
-# Answer (only for the method '{@Method_Name@}' of the class "{@Class_Name@}"):
+# Answer (only for the method '{@Entity_Name@}' of the class "{@Class_Name@}"):

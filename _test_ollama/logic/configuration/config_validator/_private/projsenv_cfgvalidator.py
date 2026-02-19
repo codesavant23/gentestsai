@@ -28,7 +28,7 @@ from ....utils.path_validator import (
 )
 
 from ..exceptions import (
-	WrongConfigFileFormatError,
+	ConfigExtraFieldsError,
 	FieldDoesntExistsError,
 	InvalidConfigValueError
 )
@@ -44,10 +44,16 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			- "envconfig_dir" (str): L' eventuale nome della directory che contiene i files di configurazione per gli ambienti focali
 			- "os_image" (str): L' immagine 'base' di docker da cui derivare ogni immagine degli ambienti focali
 			- "python_version" (str): La versione di fallback dell' interprete Python da utilizzare (nel caso in cui il progetto non ne abbia una specifica)
-			- "tools" (Dict[str, str]): Dizionario che contiene le path/directories relative ai tools da utilizzare nell' ambiente focale. Contiene:
+			- "tools" (Dict[str, str]): Dizionario che contiene le path/directories relative ai tools da utilizzare in ogni ambiente focale. Contiene:
 			
 				* "tools_root" (str): La root path che contiene i tools da aggiungere all' interno di ogni ambiente focale
 				* "linting" (str): Il nome della directory che contiene i tools per eseguire la verifica di linting all' interno dell' ambiente focale
+				
+			- "environ" (Dict[str, str]): Dizionario che contiene i parametri relativi agli ambienti focali. Contiene:
+			
+				* "lint_executer" (str): Il nome dello script che eseguirà la verifica di linting all' interno di ogni ambiente focale
+				* "path_prefix" (str): La path di base che ospita la Full Project Root Path, del progetto focale, all' interno di ogni ambiente focale
+				* "tools_root" (str): La root path dei tools utilizzati all' interno di ogni ambiente focale
 				
 			- "project" (Dict[str, str]): Dizionario che contiene i parametri relativi ad ogni progetto focale. Contiene:
 			
@@ -62,6 +68,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	_OUTER_FIELDS: Set[str] = {
 		"envconfig_dir",
 		"os_image", "python_version",
+		"environ",
 		"tools",
 		"project"
 	}
@@ -69,12 +76,19 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		"tools_root",
 		"linting"
 	}
+	_ENVIRON_FIELDS: Set[str] = {
+		"lint_executer",
+		"path_prefix",
+		"tools_root"
+	}
 	_1PROJ_FIELDS: Set[str] = {
 		"dockerfile",
 		"pyversion_file",
 		"ext_deps_file", "python_deps_file",
 		"pre_extdeps_script", "post_extdeps_script"
 	}
+	
+	_LINUXPATH_PATT: str = r"^(?P<linux_path>(/[\w.-]+/?)+)$"
 	
 	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
 	_NOTEX_ERROR: str = 'La path specificata dal parametro "{param}" non esiste'
@@ -140,24 +154,42 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		py_version: str = config_read["python_version"]
 		project: Dict[str, str] = config_read["project"]
 		tools: Dict[str, str] = config_read["tools"]
+		environ: Dict[str, str] = config_read["environ"]
 		
 		proj_fields = set(project.keys())
 		if proj_fields < self._1PROJ_FIELDS:
 			raise FieldDoesntExistsError()
 		if proj_fields > self._1PROJ_FIELDS:
-			raise WrongConfigFileFormatError()
+			raise ConfigExtraFieldsError()
 		
 		tools_fields = set(tools.keys())
 		if tools_fields < self._TOOLS_FIELDS:
 			raise FieldDoesntExistsError()
 		if tools_fields > self._TOOLS_FIELDS:
-			raise WrongConfigFileFormatError()
+			raise ConfigExtraFieldsError()
+		
+		environ_fields = set(environ.keys())
+		if environ_fields < self._ENVIRON_FIELDS:
+			raise FieldDoesntExistsError()
+		if environ_fields > self._ENVIRON_FIELDS:
+			raise ConfigExtraFieldsError()
 		
 		tools_root: str = tools["tools_root"]
-		linting_tools: str = tools["linting"]
+		linting_tools: str = path_join(tools_root, tools["linting"])
 		
-		self._assert_path(tools_root, "tools_root")
-		self._assert_path(linting_tools, "linting")
+		self._assert_path(tools_root, "tools.tools_root")
+		self._assert_path(linting_tools, "tools.linting")
+		
+		if not os_fdexists(path_join(linting_tools, environ["lint_executer"])):
+			raise InvalidConfigValueError()
+
+		linux_path_found: Match[str]
+		linux_path_found = reg_search(self._LINUXPATH_PATT, environ["path_prefix"])
+		if linux_path_found.group("linux_path") is None:
+			raise ValueError()
+		linux_path_found = reg_search(self._LINUXPATH_PATT, environ["tools_root"])
+		if linux_path_found.group("linux_path") is None:
+			raise ValueError()
 		
 		is_pyvers_valid: bool = reg_search(r"[0-9]+\.[0-9]+(\.[0-9]+)?", py_version) is not None
 		if not is_pyvers_valid:

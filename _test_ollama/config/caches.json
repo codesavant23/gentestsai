@@ -1,0 +1,8 @@
+{
+	"caches_type": "sqlite3",
+	"cache_root": "C:\\Users\\filip\\Desktop\\Python_Projects\\gentestsai\\_test_ollama\\caches",
+	"gen_func_cache": "gen_funcs.db",
+	"gen_meth_cache": "gen_meths.db",
+	"corr_synt_cache": "corr_synt.db",
+	"corr_lint_cache": "corr_lint.db"
+}

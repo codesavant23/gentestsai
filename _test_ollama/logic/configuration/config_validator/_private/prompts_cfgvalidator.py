@@ -1,10 +1,15 @@
-from typing import Dict, Set, Any, Tuple
+from typing import List, Dict, Set, Any, Tuple
 from ._a_base_cfgvalidator import _ABaseConfigValidator
 
 # ============ Path Utilities ============ #
 from os.path import join as path_join
-from pathlib import Path as SystemPath
 # ======================================== #
+# ============== OS Utilities ============== #
+from os import walk as os_walk
+# ========================================== #
+# ============= RegEx Utilities ============ #
+from regex import search as reg_search
+# ========================================== #
 
 from ....utils.path_validator import (
 	PathValidator,
@@ -19,21 +24,63 @@ from ..exceptions import (
 
 class PromptsConfigValidator(_ABaseConfigValidator):
 	"""
-		Rappresenta un `IConfigValidator` per il file di configurazione che specifica i prompts da utilizzare
-		per i processi di "Generazione" e "Correzione" di GenTestsAI.
+		Rappresenta un `IConfigValidator` per il file di configurazione che specifica i parametri relativi ai prompts.
+		Esso specifica sia parametri generali dei prompts, sia i prompts da utilizzare per i processi di "Generazione"
+		e "Correzione" di GenTestsAI.
 		
 		Il file di configurazione letto è un dizionario contenente:
 		
 			- "base_path" (str): La path assoluta di base che contiene le cartelle con i template prompts da utilizzare
 			- "generic_dirname" (str): Il nome della directory, all' interno della "base_path" che contiene i template prompts indipendenti dal LLM
-			- "func_fname" (str): Il nome del file che contiene il template prompt per funzioni
-			- "meth_fname" (str): Il nome del file che contiene il template prompt per metodi
-			- "corr_fname" (str): Il nome del file che contiene il template prompt per correzioni
+			- "file_names" (Dict[str, str]): Dizionario i nomi dei files di ogni template prompt da utilizzare. Contiene:
+			
+				* "functional" (str): Il nome del file che contiene il template prompt per funzioni
+				* "methodal" (str): Il nome del file che contiene il template prompt per metodi
+				* "correctional" (str): Il nome del file che contiene il template prompt per correzioni
+				
+			- "placeholders" (Dict[str, Any]): Dizionario che contiene la descrizione dei placeholders dei prompt. Contiene:
+				
+				* "start_del" (str): Il delimitatore iniziale di ogni placeholder
+				* "end_del" (str): Il delimitatore finale di ogni placeholder
+				* "common" (Dict[str, str]): Dizionario di placeholders comuni a tutte le categorie (functional, methodal, correctional) di template prompts utilizzati. Contiene:
+				
+					> "entity": Il placeholder (senza delimitatori) per l' entità (funzione/metodo)
+					> "module": Il placeholder (senza delimitatori) per il nome del modulo focale
+					> "project": Il placeholder (senza delimitatori) per il nome del progetto focale
+					> "module_path": Il placeholder (senza delimitatori) per la path in cui è contenuto il modulo focale
+					> "tsuite_path": Il placeholder (senza delimitatori) per la path che contiene la test-suite
+					
+				* "correctional" (Dict[str, str]): Dizionario di placeholders dei correctional template prompts utilizzati. Contiene:
+					
+					> "try_num": Il placeholder (senza delimitatori) per il numero di tentativo di correzione
+					> "error_name": Il placeholder (senza delimitatori) per il nome dell' errore da correggere
+					> "error_mess": Il placeholder (senza delimitatori) per il messaggio dell' errore da correggere
+					
+				* "code" (str): Il placeholder (senza delimitatori) per il codice focale nei functional e methodal template prompts utilizzati
+				* "class_name" (str): Il placeholder (senza delimitatori) per il nome della classe nei methodal template prompts utilizzati
 	"""
-	_ALL_FIELDS: Set[str] = {
-		"prompts_path",
-		"generic_dirname",
-		"func_fname", "meth_fname", "corr_fname"
+	_PLACEH_PATT: str = r"[A-Za-z0-9_]+"
+	
+	_OUTER_FIELDS: Set[str] = {
+		"base_path", "generic_dirname",
+		"file_names", "placeholders"
+	}
+	_FNAMES_FIELDS: Set[str] = {
+		"functional", "methodal", "correctional"
+	}
+	_PLACEHS_FIELDS: Set[str] = {
+		"start_del", "end_del",
+		"common", "correctional",
+		"code", "class_name"
+	}
+	
+	_COMMON_FIELDS: Set[str] = {
+		"entity",
+		"module", "project",
+		"module_path", "tsuite_path"
+	}
+	_CORR_FIELDS: Set[str] = {
+		"try_num", "error_name", "error_mess"
 	}
 	
 	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
@@ -69,22 +116,32 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:
-		return (self._ALL_FIELDS, set())
+		return (self._OUTER_FIELDS, set())
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
 		base_path: str = config_read["base_path"]
 		generic_dirname: str = config_read["generic_dirname"]
 		
-		func_fname: str = config_read["func_fname"]
-		meth_fname: str = config_read["meth_fname"]
-		corr_fname: str = config_read["corr_fname"]
+		file_names: Dict[str, str] = config_read["file_names"]
+		func_fname: str = file_names["functional"]
+		meth_fname: str = file_names["methodal"]
+		corr_fname: str = file_names["correctional"]
 	
 		self._assert_path(base_path, "base_path")
-		self._assert_templates(
-			base_path,
-			func_fname, meth_fname, corr_fname
+		self._assert_path(
+			path_join(base_path, generic_dirname),
+			"<base_path>/<generic_dirname>"
 		)
+		
+		base_subdirs: List[str] = next(os_walk(base_path, topdown=True))[1]
+		for prompt_dir in base_subdirs:
+			self._assert_templates(
+				path_join(base_path, prompt_dir),
+				func_fname, meth_fname, corr_fname
+			)
+			
+		self._assert_placehs(config_read["placeholders"])
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
@@ -168,7 +225,7 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 			Parameters
 			----------
 				base_path: str
-					Una stringa contenente la path base che contiene i prompts da utilizzare
+					Una stringa contenente la path che contiene i prompts da verificare
 					
 				func_fname: str
 					Una stringa contenente il nome del file con il template prompt per funzioni
@@ -185,19 +242,46 @@ class PromptsConfigValidator(_ABaseConfigValidator):
 					Si verifica se, almeno in una directory, almeno uno dei files dei template prompts
 					non esiste
 		"""
-		base_path: SystemPath = SystemPath(base_path)
-		error_on: str
-		for curr_path, dirs, files in base_path.walk(top_down=True):
-			if curr_path != base_path:
-				self._assert_path(
-					path_join(curr_path, func_fname),
-					"func_fname"
-				)
-				self._assert_path(
-					path_join(curr_path, meth_fname),
-					"meth_fname"
-				)
-				self._assert_path(
-					path_join(curr_path, corr_fname),
-					"corr_fname"
-				)
+		self._assert_path(
+			path_join(base_path, func_fname),
+			"func_fname"
+		)
+		self._assert_path(
+			path_join(base_path, meth_fname),
+			"meth_fname"
+		)
+		self._assert_path(
+			path_join(base_path, corr_fname),
+			"corr_fname"
+		)
+		
+		
+	@classmethod
+	def _assert_placehs(cls, placeholders: Dict[str, Any]):
+		placeh_names: List[str] = (list(placeholders["common"].values()) +
+		                           list(placeholders["correctional"].values()))
+		placeh_names.append(placeholders["code"])
+		placeh_names.append(placeholders["class_name"])
+		
+		if len(set(placeh_names)) != len(placeh_names):
+			raise InvalidConfigValueError()
+		
+		for placeh_name in placeh_names:
+			cls._assert_placeh(placeh_name)
+		
+		
+	@classmethod
+	def _assert_placeh(cls, placeholder: str):
+		"""
+			Verifica se un placeholder è una stringa accettabile.
+			
+			Se la verifica ha successo quest' operazione è equivalente ad una no-op
+			
+			Raises
+			------
+				InvalidConfigValueError
+					Si verifica se il placeholder contiene caratteri non accettabili
+		"""
+		is_placeh_valid: bool = reg_search(cls._PLACEH_PATT, placeholder) is not None
+		if not is_placeh_valid:
+			raise InvalidConfigValueError()
