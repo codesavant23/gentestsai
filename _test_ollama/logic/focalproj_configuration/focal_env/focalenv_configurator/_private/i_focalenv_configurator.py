@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from docker.models.images import Image as DockerImage
 # =================================================== #
 
-from .. import EImageBuiltOption
+from .e_imgbuilt_option import EImageBuiltOption
 
 
 

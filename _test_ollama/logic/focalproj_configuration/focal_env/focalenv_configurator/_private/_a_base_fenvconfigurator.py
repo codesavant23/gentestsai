@@ -28,7 +28,10 @@ from os.path import (
 	split as path_split,
 	relpath as path_relative
 )
-from pathlib import PosixPath
+from pathlib import (
+	Path as SystemPath,
+	PosixPath
+)
 # ======================================== #
 
 from ....dockerfile_builder import ATransactDockfBuilder
@@ -65,11 +68,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
-			python_vers_fname: str,
+			py_vers_fname: str,
 			deps_files: Tuple[str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
-			conttools_path: str = None
+			conttools_root: str = None,
+			path_prefix: str = None
 	):
 		"""
 			Costruisce un nuovo _ABaseFocalEnvConfigurator associandolo:
@@ -101,7 +105,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una stringa contenente il nome del dockerfile che verrà generato per ogni immagine
 					di ambiente focale
 					
-				python_vers_fname: str
+				py_vers_fname: str
 					Una stringa contenente il nome dell' eventuale file che contiene la versione specifica
 					dell' interprete Python da utilizzare nell' ambiente focale
 					
@@ -121,9 +125,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una stringa contenente il nome della directory, all' interno di `tools_root`,
 					che contiene i tools per effettuare la verifica di linting
 					
-				conttools_path: str
+				conttools_root: str
 					Opzionale. Default = `self.CONTTOOLS_ROOT`. Una stringa rappresentante la path, relativa
 					all' ambiente focale, che contiene i tools da utilizzare all' interno di esso
+					
+				path_prefix: str
+					Opzionale. Default = `None`. Una stringa rappresentante l' eventuale primo path prefix
+					da utilizzare per le immagini prodotte con questo IFocalEnvConfigurator
 					
 			Raises
 			------
@@ -134,16 +142,16 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `dockerfile_fname` ha valore `None` o è una stringa vuota
-						- Il parametro `python_vers_fname` ha valore `None` o è una stringa vuota
+						- Il parametro `py_vers_fname` ha valore `None` o è una stringa vuota
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
-						- Il parametro `conttools_path` è una stringa vuota, oppure è una path Linux invalida
+						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		self._check_initargs(
 			dockf_builder,
-			gentests_dir, envconfig_dir, dockerfile_fname, python_vers_fname, deps_files,
-			tools_root, linttools_dir, conttools_path
+			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
+			tools_root, linttools_dir, conttools_root
 		)
 		
 		self._project_set: bool = False
@@ -174,7 +182,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._gentests_root: str = None
 
 		# File con Versione dell' Interprete Python
-		self._py_vers_fname: str = python_vers_fname
+		self._py_vers_fname: str = py_vers_fname
 		self._py_vers_path: str = None
 
 		# File con lista di Dipendenze Esterne
@@ -198,8 +206,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		# Path dei tools dell' ambiente all' interno del container
 		self._conttools_root: str = self.CONTTOOLS_ROOT
-		if conttools_path is not None:
-			self._conttools_root = conttools_path
+		if conttools_root is not None:
+			self._conttools_root = conttools_root
 			
 		self._linttools_dir: str = linttools_dir
 	
@@ -214,14 +222,21 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	
 	
 	def set_focal_project(self, full_root: str, focal_root: str, tests_root: str):
-		full_dir: str = path_split(full_root)[1]
-		focal_dir: str = path_split(focal_root)[1]
-		tests_path: str = path_relative(tests_root, start=full_root)
+		if (full_root is None) or (full_root == ""):
+			raise ValueError()
+		if (focal_root is None) or (focal_root == ""):
+			raise ValueError()
+		if (tests_root is None) or (tests_root == ""):
+			raise ValueError()
+		
+		full_dirname: str = path_split(full_root)[1]
+		focal_dirname: str = path_split(focal_root)[1]
+		tests_relpath: str = SystemPath(tests_root).relative_to(full_root).as_posix()
 
 		self._orig_full_root = full_root
-		self._full_root: str = f"{self._path_prefix}/{full_dir}"
-		self._focal_root: str = f"{self._full_root}/{focal_dir}"
-		self._tests_root: str = f"{self._full_root}/{tests_path}"
+		self._full_root: str = f"{self._path_prefix}/{full_dirname}"
+		self._focal_root: str = f"{self._full_root}/{focal_dirname}"
+		self._tests_root: str = f"{self._full_root}/{tests_relpath}"
 		self._gentests_root: str = f"{self._full_root}/{self._gentests_dir}"
 		self._envconfig_root: str = f"{self._full_root}/{self._envconfig_dir}"
 
@@ -236,31 +251,33 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		pathpref_found: Match[str] = reg_search(self._LINUXPATH_PATT, path_prefix)
 		if pathpref_found.group("path_prefix") is None:
 			raise ValueError()
+		
+		path_prefix_strpd: str = path_prefix.rstrip("/")
 
 		self._full_root = self._change_prefix_of_path(
-			path_prefix,
+			path_prefix_strpd,
 			self._full_root,
 		)
 		self._focal_root = self._change_prefix_of_path(
-			path_prefix,
+			path_prefix_strpd,
 			self._focal_root,
 		)
 		self._tests_root = self._change_prefix_of_path(
-			path_prefix,
+			path_prefix_strpd,
 			self._tests_root,
 		)
 		self._gentests_root = self._change_prefix_of_path(
-			path_prefix,
+			path_prefix_strpd,
 			self._gentests_root,
 		)
 		self._envconfig_root = self._change_prefix_of_path(
-			path_prefix,
+			path_prefix_strpd,
 			self._envconfig_root,
 		)
 
-		self._change_prefix_envc_entities(path_prefix)
+		self._change_prefix_envc_entities(path_prefix_strpd)
 
-		self._path_prefix = path_prefix.rstrip("/")
+		self._path_prefix = path_prefix_strpd
 	
 	
 	def build_image(
@@ -291,9 +308,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		# TODO: Se necessario implementare i tools per il calcolo della coverage ||
 		# Copia dei tools per il linting
-		linttools_path: PosixPath = PosixPath(self._tools_root, self._linttools_dir)
+		linttools_path: str = SystemPath(self._tools_root, self._linttools_dir).as_posix()
 		self._dockf_builder.add_copy(
-			[str(linttools_path)],
+			[linttools_path],
 			f"{self._conttools_root}/{self._linttools_dir}/"
 		)
 		
@@ -314,7 +331,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				os_remove(dockerfile_path)
 			case EImageBuiltOption.DOCKIGNORE:
 				dockerignore_path: str = f"{self._orig_full_root}/.dockignore"
-				with open(dockerignore_path, "w") as fdocki:
+				with open(dockerignore_path, "a") as fdocki:
 					fdocki.writelines(f"./{self._dockf_fname}")
 					fdocki.flush()
 
@@ -400,10 +417,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				str
 					Una stringa contenente la path data con il path prefix aggiornato
 		"""
-		return path_join(
+		return PosixPath(
 			new_path_prefix,
-			path_relative(path_tochange, start=self._path_prefix)
-		)
+			PosixPath(path_tochange).relative_to(self._path_prefix)
+		).as_posix()
 	
 	
 	def _change_prefix_envc_entities(
@@ -485,8 +502,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				str
 					Una stringa contenente la path relativa al container del file dato
 		"""
-		orig_entity_path: str = f"{self._orig_envconfig_root}/{entity_fname}"
-		if not os_fdexists(f"{orig_entity_path}"):
+		orig_entity_path: str = path_join(self._orig_envconfig_root, entity_fname)
+		if not os_fdexists(orig_entity_path):
 			return ""
 		else:
 			return f"{self._envconfig_root}/{entity_fname}"
@@ -602,11 +619,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
-			python_vers_fname: str,
+			py_vers_fname: str,
 			deps_files: Tuple[str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
-			conttools_path: str = None
+			conttools_root: str = None
 	):
 		"""
 			Verifica la validità degli argomenti del costruttore forniti.
@@ -622,18 +639,18 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `dockerfile_fname` ha valore `None` o è una stringa vuota
-						- Il parametro `python_vers_fname` ha valore `None` o è una stringa vuota
+						- Il parametro `py_vers_fname` ha valore `None` o è una stringa vuota
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
-						- Il parametro `conttools_path` è una stringa vuota, oppure è una path Linux invalida
+						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		if (
 			(dockf_builder is None) or
 			(gentests_dir is None) or
 			(envconfig_dir is None) or
 			(dockerfile_fname is None) or
-			(python_vers_fname is None) or
+			(py_vers_fname is None) or
 			(deps_files is None) or
 			(tools_root is None) or
 			(linttools_dir is None)
@@ -644,10 +661,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			(gentests_dir == "") or
 			(envconfig_dir == "") or
 			(dockerfile_fname == "") or
-			(python_vers_fname == "") or
+			(py_vers_fname == "") or
 			(deps_files == tuple()) or
 			(tools_root == "") or
-			(conttools_path == "")
+			(conttools_root == "")
 		):
 			raise ValueError()
 		
