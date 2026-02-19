@@ -1,7 +1,6 @@
-from .. import (
-	IPtsuiteCacheAccessor,
-	ECacheAccessorType
-)
+from .. import IPtsuiteCacheAccessor
+from .e_cacheaccsor_type import ECacheAccessorType
+
 from .._private._a_base_cacheaccsor import _ABaseCacheAccessor
 from .._private.sqlite3_cacheaccsor import Sqlite3CacheAccessor
 
@@ -11,12 +10,6 @@ class PtsuiteCacheAccessorFactory:
 	"""
 		Rappresenta una factory per ogni `IPtsuiteCacheAccessor`
 	"""
-	
-	def __init__(self):
-		"""
-			Costruisce un nuovo PtsuiteCacheAccessorFactory
-		"""
-		pass
 		
 	
 	@classmethod

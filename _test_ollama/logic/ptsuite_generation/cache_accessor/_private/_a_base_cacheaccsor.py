@@ -320,3 +320,11 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	#	============================================================
 	#						PRIVATE METHODS
 	#	============================================================
+
+
+	def __enter__(self):
+		return self
+
+
+	def __exit__(self, exc_type: type, exc: Exception, traceback):
+		self.close()

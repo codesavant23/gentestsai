@@ -8,8 +8,24 @@ class IPtsuiteCacheAccessor(ABC):
 		risultanti da un processo in cui si utilizzano Large Language Models.
 		Ogni entry della cache è un tentativo di produrre, tramite LLM, una test-suite parziale funzionante.
 		
+		Ogni `IPtsuiteCacheAccessor` supporta il "Context Manager" di Python.
+		
 		La tecnologia implementativa della cache è specificata dai discendenti di questa interfaccia.
 	"""
+	
+
+	@abstractmethod
+	def close(self):
+		"""
+			Effettua il rilascio delle risorse utilizzate da questo cache accessor.
+			La chiamata a quest' operazione è obbligatoria alla fine dell' utilizzo di questo
+			`IPtsuiteCacheAccessor`.
+			Se si utilizza quest' oggetto con "Context Manager" allora la chiamata a questa
+			operazione è già assicurata
+			
+			Se non c'è da rilasciare nulla quest' operazione è equivalente ad una no-op.
+		"""
+		pass
 
 
 	@abstractmethod

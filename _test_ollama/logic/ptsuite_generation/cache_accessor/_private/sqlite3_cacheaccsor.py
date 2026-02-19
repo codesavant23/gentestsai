@@ -39,6 +39,11 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 		self._cursor: SqlConnectionCursor = self._conn.cursor()
 	
 	
+	def close(self):
+		self._cursor.close()
+		self._conn.close()
+	
+	
 	def does_ptsuite_exists(self, proj_name: str, prompt: str, model: str, try_num: int) -> bool:
 		row: Tuple[str, str, str, str]= self._query_db(
 			proj_name, prompt, model, try_num
