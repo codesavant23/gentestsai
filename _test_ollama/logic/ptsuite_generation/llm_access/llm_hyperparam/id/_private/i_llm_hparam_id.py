@@ -6,6 +6,11 @@ class ILlmHyperParamId(ABC):
 	"""
 		Rappresenta un oggetto che identifica un parametro specifico (parametro di decoding/campionamento,
 		o iperparametro) di uno, o più, LLMs.
+		Ogni ILlmHyperParamId è immutabile.
+		
+		Ogni ILlmHyperParamId è hashabile (tramite`.__hash__(...)`) e comparabile
+		(tramite `.__eq__(...)`)
+		
 		Essendo la disponibilità degli iperparametri di un LLM dipendente dal modello in esame, dalla variante
 		del modello che si utilizza, e dalla specifica API che fornisce l' interazione con esso;
 		questa interfaccia permette di modellare i 3 fattori in modo indipendente.
@@ -27,7 +32,7 @@ class ILlmHyperParamId(ABC):
 	@abstractmethod
 	def name(self) -> str:
 		"""
-			Restituisce il nome descrivente l' iperparametro LLM-specifico rappresentato
+			Restituisce il nome che descrive l' iperparametro rappresentato
 
 			Returns
 			-------

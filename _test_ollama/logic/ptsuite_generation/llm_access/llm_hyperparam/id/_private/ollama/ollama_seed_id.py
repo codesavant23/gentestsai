@@ -1,8 +1,8 @@
-from ... import ASeedHyperParamId
+from .._a_seed_hparamid import _ASeedHyperParamId
 
 
 
-class OllamaSeedHyperParamId(ASeedHyperParamId):
+class OllamaSeedHyperParamId(_ASeedHyperParamId):
 	"""
 		Rappresenta un `ASeedHyperParamId` per ogni LLM con cui interagire
 		tramite la piattaforma "Ollama".

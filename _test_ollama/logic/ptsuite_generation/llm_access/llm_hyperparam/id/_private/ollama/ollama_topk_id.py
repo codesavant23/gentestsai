@@ -1,22 +1,22 @@
-from ... import AWantsThinkingHyperParamId
+from .._a_topk_hparamid import _ATopKHyperParamId
 
 
 
-class OllamaThinkHyperParamId(AWantsThinkingHyperParamId):
+class OllamaTopKHyperParamId(_ATopKHyperParamId):
 	"""
-		Rappresenta un `AWantsThinkingHyperParamId` per ogni LLM con cui interagire
+		Rappresenta un `ATopKHyperParamId` per ogni LLM con cui interagire
 		tramite la piattaforma "Ollama".
 	"""
 	
 	def __init__(self):
 		"""
-			Costruisce un nuovo OllamaThinkHyperParamId
+			Costruisce un nuovo OllamaTopKHyperParamId
 		"""
 		pass
 	
 	
 	def id(self) -> str:
-		return "think"
+		return "top_k"
 
 
 	##	============================================================

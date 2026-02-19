@@ -1,14 +1,14 @@
 from abc import abstractmethod
-from .. import ILlmHyperParamId
+from ._a_base_hparamid import _ABaseHyperParamId
 
 
 
-class ATopKHyperParamId(ILlmHyperParamId):
+class _ATemperatureHyperParamId(_ABaseHyperParamId):
 	"""
 		Rappresenta un `ILlmHyperParamId` che descrive l' iperparametro
-		top-k.
+		della temperatura.
 		
-		Ogni iperparametro "Top-K" ha nome "top-k".
+		Ogni iperparametro "Temperatura" ha nome "temperature".
 		
 		I modelli e/o le specifiche APIs, a cui appartengono l' iperparametro specifico, sono descritti/e
 		dai discendenti di questa interfaccia
@@ -16,7 +16,7 @@ class ATopKHyperParamId(ILlmHyperParamId):
 	
 	
 	def name(self) -> str:
-		return "top-k"
+		return "temperature"
 	
 	
 	##	============================================================

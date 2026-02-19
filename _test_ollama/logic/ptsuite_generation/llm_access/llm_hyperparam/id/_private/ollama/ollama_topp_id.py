@@ -1,8 +1,8 @@
-from ... import ATopPHyperParamId
+from .._a_topp_hparamid import _ATopPHyperParamId
 
 
 
-class OllamaTopPHyperParamId(ATopPHyperParamId):
+class OllamaTopPHyperParamId(_ATopPHyperParamId):
 	"""
 		Rappresenta un `ILlmHyperParamId` per ogni LLM con cui interagire
 		tramite la piattaforma "Ollama".

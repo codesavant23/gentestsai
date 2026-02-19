@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from .. import ILlmHyperParam
 
-from ...llm_hyperparam_id import ILlmHyperParamId
+from ..id import ILlmHyperParamId
 
 
 

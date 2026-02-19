@@ -1,8 +1,8 @@
-from ... import ATemperatureHyperParamId
+from .._a_temperature_hparamid import _ATemperatureHyperParamId
 
 
 
-class OllamaTemperatureHyperParamId(ATemperatureHyperParamId):
+class OllamaTemperatureHyperParamId(_ATemperatureHyperParamId):
 	"""
 		Rappresenta un `ATemperatureHyperParamId` per ogni LLM con cui interagire
 		tramite la piattaforma "Ollama".

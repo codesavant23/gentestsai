@@ -1,14 +1,14 @@
 from abc import abstractmethod
-from .. import ILlmHyperParamId
+from ._a_base_hparamid import _ABaseHyperParamId
 
 
 
-class AWantsThinkingHyperParamId(ILlmHyperParamId):
+class _ATopPHyperParamId(_ABaseHyperParamId):
 	"""
 		Rappresenta un `ILlmHyperParamId` che descrive l' iperparametro
-		"è richiesto l' utilizzo del thinking".
+		top-p.
 		
-		Ogni iperparametro "Thinking richiesto" ha nome "think".
+		Ogni iperparametro "Top-P" ha nome "top-p".
 		
 		I modelli e/o le specifiche APIs, a cui appartengono l' iperparametro specifico, sono descritti/e
 		dai discendenti di questa interfaccia
@@ -16,7 +16,7 @@ class AWantsThinkingHyperParamId(ILlmHyperParamId):
 	
 	
 	def name(self) -> str:
-		return "think"
+		return "top-p"
 	
 	
 	##	============================================================

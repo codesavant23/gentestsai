@@ -1,14 +1,14 @@
 from abc import abstractmethod
-from .. import ILlmHyperParamId
+from ._a_base_hparamid import _ABaseHyperParamId
 
 
 
-class ATemperatureHyperParamId(ILlmHyperParamId):
+class _ASeedHyperParamId(_ABaseHyperParamId):
 	"""
 		Rappresenta un `ILlmHyperParamId` che descrive l' iperparametro
-		della temperatura.
+		del seed della generazione.
 		
-		Ogni iperparametro "Temperatura" ha nome "temperature".
+		Ogni iperparametro "Seed di generazione" ha nome "gen_seed".
 		
 		I modelli e/o le specifiche APIs, a cui appartengono l' iperparametro specifico, sono descritti/e
 		dai discendenti di questa interfaccia
@@ -16,7 +16,7 @@ class ATemperatureHyperParamId(ILlmHyperParamId):
 	
 	
 	def name(self) -> str:
-		return "temperature"
+		return "gen_seed"
 	
 	
 	##	============================================================

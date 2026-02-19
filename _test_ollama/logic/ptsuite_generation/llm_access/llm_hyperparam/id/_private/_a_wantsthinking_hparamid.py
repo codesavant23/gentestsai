@@ -1,14 +1,14 @@
 from abc import abstractmethod
-from .. import ILlmHyperParamId
+from ._a_base_hparamid import _ABaseHyperParamId
 
 
 
-class AContextWindowHyperParamId(ILlmHyperParamId):
+class _AWantsThinkingHyperParamId(_ABaseHyperParamId):
 	"""
 		Rappresenta un `ILlmHyperParamId` che descrive l' iperparametro
-		della finestra di contesto.
+		"è richiesto l' utilizzo del thinking".
 		
-		Ogni iperparametro "Finestra di contesto" ha nome "context_name".
+		Ogni iperparametro "Thinking richiesto" ha nome "think".
 		
 		I modelli e/o le specifiche APIs, a cui appartengono l' iperparametro specifico, sono descritti/e
 		dai discendenti di questa interfaccia
@@ -16,7 +16,7 @@ class AContextWindowHyperParamId(ILlmHyperParamId):
 	
 	
 	def name(self) -> str:
-		return "context_window"
+		return "think"
 	
 	
 	##	============================================================

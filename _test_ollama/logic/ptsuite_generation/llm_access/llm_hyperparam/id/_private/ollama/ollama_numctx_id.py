@@ -1,8 +1,8 @@
-from ... import AContextWindowHyperParamId
+from .._a_contextwin_hparamid import _AContextWindowHyperParamId
 
 
 
-class OllamaNumCtxHyperParamId(AContextWindowHyperParamId):
+class OllamaNumCtxHyperParamId(_AContextWindowHyperParamId):
 	"""
 		Rappresenta un `AContextWindowHyperParamId` per ogni LLM con cui interagire
 		tramite la piattaforma "Ollama".

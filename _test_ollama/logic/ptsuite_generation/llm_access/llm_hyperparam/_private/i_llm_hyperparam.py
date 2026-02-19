@@ -1,7 +1,7 @@
 from typing import Any
 from abc import ABC, abstractmethod
 
-from ...llm_hyperparam_id import ILlmHyperParamId
+from ..id import ILlmHyperParamId
 
 
 

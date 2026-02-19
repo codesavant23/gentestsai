@@ -2,42 +2,42 @@ from typing import Any
 from .._a_base_llmhyperparam import _ABaseLlmHyperparam
 
 from ...id import ILlmHyperParamId
-from ...id._private.ollama.ollama_topp_id import OllamaTopPHyperParamId
+from ...id._private.ollama.ollama_numgpu_id import OllamaNumGpuHyperParamId
 
 
 
-class OllamaTopPHyperParam(_ABaseLlmHyperparam):
+class OllamaNumGpuHyperParam(_ABaseLlmHyperparam):
 	"""
-		Rappresenta un `ILlmHyperParam` per l' iperparametro "top-p" per ogni
+		Rappresenta un `ILlmHyperParam` per l' iperparametro "num_gpu" per ogni
 		LLM con cui interagire tramite la piattaforma "Ollama".
 		
-		Il tipo di valori dell' iperparametro è `float`.
-		E' necessario inoltre che: `0.0 <= valore <= 1.0`
+		Il tipo di valori dell' iperparametro è `int`.
+		E' necessario inoltre che: `valore >= 0`.
 	"""
 	
 	def __init__(self):
 		"""
-			Costruisce un nuovo OllamaTopPHyperParam
+			Costruisce un nuovo OllamaNumGpuHyperParam
 		"""
 		super().__init__()
 	
 	
 	def _ap__param_id(self) -> ILlmHyperParamId:
-		return OllamaTopPHyperParamId()
+		return OllamaNumGpuHyperParamId()
 	
 	
 	def _ap__default_value(self) -> str:
-		return "0.9"
+		return "0"
 	
 	
 	def _ap__assert_semvalidity(self, value: str):
-		topp: float = float(value)
-		if (topp < 0.0) or (topp > 1.0):
+		value_int: int = int(value)
+		if value_int < 0:
 			raise ValueError()
-	
-	
+		
+		
 	def to_effvalue(self) -> Any:
-		return float(self._p__get_str_value())
+		return int(self._p__get_str_value())
 
 
 	##	============================================================

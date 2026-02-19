@@ -1,6 +1,5 @@
-import llm_api
-import llm_chat
-import llm_hyperparam_id
-import llm_hyperparam
-import llm_specimpl
-import llm_apiaccessor
+from . import llm_api
+from . import llm_chat
+from . import llm_hyperparam
+from . import llm_specimpl
+from . import llm_apiaccessor

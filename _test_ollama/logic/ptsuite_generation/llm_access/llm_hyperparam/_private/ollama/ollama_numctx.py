@@ -1,10 +1,8 @@
 from typing import Any
 from .._a_base_llmhyperparam import _ABaseLlmHyperparam
 
-from ....llm_hyperparam_id import (
-	ILlmHyperParamId,
-	OllamaNumCtxHyperParamId
-)
+from ...id import ILlmHyperParamId
+from ...id._private.ollama.ollama_numctx_id import OllamaNumCtxHyperParamId
 
 
 
