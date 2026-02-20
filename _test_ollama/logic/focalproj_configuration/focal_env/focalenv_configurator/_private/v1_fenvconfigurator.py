@@ -100,7 +100,8 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 		super().__init__(
 			dockf_builder,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
-			tools_root, linttools_dir, conttools_root
+			tools_root, linttools_dir, conttools_root,
+			path_prefix
 		)
 	
 	

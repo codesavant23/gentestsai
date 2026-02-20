@@ -15,7 +15,7 @@
 	},
 	"max_gen_times": 10,
 	"max_corr_times": 10,
-    "gen_tests_dir": "gen_tests",
+	"gen_tests_dir": "gen_tests",
 	"skipped_tests": {
 		"file_format": "json",
 		"funcs_gen": "skipd_funcs_gen.json",

@@ -165,6 +165,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._gentests_dir: str = gentests_dir
 
 		self._path_prefix: str = self.PATH_PREFIX
+		if path_prefix is not None:
+			self._path_prefix = path_prefix
 
 		# La Full Project Root Path reale
 		self._orig_full_root: str = None
