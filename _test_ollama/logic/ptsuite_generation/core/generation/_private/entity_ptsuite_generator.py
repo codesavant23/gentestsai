@@ -1,3 +1,5 @@
+from typing import Tuple
+
 # ============= RegEx Utilities ============ #
 from regex import (
 	search as reg_search,
@@ -59,8 +61,8 @@ class EntityPtsuiteGenerator:
 			Parameters
 			----------
 				max_tries: int
-					Un intero che indica il nuovo numero di tentativi massimi da
-					effettuare nelle richieste
+					Un intero che indica il numero di tentativi massimi da effettuare
+					nelle richieste
 			
 				llm_accsor: ILlmApiAccessor
 					Un oggetto `ILlmApiAccessor` che verrà utilizzato per effettuare le richieste di generazione
@@ -98,7 +100,7 @@ class EntityPtsuiteGenerator:
 		self._try_succ: bool = False
 		self._resp_tout: int = 0
 		
-		self._last_genresp: str = ""
+		self._last_genpts: str = ""
 		self._max_tries: int = max_tries
 		
 		self._llm_platf: ILlmApiAccessor = llm_accsor
@@ -141,54 +143,59 @@ class EntityPtsuiteGenerator:
 
 			Raises
 			------
+				PromptingSessionNeverPerformedError
+					Si verifica se non è mai stata iniziata una serie di tentativi
+					di generazione
+			
 				PromptingSessionInProgressError
 					Si verifica se non è in corso una serie di tentativi di generazione
 		"""
-		if self._gen_inprogr:
-			raise PromptingSessionInProgressError()
 		if not self._gen_everperf:
 			raise PromptingSessionNeverPerformedError()
+		if self._gen_inprogr:
+			raise PromptingSessionInProgressError()
 		
 		return not self._try_succ
 
 
-	def get_lastgen(self) -> str:
+	def get_lastgen(self) -> Tuple[str, int]:
 		"""
-			Restituisce il codice risultante dall' ultimo tentativo di generazione di una test-suite parziale.
+			Restituisce una tupla contenente:
+				- Il codice risultante dall' ultimo tentativo di generazione di una test-suite parziale
+				- Il numero di tentativo in cui ha avuto successo la generazione
 
 			Per verificare la buona riuscita dell' ultima serie di tentativi è necessario utilizzare
 			l'operazione `.has_gen_succ(...)`
 
 			Returns
 			-------
-				str
-					Una stringa contenente il codice dell' ultimo tentativo di correzione dell' ultima test-suite parziale
-					di cui è stata tentata la correzione.
-					Viene restituita una stringa vuota se l' ultima serie di tentativi non è andata a
+				Tuple[str, int]
+					Una tupla variegata contenente:
+						- Il codice dell' ultimo tentativo di generazione dell' ultima test-suite parziale
+						  di cui è stata tentata la generazione
+						- Il numero di tentativo in cui ha avuto successo la generazione
+					
+					Viene restituita una tupla vuota se l' ultima serie di tentativi non è andata a
 					buon fine
 
 			Raises
 			------
-				PromptingSessionInProgressError
-					Si verifica se è in corso una serie di tentativi di generazione
-					
 				PromptingSessionNeverPerformedError
 					Si verifica se non è mai stata eseguita nessuna serie di tentativi
+			
+				PromptingSessionInProgressError
+					Si verifica se è in corso una serie di tentativi di generazione
 		"""
-		if self._gen_inprogr:
-			raise PromptingSessionInProgressError()
 		if not self._gen_everperf:
 			raise PromptingSessionNeverPerformedError()
+		if self._gen_inprogr:
+			raise PromptingSessionInProgressError()
 		
-		gen_code: str = ""
-		if self._last_genresp is not None:
-			gen_code = reg_search(
-				self._resp_regex,
-				self._last_genresp,
-				RegexFlags.MULTILINE
-			).group("gen_code")
-		
-		return gen_code
+		result: Tuple[str, int] = tuple()
+		if self._last_genpts != "":
+			result = (self._last_genpts, self._times_tried)
+			
+		return result
 		
 		
 	def start_new_generation(
@@ -221,14 +228,14 @@ class EntityPtsuiteGenerator:
 		
 		self._times_tried = 1
 		self._try_succ = False
-		self._last_genresp = None
+		self._last_genpts = None
 		self._resp_tout = resp_timeout
 		if self._logger is not None:
 			self._logger.log(
 				f"Inzio di una nuova serie di tentativi di generazione"
 			)
-		
-		
+
+
 	def perform_gen_try(self):
 		"""
 			Effettua un singolo tentativo di generazione di una test-suite parziale di una specifica entità
@@ -269,30 +276,37 @@ class EntityPtsuiteGenerator:
 		
 		if (not self._try_succ) and (self._times_tried <= self._max_tries):
 			try:
-				if self._logger is not None:
-					self._logger.log(
-						f"Inzio del tentativo di generazione no. {self._times_tried}/{self._max_tries}"
-					)
+				self._logger.log(
+					f"Inzio del tentativo di generazione no. {self._times_tried}/{self._max_tries}"
+				) if self._logger is not None else None
 					
-				response = self._llm_platf.prompt(self._resp_tout)
+				response: str = self._llm_platf.prompt(self._resp_tout)
 				
-				resp_match: Match[str] = reg_search(self._resp_regex, response)
+				resp_match: Match[str] = reg_search(self._resp_regex, response, RegexFlags.MULTILINE)
 				if resp_match is None:
 					raise WrongResponseFormatError()
 				
-				self._last_genresp = resp_match.group("gen_code")
+				self._last_genpts = resp_match.group("gen_code")
 				self._try_succ = True
+				self._gen_inprogr = False
 				
 				if self._logger is not None:
 					self._logger.log(
 						f"Tentativo di generazione no. {self._times_tried}/{self._max_tries} riuscito con successo"
 					)
-			except (ApiResponseError, SaturatedContextWindowError,
+					self._logger.log(
+						f"Fine della serie di tentativi di generazione"
+					)
+			except (ApiResponseError,
+			        SaturatedContextWindowError,
 			        ResponseTimedOutError):
 				self._times_tried += 1
 		else:
 			self._gen_inprogr = False
 			if self._logger is not None:
+				self._logger.log(
+					f"Tentativi di generazione massimi raggiunti. Test-suite parziale non generata"
+				)
 				self._logger.log(
 					f"Fine della serie di tentativi di generazione"
 				)
