@@ -11,7 +11,7 @@ class _ABaseLlmApi(ILlmApi):
 	
 	
 	def __hash__(self):
-		return hash(self)
+		return super().__hash__()
 	
 	
 	def __eq__(self, __value):

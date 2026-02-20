@@ -5,7 +5,7 @@ from .. import ILlmApiAccessor
 from ...llm_api import ILlmApi
 from ...llm_chat import ILlmChat
 from ...llm_hyperparam import ILlmHyperParam
-from ...llm_hyperparam_id import ILlmHyperParamId
+from ...llm_hyperparam.id import ILlmHyperParamId
 from ...llm_specimpl import ILlmSpecImpl
 
 from ..exceptions import (

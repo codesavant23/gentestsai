@@ -20,9 +20,9 @@ from ...llm_api import (
 	OllamaApi
 )
 from ...llm_chat import ILlmChat
-from ...llm_hyperparam_id import (
-	AWantsThinkingHyperParamId, OllamaThinkHyperParamId,
-	AContextWindowHyperParamId, OllamaNumCtxHyperParamId
+from ...llm_hyperparam.id import (
+	ILlmHyperParamId,
+	LlmHyperParamIdFactoryResolver,
 )
 from ...llm_hyperparam import ILlmHyperParam
 from ...llm_specimpl import ILlmSpecImpl
@@ -93,7 +93,7 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 				ValueError
 					Si verifica se:
 						
-						- Almeno uno tra `chat`, `address` e `auth` hanno valore `None`
+						- Almeno uno tra `address` e `auth` hanno valore `None`
 						- Il parametro `log_resp` ha valore `True` ma non è stato fornito un logger
 		"""
 		super().__init__()
@@ -111,8 +111,9 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		self._o_addr: str = address
 		self._o_auth: str = auth
 		self._conn_tout: int = conn_timeout
-		self._think_param: AWantsThinkingHyperParamId = OllamaThinkHyperParamId()
-		self._numctx_param: AContextWindowHyperParamId = OllamaNumCtxHyperParamId()
+		
+		self._think_param: ILlmHyperParamId = LlmHyperParamIdFactoryResolver.resolve("ollama").create("think")
+		self._numctx_param: ILlmHyperParamId = LlmHyperParamIdFactoryResolver.resolve("ollama").create("context_window")
 	
 	
 	def _ap__prompt_spec(
@@ -124,11 +125,11 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			logger: ATemporalFormattLogger=None
 	) -> str:
 		options_param: Dict[str, Any] = {
-			hparam.param_id().name(): hparam.to_effvalue()
+			hparam.param_id().id(): hparam.to_effvalue()
 			for hparam in hparams
 		}
-		think_param: bool = options_param.pop(self._think_param.name())
-		num_ctx_param: int = options_param.pop(self._numctx_param.name())
+		think_param: bool = options_param.pop(self._think_param.id())
+		num_ctx_param: int = options_param.pop(self._numctx_param.id())
 		
 		full_timeout: HttpxTimeout = HttpxTimeout(
 			connect=int(self._conn_tout) / 1000.0,

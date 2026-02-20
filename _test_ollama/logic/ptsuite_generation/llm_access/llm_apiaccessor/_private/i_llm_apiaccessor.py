@@ -13,8 +13,8 @@ class ILlmApiAccessor(ABC):
 
 		E' necessario, dopo la creazione di un ILlmApiAccessor, eseguire:
 		
-			- L' operazione `.set_chat(...)` per l' associazione con la chat da utilizzare per le richieste (inzialmente la prima)
-			- L' operazione `.select_model(...)` per la selezione del primo modello con cui avverranno le interazioni
+			1- L' operazione `.set_chat(...)` per l' associazione con la chat da utilizzare per le richieste (inzialmente la prima)
+			2- L' operazione `.select_model(...)` per la selezione del primo modello con cui avverranno le interazioni
 
 		La specifica API a cui è legato ogni oggetto ILlmApiAccessor è descritta dai discendenti di questa interfaccia.
 	"""

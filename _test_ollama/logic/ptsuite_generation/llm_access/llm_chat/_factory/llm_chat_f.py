@@ -1,7 +1,6 @@
-from .. import (
-	ILlmChat,
-	ELlmChatApis
-)
+from .. import ILlmChat
+from .e_llmchatapis import ELlmChatApis
+
 from .._private.ollama_chat import OllamaLlmChat
 
 
@@ -10,12 +9,6 @@ class LlmChatFactory:
 	"""
 		Rappresenta una factory per ogni `ILlmChat`
 	"""
-	
-	def __init__(self):
-		"""
-			Costruisce un nuovo LlmChatFactory
-		"""
-		pass
 		
 	
 	@classmethod
