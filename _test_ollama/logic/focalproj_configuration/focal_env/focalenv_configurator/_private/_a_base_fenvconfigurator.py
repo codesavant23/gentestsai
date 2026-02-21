@@ -18,10 +18,13 @@ from regex import (
 	Match,
 )
 # ========================================= #
-# ============ OS Utilities ============ #
+# ============== OS Utilities ============== #
+from os import (
+	remove as os_remove,
+	environ as os_getenv
+)
 from os.path import exists as os_fdexists
-from os import remove as os_remove
-# ====================================== #
+# ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
 	join as path_join,
@@ -157,7 +160,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._project_set: bool = False
 		self._def_pyvers_set: bool = False
 
-		self._docker: DockerClient = docker_getclient()
+		self._docker: DockerClient = None
+		docker_host: str = os_getenv["DOCKER_HOST"]
+		if docker_host is not None:
+			self._docker = DockerClient(base_url=docker_host)
+		else:
+			self._docker = docker_getclient()
+		
 		self._dockf_builder: ATransactDockfBuilder = dockf_builder
 		self._dockf_fname: str = dockerfile_fname
 

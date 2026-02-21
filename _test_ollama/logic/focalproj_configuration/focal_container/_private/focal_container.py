@@ -1,5 +1,8 @@
 from typing import Tuple
 
+# ============== OS Utilities ============== #
+from os import environ as os_getenv
+# ========================================== #
 # ============ Docker SDK Utilities ============ #
 from docker import (
 	from_env as docker_getclient,
@@ -79,7 +82,12 @@ class FocalContainer:
 		):
 			raise ValueError()
 		
-		self._docker: DockerClient = docker_getclient()
+		self._docker: DockerClient = None
+		docker_host: str = os_getenv["DOCKER_HOST"]
+		if docker_host is not None:
+			self._docker = DockerClient(base_url=docker_host)
+		else:
+			self._docker = docker_getclient()
 
 		self._image = docker_image
 		self._full_root: str = full_root
