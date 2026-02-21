@@ -43,7 +43,7 @@ from main_execs.gents.mbym import (
 from main_execs.gents.reading import read_fallback_templprompts, read_1model_templprompts
 from main_execs.gents import normalize_llmname
 
-from main_execs.gents import read_config_files
+from main_execs import read_config_files
 from logic.configuration.config_parser import (
 	IConfigParser,
 	ConfigParserFactory, EParserFiletype

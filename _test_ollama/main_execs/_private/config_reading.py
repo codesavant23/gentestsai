@@ -19,7 +19,7 @@ from logic.configuration.config_validator import (
 
 
 
-def _read_platform_config(
+def read_platform_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
@@ -33,7 +33,7 @@ def _read_platform_config(
 	return platf_dict
 
 
-def _read_general_config(
+def read_general_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
@@ -49,7 +49,7 @@ def _read_general_config(
 	return gen_dict
 
 
-def _read_models_config(
+def read_models_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
@@ -65,7 +65,7 @@ def _read_models_config(
 	return models_dict
 
 
-def _read_projs_config(
+def read_projs_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
@@ -79,7 +79,7 @@ def _read_projs_config(
 	return projs_dict
 
 
-def _read_projsenv_config(
+def read_projsenv_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
@@ -102,7 +102,7 @@ def _read_projsenv_config(
 	return environ_dict
 
 
-def _read_prompts_config(
+def read_prompts_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser
@@ -116,7 +116,7 @@ def _read_prompts_config(
 	return prompts_dict
 
 
-def _read_caches_config(
+def read_caches_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser
@@ -188,12 +188,12 @@ def read_config_files(
 	general_cfgvalf: GeneralPlatSpecCfgValidatorFactory = GeneralPlatSpecCfgValidatorFactory()
 	models_cfgvalf: ModelsPlatSpecCfgValidatorFactory = ModelsPlatSpecCfgValidatorFactory()
 
-	configs["platform"] = _read_platform_config(config_root, file_names[0], config_parser, platf_cfgvalf, inf_platf)
-	configs["general"] = _read_general_config(config_root, file_names[1], config_parser, general_cfgvalf, inf_platf)
-	configs["models"] = _read_models_config(config_root, file_names[2], config_parser, models_cfgvalf, inf_platf)
-	configs["projects"] = _read_projs_config(config_root, file_names[3], config_parser)
-	configs["environ"] = _read_projsenv_config(config_root, file_names[4], config_parser, configs["projects"], docker_hub_vers)
-	configs["prompts"] = _read_prompts_config(config_root, file_names[5], config_parser)
-	configs["caches"] = _read_caches_config(config_root, file_names[6], config_parser)
+	configs["platform"] = read_platform_config(config_root, file_names[0], config_parser, platf_cfgvalf, inf_platf)
+	configs["general"] = read_general_config(config_root, file_names[1], config_parser, general_cfgvalf, inf_platf)
+	configs["models"] = read_models_config(config_root, file_names[2], config_parser, models_cfgvalf, inf_platf)
+	configs["projects"] = read_projs_config(config_root, file_names[3], config_parser)
+	configs["environ"] = read_projsenv_config(config_root, file_names[4], config_parser, configs["projects"], docker_hub_vers)
+	configs["prompts"] = read_prompts_config(config_root, file_names[5], config_parser)
+	configs["caches"] = read_caches_config(config_root, file_names[6], config_parser)
 	
 	return configs
