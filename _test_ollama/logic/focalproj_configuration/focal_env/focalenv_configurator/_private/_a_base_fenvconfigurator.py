@@ -29,7 +29,6 @@ from os.path import exists as os_fdexists
 from os.path import (
 	join as path_join,
 	split as path_split,
-	relpath as path_relative
 )
 from pathlib import (
 	Path as SystemPath,
@@ -68,6 +67,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	def __init__(
 			self,
 			dockf_builder: ATransactDockfBuilder,
+			tag_prefix: str,
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
@@ -75,6 +75,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			deps_files: Tuple[str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
+			covtools_dir: str,
 			conttools_root: str = None,
 			path_prefix: str = None
 	):
@@ -95,6 +96,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				dockf_builder: ATransactDockfBuilder
 					Un oggetto `ATransactDockfBuilder` rappresentante il costruttore di dockerfiles
 					da utilizzare per generare le immagini degli ambienti focali
+					
+				tag_prefix: str
+					Una stringa contenente il prefisso da apporre al tag di ogni immagine
+					che verrà costruita
 					
 				gentests_dir: str
 					Una stringa contenente il nome della directory che contiene i tests generati
@@ -128,6 +133,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una stringa contenente il nome della directory, all' interno di `tools_root`,
 					che contiene i tools per effettuare la verifica di linting
 					
+				covtools_dir: str
+					Una stringa contenente il nome della directory, all' interno di `tools_root`,
+					che contiene i tools per effettuare il calcolo della coverage
+					
 				conttools_root: str
 					Opzionale. Default = `self.CONTTOOLS_ROOT`. Una stringa rappresentante la path, relativa
 					all' ambiente focale, che contiene i tools da utilizzare all' interno di esso
@@ -142,6 +151,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Si verifica se:
 					
 						- Il parametro `dockf_builder` ha valore `None`
+						- Il parametro `tag_prefix` ha valore `None` o è una stringa vuota
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `dockerfile_fname` ha valore `None` o è una stringa vuota
@@ -152,7 +162,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		self._check_initargs(
-			dockf_builder,
+			dockf_builder, tag_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
 			tools_root, linttools_dir, conttools_root
 		)
@@ -169,14 +179,17 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		self._dockf_builder: ATransactDockfBuilder = dockf_builder
 		self._dockf_fname: str = dockerfile_fname
+		self._tag_prefix: str = tag_prefix
 
 		self._envconfig_dir: str = envconfig_dir
 		self._gentests_dir: str = gentests_dir
 
 		self._path_prefix: str = self.PATH_PREFIX
 		if path_prefix is not None:
-			self._path_prefix = path_prefix
+			self._path_prefix = path_prefix.rstrip("/")
 
+		# Il nome del progetto focale impostato
+		self._proj_name: str = None
 		# La Full Project Root Path reale
 		self._orig_full_root: str = None
 		# La Full Project Root Path all' interno del container
@@ -185,8 +198,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._focal_root: str = None
 		# La Tests Project Root Path all' interno del container
 		self._tests_root: str = None
-		# La Env-config Project Root Path reale
-		self._orig_envconfig_root: str = None
 		# La Env-config Project Root Path all' interno del container
 		self._envconfig_root: str = None
 		# La Gen-tests Project Root Path all' interno del container
@@ -211,16 +222,16 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._postscr_path: str = None
 		
 		# Path dei tools dell' ambiente reale
-		self._tools_root: str = tools_root
+		self._tools_root: str = tools_root.rstrip("/")
+		# Directory dei tools per il calcolo della coverage
+		self._covtools_dir: str = covtools_dir
 		# Directory dei tools per la verifica di linting
 		self._linttools_dir: str = linttools_dir
 		
 		# Path dei tools dell' ambiente all' interno del container
 		self._conttools_root: str = self.CONTTOOLS_ROOT
 		if conttools_root is not None:
-			self._conttools_root = conttools_root
-			
-		self._linttools_dir: str = linttools_dir
+			self._conttools_root = conttools_root.rstrip("/")
 	
 	
 	def set_default_pyversion(self, python_version: str):
@@ -232,7 +243,15 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._def_pyvers_set = True
 	
 	
-	def set_focal_project(self, full_root: str, focal_root: str, tests_root: str):
+	def set_focal_project(
+			self,
+			proj_name: str,
+	        full_root: str,
+			focal_root: str,
+			tests_root: str
+	):
+		if (proj_name is None) or (proj_name == ""):
+			raise ValueError()
 		if (full_root is None) or (full_root == ""):
 			raise ValueError()
 		if (focal_root is None) or (focal_root == ""):
@@ -317,7 +336,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Installazione di `pylint`
 		self._dockf_builder.add_shellcmd(f'python3 -m pip install pylint=="{self._ap__pylint_version()}"')
 		
-		# TODO: Se necessario implementare i tools per il calcolo della coverage ||
+		# Copia dei tools per la coverage
+		covtools_path: str = SystemPath(self._tools_root, self._covtools_dir).as_posix()
+		self._dockf_builder.add_copy(
+			[covtools_path],
+			f"{self._conttools_root}/{self._covtools_dir}/",
+		)
 		# Copia dei tools per il linting
 		linttools_path: str = SystemPath(self._tools_root, self._linttools_dir).as_posix()
 		self._dockf_builder.add_copy(
@@ -334,7 +358,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		proj_image: DockerImage = self._docker.images.build(
 			path=self._orig_full_root,
-			dockerfile=self._dockf_fname
+			dockerfile=self._dockf_fname,
+			tag=f"{self._tag_prefix}_{self._proj_name}"
 		)[0]
 
 		match post_steps:
@@ -471,31 +496,37 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			Imposta i valori degli attributi privati relativi ai files presenti nella
 			Env-config Project Root Path
 		"""
-		self._orig_envconfig_root = f"{self._orig_full_root}/{self._envconfig_dir}"
+		orig_envconfig_root: str = f"{self._orig_full_root}/{self._envconfig_dir}"
 
 		self._py_vers_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
 			self._py_vers_fname
 		)
 		
 		self._py_deps_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
 			self._py_deps_fname
 		)
 		self._ext_deps_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
 			self._ext_deps_path
 		)
 
 		if self._ext_deps_path != "":
 			self._prescr_path = self._set_envc_entity_ifexists(
+				orig_envconfig_root,
 				self._prescr_fname
 			)
 
 			self._postscr_path = self._set_envc_entity_ifexists(
+				orig_envconfig_root,
 				self._postscr_fname
 			)
 			
 			
 	def _set_envc_entity_ifexists(
 			self,
+			envconfig_root: str,
 			entity_fname: str
 	) -> str:
 		"""
@@ -504,6 +535,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 			Parameters
 			----------
+				envconfig_root: str
+					Una stringa contenente la Env-Config Project Root Path reale
+			
 				entity_fname: str
 					Una stringa contenente il nome del file di cui impostare la path relativamente
 					all' ambiente focale
@@ -513,7 +547,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				str
 					Una stringa contenente la path relativa al container del file dato
 		"""
-		orig_entity_path: str = path_join(self._orig_envconfig_root, entity_fname)
+		orig_entity_path: str = path_join(envconfig_root, entity_fname)
 		if not os_fdexists(orig_entity_path):
 			return ""
 		else:
@@ -587,6 +621,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._dockf_builder.set_envvar("GENTESTS_ROOT", self._gentests_root)
 		self._dockf_builder.set_envvar("CONTTOOLS_ROOT", self._conttools_root)
 		self._dockf_builder.set_envvar("LINTTOOLS_DIRNAME", self._linttools_dir)
+		self._dockf_builder.set_envvar("COVTOOLS_DIRNAME", self._covtools_dir)
 
 
 	def _configure_deps_install(
@@ -627,6 +662,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	def _check_initargs(
 			cls,
 			dockf_builder: ATransactDockfBuilder,
+			tag_prefix: str,
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
@@ -658,6 +694,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		"""
 		if (
 			(dockf_builder is None) or
+			(tag_prefix is None) or
 			(gentests_dir is None) or
 			(envconfig_dir is None) or
 			(dockerfile_fname is None) or
@@ -669,6 +706,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			raise ValueError()
 
 		if (
+			(tag_prefix == "") or
 			(gentests_dir == "") or
 			(envconfig_dir == "") or
 			(dockerfile_fname == "") or

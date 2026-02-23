@@ -14,6 +14,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 	def __init__(
 			self,
 			dockf_builder: ATransactDockfBuilder,
+			tag_prefix: str,
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
@@ -21,6 +22,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			deps_files: Tuple[str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
+			covtools_dir: str,
 			conttools_root: str = None,
 			path_prefix: str = None
 	):
@@ -41,6 +43,10 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 				dockf_builder: ATransactDockfBuilder
 					Un oggetto `ATransactDockfBuilder` rappresentante il costruttore di dockerfiles
 					da utilizzare per generare le immagini degli ambienti focali
+					
+				tag_prefix: str
+					Una stringa contenente il prefisso da apporre al tag di ogni immagine
+					che verrà costruita
 					
 				gentests_dir: str
 					Una stringa contenente il nome della directory che contiene i tests generati
@@ -74,6 +80,10 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 					Una stringa contenente il nome della directory, all' interno di `tools_root`,
 					che contiene i tools per effettuare la verifica di linting
 					
+				covtools_dir: str
+					Una stringa contenente il nome della directory, all' interno di `tools_root`,
+					che contiene i tools per effettuare il calcolo della coverage
+					
 				conttools_root: str
 					Opzionale. Default = `self.CONTTOOLS_ROOT`. Una stringa rappresentante la path, relativa
 					all' ambiente focale, che contiene i tools da utilizzare all' interno di esso
@@ -98,10 +108,10 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		super().__init__(
-			dockf_builder,
+			dockf_builder, tag_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
-			tools_root, linttools_dir, conttools_root,
-			path_prefix
+			tools_root, linttools_dir, covtools_dir,
+			conttools_root, path_prefix
 		)
 	
 	

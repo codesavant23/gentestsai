@@ -46,7 +46,6 @@ class LintingChecker:
 	
 	def __init__(
 			self,
-			chk_tools_dirname: str = None,
 			fenv_script_fname: str = None,
 			temp_dir: str = None,
 	        logger: ATemporalFormattLogger = None,
@@ -57,10 +56,6 @@ class LintingChecker:
 			
 			Parameters
 			----------
-				chk_tools_dirname: str
-					Opzionale. Default = `None`. Una stringa rappresentante il nome della directory contenente i tools da utilizzare per
-					la verifica di linting all' interno dell' ambiente del progetto focale
-					
 				fenv_script_fname: str
 					Opzionale. Default = `None`. Una stringa contenente il nome dello script Python che esegue la verifica di correttezza,
 					a livello di linting, all' interno dell' ambiente per il progetto focale
@@ -86,11 +81,6 @@ class LintingChecker:
 		self._TEMP_DIRNAME: str = self.LINTING_TEMP_DIR
 		if temp_dir is not None:
 			self._TEMP_DIRNAME = temp_dir
-		
-		# Nome della directory che contiene i tools per la verifica di linting
-		self._LINTTOOLS_DIRNAME: str = self.LINTING_TOOLS_DIR
-		if chk_tools_dirname is not None:
-			self._LINTTOOLS_DIRNAME = chk_tools_dirname
 
 		# Nome dello script Python che esegue il linter all' interno dell' ambiente focale
 		self._fenv_script_fname: str = self.LINTING_SCRIPT
@@ -251,7 +241,8 @@ class LintingChecker:
 		# Richiesta della verifica della correttezza (a livello di linting)
 		self._logger.log("Esecuzione della verifica di linting ...") if self._logger is not None else None
 		self._focal_env.execute(
-			f"python ./{self._LINTTOOLS_DIRNAME}/{self._fenv_script_fname} {self._ptsuite_relpath} {self._lint_result_relpath}"
+			f"/bin/sh -c python $CONTTOOLS_ROOT/$LINTTOOLS_DIRNAME/{self._fenv_script_fname} "
+			f"{self._ptsuite_relpath} {self._lint_result_relpath}"
 		)
 		self._logger.log("Verifica di linting eseguita") if self._logger is not None else None
 		

@@ -50,12 +50,21 @@ class IFocalEnvConfigurator(ABC):
 	
 	
 	@abstractmethod
-	def set_focal_project(self, full_root: str, focal_root: str, tests_root: str):
+	def set_focal_project(
+			self,
+			proj_name: str,
+			full_root: str,
+			focal_root: str,
+			tests_root: str
+	):
 		"""
 			Imposta i dati di contesto di un nuovo progetto focale
 
 			Parameters
 			----------
+				proj_name: str
+					Una stringa contenente il nome del nuovo progetto focale
+			
 				full_root: str
 					Una stringa contenente la Full Project Root Path del nuovo progetto focale
 
@@ -70,6 +79,7 @@ class IFocalEnvConfigurator(ABC):
 				ValueError
 					Si verifica se:
 					
+						- Il parametro `proj_name` ha valore `None` o è una stringa vuota
 						- Il parametro `full_root` ha valore `None` o è una stringa vuota
 						- Il parametro `focal_root` ha valore `None` o è una stringa vuota
 						- Il parametro `tests_root` ha valore `None` o è una stringa vuota
@@ -112,7 +122,13 @@ class IFocalEnvConfigurator(ABC):
 	) -> DockerImage:
 		"""
 			Crea un' immagine docker, corrispondente all' ambiente focale, dell' ultimo progetto impostato
-			che verrà utilizzata per istanziare il container che è l' ambiente effettivo
+			che verrà utilizzata per istanziare il container che è l' ambiente effettivo.
+			
+			L' immagine docker creata ha come tag la seguente stringa:
+				"<tag_prefix>_<project_name>:latest"
+				
+			dove `<tag_prefix>` è il prefisso scelto da apporre al tag e `<project_name>` è il nome del progetto
+			focale di cui si sta creando l' immagine
 			
 			Nell' ambiente focale:
 				- Vengono installati i seguenti software:
