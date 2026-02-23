@@ -1,5 +1,9 @@
 {
 	"covconfig_dir": "config_coverage",
-	"pytest_args_file": "pytest_args.json",
-	"coverage_args_file": "coverage_args.json"
+	"pytargs_fname": "pytest_args.json",
+	"covargs_fname": "coverage_args.json",
+	"environ": {
+		"humancov_script": "exec_calc_humcov.py",
+		"llmcov_script": "exec_calc_llmcov.py"
+	}
 }

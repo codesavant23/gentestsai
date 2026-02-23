@@ -14,4 +14,5 @@ from ._private.models_validators.a_models_cfgvalidator import AModelsConfigValid
 from ._private.projs_cfgvalidator import ProjectsConfigValidator
 from ._private.projsenv_cfgvalidator import ProjsEnvironConfigValidator
 from ._private.prompts_cfgvalidator import PromptsConfigValidator
+from ._private.calccov_cfgvalidator import CalcCovConfigValidator
 from ._private.cache_cfgvalidator import CacheConfigValidator

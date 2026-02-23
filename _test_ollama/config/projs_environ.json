@@ -1,10 +1,12 @@
 {
 	"envconfig_dir": "config_proj_environment",
 	"os_image": "debian:trixie-slim",
+	"images_prefix": "fenv",
 	"python_version": "3.10",
 	"tools": {
 		"tools_root": "C:\\Users\\filip\\Desktop\\Python_Projects\\gentestsai\\_test_ollama\\docker\\tools",
-		"linting": "gtsai_linting_tools"
+		"linting": "gtsai_linting_tools",
+		"coverage": "gtsai_coverage_tools"
 	},
 	"environ": {
 		"lint_executer": "exec_linting_check.py",

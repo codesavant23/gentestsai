@@ -41,13 +41,15 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		alla configurazione dell' ambiente focale per ogni progetto di i LLMs scelti genereranno i tests.
 		
 		Il file di configurazione letto sarà composto da un dizionario contenente:
-			- "envconfig_dir" (str): L' eventuale nome della directory che contiene i files di configurazione per gli ambienti focali
+			- "envconfig_dir" (str): Il nome dell' eventuale directory che contiene i files di configurazione per gli ambienti focali
 			- "os_image" (str): L' immagine 'base' di docker da cui derivare ogni immagine degli ambienti focali
+			- "images_prefix" (str): Il prefisso da anteporre al tag delle immagini degli ambienti focali
 			- "python_version" (str): La versione di fallback dell' interprete Python da utilizzare (nel caso in cui il progetto non ne abbia una specifica)
 			- "tools" (Dict[str, str]): Dizionario che contiene le path/directories relative ai tools da utilizzare in ogni ambiente focale. Contiene:
 			
 				* "tools_root" (str): La root path che contiene i tools da aggiungere all' interno di ogni ambiente focale
 				* "linting" (str): Il nome della directory che contiene i tools per eseguire la verifica di linting all' interno dell' ambiente focale
+				* "coverage" (str): Il nome della directory che contiene i tools per eseguire il calcolo della coverage all' interno dell' ambiente focale
 				
 			- "environ" (Dict[str, str]): Dizionario che contiene i parametri relativi agli ambienti focali. Contiene:
 			
@@ -58,15 +60,16 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			- "project" (Dict[str, str]): Dizionario che contiene i parametri relativi ad ogni progetto focale. Contiene:
 			
 				* "dockerfile" (str): Il nome del dockerfile, creato da GenTestsAI, che costruirà l' immagine dell' ambiente focale
-				* "pyversion_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene la versione dell' interprete Python specifica per il progetto
-				* "ext_deps_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene le dipendenze non-Python del progetto focale
-				* "python_deps_file" (str): L' eventuale nome del file testuale (in "envconfig_dir") che contiene le dipendenze Python del progetto focale
-				* "pre_extdeps_script" (str): L' eventuale nome dello script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze Python del progetto focale
-				* "post_extdeps_script" (str): L' eventuale nome dello script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze Python del progetto focale
+				* "pyversion_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene la versione dell' interprete Python specifica per il progetto
+				* "ext_deps_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene le dipendenze non-Python del progetto focale
+				* "python_deps_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene le dipendenze Python del progetto focale
+				* "pre_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze Python del progetto focale
+				* "post_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze Python del progetto focale
 	"""
 	
 	_OUTER_FIELDS: Set[str] = {
 		"envconfig_dir",
+		"images_prefix",
 		"os_image", "python_version",
 		"environ",
 		"tools",
@@ -74,7 +77,8 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	}
 	_TOOLS_FIELDS: Set[str] = {
 		"tools_root",
-		"linting"
+		"linting",
+		"coverage"
 	}
 	_ENVIRON_FIELDS: Set[str] = {
 		"lint_executer",
@@ -150,6 +154,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
 		envconfig_dir: str = config_read["envconfig_dir"]
+		imgs_prefix: str = config_read["images_prefix"]
 		os_image: str = config_read["os_image"]
 		py_version: str = config_read["python_version"]
 		project: Dict[str, str] = config_read["project"]
@@ -174,11 +179,16 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		if environ_fields > self._ENVIRON_FIELDS:
 			raise ConfigExtraFieldsError()
 		
+		if imgs_prefix == "":
+			raise InvalidConfigValueError()
+		
 		tools_root: str = tools["tools_root"]
 		linting_tools: str = path_join(tools_root, tools["linting"])
+		cov_tools: str = path_join(tools_root, tools["coverage"])
 		
 		self._assert_path(tools_root, "tools.tools_root")
 		self._assert_path(linting_tools, "tools.linting")
+		self._assert_path(cov_tools, "tools.coverage")
 		
 		if not os_fdexists(path_join(linting_tools, environ["lint_executer"])):
 			raise InvalidConfigValueError()
