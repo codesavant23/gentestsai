@@ -18,10 +18,10 @@ from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 def create_focal_images(
 		projs_config: Dict[str, Dict[str, Any]],
 		base_image: str,
-		dockerfile_fname: str,
+		dockerfile_fname: str, tag_prefix: str,
 		gentests_dir: str, envconfig_dir: str,
 		def_pyvers: str, py_vers_fname: str,
-		deps_files: Tuple[str, str, str, str],
+		deps_files: Tuple[str, str, str, str, str],
 		tools_root: str, linttools_dir: str,
 		path_prefix: str, conttools_root: str,
 ) -> Dict[str, DockerImage]:
@@ -47,6 +47,9 @@ def create_focal_images(
 			
 			dockerfile_fname: str
 				Una stringa contenente il nome del dockerfile che verrà generato per ogni immagine di ambiente focale
+				
+			tag_prefix: str
+				Una stringa contenente il prefisso da utilizzare per il tag delle immagini focali
 			
 			def_pyvers: str
 				Una stringa contenente la versione di default dell' interprete Python da utilizzare nel caso in cui per un
@@ -98,7 +101,7 @@ def create_focal_images(
 	dockf_bder.new_dockerfile()
 	
 	fenv_confgor: IFocalEnvConfigurator = V1FocalEnvConfigurator(
-		dockf_bder,
+		dockf_bder, tag_prefix,
 		gentests_dir, envconfig_dir,
 		dockerfile_fname,
 		py_vers_fname, deps_files,
@@ -113,6 +116,7 @@ def create_focal_images(
 	for proj_name, proj_info in projs_config.items():
 		full_root = path_split(proj_info["focal_root"])[0]
 		fenv_confgor.set_focal_project(
+			proj_name,
 			full_root,
 			proj_info["focal_root"],
 			proj_info["tests_root"]

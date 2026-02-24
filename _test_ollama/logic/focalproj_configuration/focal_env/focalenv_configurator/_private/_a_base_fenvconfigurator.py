@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from abc import abstractmethod
 from .. import (
 	IFocalEnvConfigurator,
@@ -35,6 +35,9 @@ from pathlib import (
 	PosixPath
 )
 # ======================================== #
+# ============== JSON Utilities ============== #
+from json import JSONDecoder
+# ============================================ #
 
 from ....dockerfile_builder import ATransactDockfBuilder
 
@@ -72,7 +75,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			envconfig_dir: str,
 			dockerfile_fname: str,
 			py_vers_fname: str,
-			deps_files: Tuple[str, str, str, str],
+			deps_files: Tuple[str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
 			covtools_dir: str,
@@ -117,13 +120,14 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una stringa contenente il nome dell' eventuale file che contiene la versione specifica
 					dell' interprete Python da utilizzare nell' ambiente focale
 					
-				deps_files: Tuple[str, str, str, str]
-					Una 4-tupla di stringhe contenente:
+				deps_files: Tuple[str, str, str, str, str]
+					Una 5-tupla di stringhe contenente:
 						
 						- [0]: Il nome dell' eventuale file che specifica le dipendenze Python del progetto focale
 						- [1]: Il nome dell' eventuale file che specifica le dipendenze non-Python del progetto focale
 						- [2]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima l' installazione delle dipendenze esterne
 						- [3]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze esterne
+						- [4]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze Python
 			
 				tools_root: str
 					Una stringa rappresentante la path che contiene i tools da utilizzare all' interno
@@ -167,6 +171,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			tools_root, linttools_dir, conttools_root
 		)
 		
+		self._json_dec: JSONDecoder = JSONDecoder()
+		
 		self._project_set: bool = False
 		self._def_pyvers_set: bool = False
 
@@ -207,19 +213,21 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._py_vers_fname: str = py_vers_fname
 		self._py_vers_path: str = None
 
+		# File (json di dizionari) con lista di Dipendenze Python
+		self._py_deps_fname: str = deps_files[0]
+		self._py_deps_path: str = None
+
 		# File con lista di Dipendenze Esterne
 		self._ext_deps_fname: str = deps_files[1]
 		self._ext_deps_path: str = None
-
-		# File ("requirements.txt"-like) con lista di Dipendenze Python
-		self._py_deps_fname: str = deps_files[0]
-		self._py_deps_path: str = None
 
 		# Files Script Precedente e Successivo all' installazione delle Dipendenze Esterne
 		self._prescr_fname: str = deps_files[2]
 		self._prescr_path: str = None
 		self._postscr_fname: str = deps_files[3]
 		self._postscr_path: str = None
+		self._postscrpy_fname: str = None
+		self._postscrpy_path: str = deps_files[4]
 		
 		# Path dei tools dell' ambiente reale
 		self._tools_root: str = tools_root.rstrip("/")
@@ -321,6 +329,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		# Impostazione della versione dell' interprete Python che verrà utilizzata
 		self._dockf_builder.set_envvar("PYTHON_VERSION", python_version)
+		
+		self._dockf_builder.add_shellcmd("apt-get update")
+		
+		# Installazione del comando `yes` (utilizzato per le installazioni silenziose)
+		self._dockf_builder.add_shellcmd("apt-get install -y yes")
 
 		# Installazione di `pyenv`
 		self._configure_pyenv()
@@ -480,15 +493,21 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		if os_fdexists(self._ext_deps_path):
 			if self._prescr_path != "":
-				self._py_deps_path = self._change_prefix_of_path(
+				self._prescr_path = self._change_prefix_of_path(
 					new_path_prefix,
-					self._py_deps_path,
+					self._prescr_path,
 				)
 			if self._postscr_path != "":
 				self._postscr_path = self._change_prefix_of_path(
 					new_path_prefix,
 					self._postscr_path,
 				)
+				
+		if self._postscrpy_path != "":
+			self._postscrpy_path = self._change_prefix_of_path(
+				new_path_prefix,
+				self._postscrpy_path,
+			)
 	
 
 	def _set_envc_entities(self):
@@ -522,6 +541,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				orig_envconfig_root,
 				self._postscr_fname
 			)
+			
+		self._postscrpy_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
+			self._postscrpy_fname
+		)
 			
 			
 	def _set_envc_entity_ifexists(
@@ -571,7 +595,27 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		else:
 			python_vers = self._def_pyvers
 		return python_vers
+	
+	
+	def _get_py_deps(self) -> List[Dict[str, str]]:
+		"""
+			Legge le dipendenze python dal file, relativamente al progetto focale impostato.
 
+			Returns
+			-------
+				List[Dict[str, str]]
+					Una lista di dizionari contenente un elemento per ogni dipendenza python da installare.
+					Ogni dizionario contiene:
+						- "r": La dipendenza/e da installare con `pip` (se più di una si separano con gli spazi)
+						- Ogni altra chiave è un flag per il comando `pip` (ed eventuale valore, oppure None)
+		"""
+		py_deps: List[Dict[str, str]]
+		if self._py_deps_path != "":
+			with open(self._py_deps_path, "r") as fp:
+				py_deps = self._json_dec.decode(fp.read())
+			return py_deps
+		return list()
+		
 
 	def _get_ext_deps(self) -> List[str]:
 		"""
@@ -597,7 +641,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			che verranno prodotte successivamente
 		"""
 		self._dockf_builder.begin_cmds_tran()
-		self._dockf_builder.add_shellcmd_step("apt-get update")
 		self._dockf_builder.add_shellcmd_step(
 			"apt-get install -y "
 			"build-essential curl git zlib1g-dev "
@@ -614,7 +657,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			immagini che verranno prodotte successivamente
 		"""
 		self._dockf_builder.set_envvar("PYENV_ROOT", "/root/.pyenv")
-		self._dockf_builder.set_envvar("PATH", "$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH")
+		self._dockf_builder.set_envvar(
+			"PATH",
+		    "$HOME/.local/bin:$HOME/bin:$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+		)
 		self._dockf_builder.set_envvar("FULL_ROOT", self._full_root)
 		self._dockf_builder.set_envvar("FOCAL_ROOT", self._focal_root)
 		self._dockf_builder.set_envvar("TESTS_ROOT", self._tests_root)
@@ -642,7 +688,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		# Esecuzione dello script Pre-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
-			self._dockf_builder.add_shellcmd_step(f"source {self._prescr_path}")
+			if os_fdexists(self._prescr_path):
+				self._dockf_builder.add_shellcmd_step(f"source {self._prescr_path}")
 
 		# Installazione delle dipendenze esterne
 		for ext_dep in ext_deps:
@@ -650,10 +697,27 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
-			self._dockf_builder.add_shellcmd_step(f"source {self._postscr_path}")
+			if os_fdexists(self._postscr_path):
+				self._dockf_builder.add_shellcmd_step(f"source {self._postscr_path}")
 
 		# Installazione delle dipendenze (packages) Python
-		self._dockf_builder.add_shellcmd_step(f"pip install -r {self._py_deps_path}")
+		py_packs: str
+		pip_flags: str
+		for pydep_dict in self._get_py_deps():
+			pip_flags = ""
+			py_packs = pydep_dict.pop("r")
+			for flag, value in pydep_dict.items():
+				pip_flags += f"{flag}"
+				if value is not None:
+					pip_flags += f" {value}"
+					
+			self._dockf_builder.add_shellcmd_step(
+				f"yes | pip install -q -q -q {pip_flags} \"{py_packs}\""
+			)
+			
+		# Esecuzione dello script Post-installazione delle dipendenze Python
+		if os_fdexists(self._postscrpy_path):
+			self._dockf_builder.add_shellcmd_step(f"source {self._postscrpy_path}")
 
 		self._dockf_builder.commit_cmds_tran()
 		
@@ -667,7 +731,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			envconfig_dir: str,
 			dockerfile_fname: str,
 			py_vers_fname: str,
-			deps_files: Tuple[str, str, str, str],
+			deps_files: Tuple[str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
 			conttools_root: str = None

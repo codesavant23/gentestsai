@@ -1,5 +1,5 @@
 {
-	"envconfig_dir": "config_proj_environment",
+	"envconfig_dir": "config_projenv",
 	"os_image": "debian:trixie-slim",
 	"images_prefix": "fenv",
 	"python_version": "3.10",
@@ -16,9 +16,10 @@
 	"project": {
 		"dockerfile": "Dockerfile.gtsai",
 		"pyversion_file": "python_version.txt",
-		"python_deps_file": "python_deps.txt",
+		"python_deps_file": "python_deps.json",
 		"ext_deps_file": "ext_deps.txt",
 		"pre_extdeps_script": "pre_extdeps.sh",
-		"post_extdeps_script": "post_extdeps.sh"
+		"post_extdeps_script": "post_extdeps.sh",
+		"post_pydeps_script": "post_pydeps.sh"
 	}
 }

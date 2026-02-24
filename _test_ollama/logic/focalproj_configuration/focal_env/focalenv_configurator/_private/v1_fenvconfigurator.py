@@ -19,7 +19,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			envconfig_dir: str,
 			dockerfile_fname: str,
 			py_vers_fname: str,
-			deps_files: Tuple[str, str, str, str],
+			deps_files: Tuple[str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
 			covtools_dir: str,

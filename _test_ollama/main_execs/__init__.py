@@ -1,4 +1,5 @@
 from . import gents
+from . import calc_cov
 from . import pdirs_hasher
 
 from ._private.config_reading import (
@@ -6,5 +7,6 @@ from ._private.config_reading import (
 	read_general_config, read_platform_config, read_models_config,
 	read_projs_config, read_projsenv_config,
 	read_prompts_config,
-	read_caches_config
+	read_caches_config,
+	read_calccov_config
 )

@@ -1,10 +1,15 @@
 from typing import Tuple
+
+# ============ Path Utilities ============ #
+from os.path import join as path_join
+# ======================================== #
 # =========== ArgParse Utilities =========== #
 from argparse import (
 	ArgumentParser,
 	Namespace as ArgumentsList,
 )
 # ========================================== #
+
 
 
 def read_arguments(
@@ -38,7 +43,7 @@ def read_arguments(
 		help='Optional. Root path that contains configuration files to use. '
 		     'The default is the "config" directory inside GenTestsAI project\'s root' ,
 		required=False,
-		default=script_path
+		default=path_join(script_path, "config")
 	)
 	
 	arg_parser.add_argument(
@@ -118,6 +123,6 @@ def read_arguments(
 		args.prompts_config
 	)
 	if any(config_names_args) and not args.config_type:
-		arg_parser.error("--config-type must be specified if any <config_names> is specified")
+		arg_parser.error("--config-type must be specified if any of the <config_names> is specified")
 		
 	return args

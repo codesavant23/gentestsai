@@ -14,7 +14,8 @@ from logic.configuration.config_validator import (
 	AccessorPlatSpecCfgValidatorFactory, GeneralPlatSpecCfgValidatorFactory, ModelsPlatSpecCfgValidatorFactory,
 	AAccessorConfigValidator, AGeneralConfigValidator, AModelsConfigValidator,
 	ProjectsConfigValidator, ProjsEnvironConfigValidator,
-	PromptsConfigValidator, CacheConfigValidator
+	PromptsConfigValidator, CacheConfigValidator,
+	CalcCovConfigValidator
 )
 
 
@@ -23,12 +24,12 @@ def read_platform_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
-		cfgval_f: AccessorPlatSpecCfgValidatorFactory,
 		inf_platf: EImplementedPlatform,
 ) -> Dict[str, Any]:
 	# Lettura del file della piattaforma di inferenza
 	platf_dict: Dict[str, Any] = config_parser.read_config(path_join(config_root, config_fname))
-	platf_chker: AAccessorConfigValidator = cfgval_f.create(inf_platf, platf_dict)
+	platf_chker: AAccessorConfigValidator = \
+		AccessorPlatSpecCfgValidatorFactory().create(inf_platf, platf_dict)
 	platf_chker.validate_sem()
 	return platf_dict
 
@@ -37,14 +38,14 @@ def read_general_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
-		cfgval_f: GeneralPlatSpecCfgValidatorFactory,
 		inf_platf: EImplementedPlatform,
 ) -> Dict[str, Any]:
 	# Lettura del file dei parametri generali
 	gen_dict: Dict[str, Any] = config_parser.read_config(
 		path_join(config_root, config_fname)
 	)
-	gen_chker: AGeneralConfigValidator = cfgval_f.create(inf_platf, gen_dict)
+	gen_chker: AGeneralConfigValidator = \
+		GeneralPlatSpecCfgValidatorFactory().create(inf_platf, gen_dict)
 	gen_chker.validate_sem()
 	return gen_dict
 
@@ -53,14 +54,14 @@ def read_models_config(
 		config_root: str,
 		config_fname: str,
 		config_parser: IConfigParser,
-		cfgval_f: ModelsPlatSpecCfgValidatorFactory,
 		inf_platf: EImplementedPlatform,
 ) -> Dict[str, Any]:
 	# Lettura del file dei modelli
 	models_dict: Dict[str, Any] = config_parser.read_config(
 		path_join(config_root, config_fname)
 	)
-	llms_chker: AModelsConfigValidator = cfgval_f.create(inf_platf, models_dict)
+	llms_chker: AModelsConfigValidator = \
+		ModelsPlatSpecCfgValidatorFactory().create(inf_platf, models_dict)
 	llms_chker.validate_sem()
 	return models_dict
 
@@ -183,14 +184,10 @@ def read_config_files(
 					- "caches": Il file di configurazione delle caches di test-suites parziali da utilizzare (vedi `CacheConfigValidator` per i suoi campi)
 	"""
 	configs: Dict[str, Dict[str, Any]] = dict()
-	
-	platf_cfgvalf: AccessorPlatSpecCfgValidatorFactory = AccessorPlatSpecCfgValidatorFactory()
-	general_cfgvalf: GeneralPlatSpecCfgValidatorFactory = GeneralPlatSpecCfgValidatorFactory()
-	models_cfgvalf: ModelsPlatSpecCfgValidatorFactory = ModelsPlatSpecCfgValidatorFactory()
 
-	configs["platform"] = read_platform_config(config_root, file_names[0], config_parser, platf_cfgvalf, inf_platf)
-	configs["general"] = read_general_config(config_root, file_names[1], config_parser, general_cfgvalf, inf_platf)
-	configs["models"] = read_models_config(config_root, file_names[2], config_parser, models_cfgvalf, inf_platf)
+	configs["platform"] = read_platform_config(config_root, file_names[0], config_parser, inf_platf)
+	configs["general"] = read_general_config(config_root, file_names[1], config_parser, inf_platf)
+	configs["models"] = read_models_config(config_root, file_names[2], config_parser, inf_platf)
 	configs["projects"] = read_projs_config(config_root, file_names[3], config_parser)
 	configs["environ"] = read_projsenv_config(config_root, file_names[4], config_parser, configs["projects"], docker_hub_vers)
 	configs["prompts"] = read_prompts_config(config_root, file_names[5], config_parser)

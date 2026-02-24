@@ -63,8 +63,9 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 				* "pyversion_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene la versione dell' interprete Python specifica per il progetto
 				* "ext_deps_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene le dipendenze non-Python del progetto focale
 				* "python_deps_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene le dipendenze Python del progetto focale
-				* "pre_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze Python del progetto focale
-				* "post_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze Python del progetto focale
+				* "pre_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze non-Python del progetto focale
+				* "post_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze non-Python del progetto focale
+				* "post_pydeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo l' installazione delle dipendenze Python del progetto focale
 	"""
 	
 	_OUTER_FIELDS: Set[str] = {
@@ -89,7 +90,8 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		"dockerfile",
 		"pyversion_file",
 		"ext_deps_file", "python_deps_file",
-		"pre_extdeps_script", "post_extdeps_script"
+		"pre_extdeps_script", "post_extdeps_script",
+		"post_pydeps_script"
 	}
 	
 	_LINUXPATH_PATT: str = r"^(?P<linux_path>(/[\w.-]+/?)+)$"
@@ -217,38 +219,6 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		image, tag = image.split(":")
 		#self._assert_base_image_exists(os_image, image, tag)
 		"""
-		
-		self._pathval.set_error_msg(
-			EPathValidationErrorType.SYNTACTIC,
-			'La path specificata dal parametro "dockerfile" è invalida'
-		)
-		self._pathval.set_error_msg(
-			EPathValidationErrorType.NOTEXISTS,
-			'Il dockerfile specificato da "dockerfile" non esiste'
-		)
-		self._pathval.set_error_msg(
-			EPathValidationErrorType.PERMISSION,
-			'Non si può accedere alla path specificata dal parametro "dockerfile"'
-		)
-		self._pathval.set_error_msg(
-			EPathValidationErrorType.INACCESSIBLE,
-			'La path specificata dal parametro "dockerfile" non è raggiungibile'
-		)
-		envconfig_root: str
-		dockf_path: str
-		path: SystemPath
-		for full_root in self._full_roots:
-			envconfig_root = path_join(full_root, envconfig_dir)
-			if os_fdexists(envconfig_root):
-				dockf_path = path_join(full_root, project["dockerfile"])
-				
-				try:
-					self._pathval.assert_path(dockf_path)
-				except (NotADirectoryError,
-				        FileNotFoundError,
-				        PermissionError,
-				        OSError):
-					raise InvalidConfigValueError()
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
