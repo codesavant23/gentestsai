@@ -1,5 +1,4 @@
 from . import gents
-from . import calc_cov
 from . import pdirs_hasher
 
 from ._private.config_reading import (
