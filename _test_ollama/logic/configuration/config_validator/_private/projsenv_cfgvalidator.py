@@ -55,7 +55,6 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			
 				* "lint_executer" (str): Il nome dello script che eseguirà la verifica di linting all' interno di ogni ambiente focale
 				* "path_prefix" (str): La path di base che ospita la Full Project Root Path, del progetto focale, all' interno di ogni ambiente focale
-				* "tools_root" (str): La root path dei tools utilizzati all' interno di ogni ambiente focale
 				
 			- "project" (Dict[str, str]): Dizionario che contiene i parametri relativi ad ogni progetto focale. Contiene:
 			
@@ -83,8 +82,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	}
 	_ENVIRON_FIELDS: Set[str] = {
 		"lint_executer",
-		"path_prefix",
-		"tools_root"
+		"path_prefix"
 	}
 	_1PROJ_FIELDS: Set[str] = {
 		"dockerfile",
@@ -197,9 +195,6 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 
 		linux_path_found: Match[str]
 		linux_path_found = reg_search(self._LINUXPATH_PATT, environ["path_prefix"])
-		if linux_path_found.group("linux_path") is None:
-			raise ValueError()
-		linux_path_found = reg_search(self._LINUXPATH_PATT, environ["tools_root"])
 		if linux_path_found.group("linux_path") is None:
 			raise ValueError()
 		

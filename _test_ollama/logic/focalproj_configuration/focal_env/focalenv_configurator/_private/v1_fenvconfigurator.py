@@ -23,7 +23,6 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			tools_root: str,
 			linttools_dir: str,
 			covtools_dir: str,
-			conttools_root: str = None,
 			path_prefix: str = None
 	):
 		"""
@@ -84,10 +83,6 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 					Una stringa contenente il nome della directory, all' interno di `tools_root`,
 					che contiene i tools per effettuare il calcolo della coverage
 					
-				conttools_root: str
-					Opzionale. Default = `self.CONTTOOLS_ROOT`. Una stringa rappresentante la path, relativa
-					all' ambiente focale, che contiene i tools da utilizzare all' interno di esso
-					
 				path_prefix: str
 					Opzionale. Default = `None`. Una stringa rappresentante l' eventuale primo path prefix
 					da utilizzare per le immagini prodotte con questo IFocalEnvConfigurator
@@ -111,7 +106,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			dockf_builder, tag_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
 			tools_root, linttools_dir, covtools_dir,
-			conttools_root, path_prefix
+			path_prefix
 		)
 	
 	

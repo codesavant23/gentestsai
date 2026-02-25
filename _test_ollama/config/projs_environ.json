@@ -10,8 +10,7 @@
 	},
 	"environ": {
 		"lint_executer": "exec_linting_check.py",
-		"path_prefix": "/app/",
-		"tools_root": "/etc/container/tools/"
+		"path_prefix": "/app/"
 	},
 	"project": {
 		"dockerfile": "Dockerfile.gtsai",

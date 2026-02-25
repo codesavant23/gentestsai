@@ -22,8 +22,10 @@ def create_focal_images(
 		gentests_dir: str, envconfig_dir: str,
 		def_pyvers: str, py_vers_fname: str,
 		deps_files: Tuple[str, str, str, str, str],
-		tools_root: str, linttools_dir: str,
-		path_prefix: str, conttools_root: str,
+		tools_root: str,
+		linttools_dir: str,
+		covtools_dir: str,
+		path_prefix: str
 ) -> Dict[str, DockerImage]:
 	"""
 		Crea le immagini che corrispondono agli ambienti focali dei progetti focali	
@@ -74,13 +76,13 @@ def create_focal_images(
 				Una stringa contenente il nome della directory, all' interno di `tools_root`, che contiene i tools
 				per effettuare la verifica di linting
 				
+			covtools_dir: str
+				Una stringa contenente il nome della directory, all' interno di `tools_root`, che contiene i tools
+				per effettuare il calcolo della coverage
+				
 			path_prefix: str
 				Una stringa rappresentante il path prefix da utilizzare negli ambienti focali prodotti
-			
-			conttools_root: str
-				Una stringa rappresentante la path, relativa all' ambiente focale, che conterrà i tools
-				da utilizzare all' interno di ognuno di essi
-
+				
 		Raises
 		------
 			ValueError
@@ -93,7 +95,6 @@ def create_focal_images(
 					- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 					- Il parametro `tools_root` ha valore ``None`, è una stringa vuota, oppure è una path invalida
 					- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in tools_root
-					- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 	"""
 	focal_envs: Dict[str, DockerImage] = dict()
 	
@@ -105,8 +106,8 @@ def create_focal_images(
 		gentests_dir, envconfig_dir,
 		dockerfile_fname,
 		py_vers_fname, deps_files,
-		tools_root, linttools_dir, conttools_root,
-		path_prefix
+		tools_root, linttools_dir, covtools_dir,
+		path_prefix=path_prefix
 	)
 	
 	dockf_bder.set_base_image(base_image)
