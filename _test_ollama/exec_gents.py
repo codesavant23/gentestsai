@@ -180,8 +180,8 @@ if __name__ == "__main__":
 		),
 		tools_config["tools_root"],
 		tools_config["linting"],
-		environ_config["path_prefix"],
-		environ_config["tools_root"]
+		tools_config["coverage"],
+		environ_config["path_prefix"]
 	)
 	
 	logger.process_end()
