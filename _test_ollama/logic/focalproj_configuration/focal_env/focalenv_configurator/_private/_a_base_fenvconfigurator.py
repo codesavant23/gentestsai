@@ -270,15 +270,15 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		full_dirname: str = path_split(full_root)[1]
 		focal_dirname: str = path_split(focal_root)[1]
 		tests_relpath: str = SystemPath(tests_root).relative_to(full_root).as_posix()
-
 		self._orig_full_root = full_root
+		
+		self._set_envconfig_entities()
+		
 		self._full_root: str = f"{self._path_prefix}/{full_dirname}"
 		self._focal_root: str = f"{self._full_root}/{focal_dirname}"
 		self._tests_root: str = f"{self._full_root}/{tests_relpath}"
 		self._gentests_root: str = f"{self._full_root}/{self._gentests_dir}"
 		self._envconfig_root: str = f"{self._full_root}/{self._envconfig_dir}"
-
-		self._set_envc_entities()
 
 		self._project_set = True
 	
@@ -508,74 +508,44 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				new_path_prefix,
 				self._postscrpy_path,
 			)
-	
 
-	def _set_envc_entities(self):
+			
+	def _set_envconfig_entities(self):
 		"""
-			Imposta i valori degli attributi privati relativi ai files presenti nella
-			Env-config Project Root Path
+			Imposta le paths degli elementi della Env-config Project Root Path
+			(in base alla loro esistenza)
 		"""
-		orig_envconfig_root: str = f"{self._orig_full_root}/{self._envconfig_dir}"
-
-		self._py_vers_path = self._set_envc_entity_ifexists(
-			orig_envconfig_root,
-			self._py_vers_fname
-		)
+		path: str
 		
-		self._py_deps_path = self._set_envc_entity_ifexists(
-			orig_envconfig_root,
-			self._py_deps_fname
-		)
-		self._ext_deps_path = self._set_envc_entity_ifexists(
-			orig_envconfig_root,
-			self._ext_deps_fname
-		)
-
-		if self._ext_deps_path != "":
-			self._prescr_path = self._set_envc_entity_ifexists(
-				orig_envconfig_root,
-				self._prescr_fname
-			)
-
-			self._postscr_path = self._set_envc_entity_ifexists(
-				orig_envconfig_root,
-				self._postscr_fname
-			)
-			
-		self._postscrpy_path = self._set_envc_entity_ifexists(
-			orig_envconfig_root,
-			self._postscrpy_fname
-		)
-			
-			
-	def _set_envc_entity_ifexists(
-			self,
-			envconfig_root: str,
-			entity_fname: str
-	) -> str:
-		"""
-			Imposta il valore di un file della Env-config Project Root Path, da utilizzarsi
-			all' interno dell' ambiente focale, se esiste realmente
-
-			Parameters
-			----------
-				envconfig_root: str
-					Una stringa contenente la Env-Config Project Root Path reale
-			
-				entity_fname: str
-					Una stringa contenente il nome del file di cui impostare la path relativamente
-					all' ambiente focale
-
-			Returns
-			-------
-				str
-					Una stringa contenente la path relativa al container del file dato
-		"""
-		orig_entity_path: str = path_join(envconfig_root, entity_fname)
-		if not os_fdexists(orig_entity_path):
-			return ""
-		else:
-			return f"{self._envconfig_root}/{entity_fname}"
+		path = path_join(self._orig_full_root, self._envconfig_dir, self._py_vers_fname)
+		self._py_vers_path = ""
+		if os_fdexists(path):
+			self._py_vers_path = path
+		
+		path = path_join(self._orig_full_root, self._envconfig_dir, self._py_deps_fname)
+		self._py_deps_path = ""
+		if os_fdexists(path):
+			self._py_deps_path = path
+		
+		path = path_join(self._orig_full_root, self._envconfig_dir, self._ext_deps_fname)
+		self._ext_deps_path = ""
+		if os_fdexists(path):
+			self._ext_deps_path = path
+		
+		path = path_join(self._orig_full_root, self._envconfig_dir, self._prescr_fname)
+		self._prescr_path = ""
+		if os_fdexists(path):
+			self._prescr_path = path
+		
+		path = path_join(self._orig_full_root, self._envconfig_dir, self._postscr_fname)
+		self._postscr_path = ""
+		if os_fdexists(path):
+			self._postscr_path = path
+		
+		path = path_join(self._orig_full_root, self._envconfig_dir, self._postscrpy_fname)
+		self._postscrpy_path = ""
+		if os_fdexists(path):
+			self._postscrpy_path = path
 		
 		
 	def _get_python_version(self) -> str:
