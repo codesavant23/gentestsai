@@ -270,6 +270,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		full_dirname: str = path_split(full_root)[1]
 		focal_dirname: str = path_split(focal_root)[1]
 		tests_relpath: str = SystemPath(tests_root).relative_to(full_root).as_posix()
+		self._proj_name = proj_name
 		self._orig_full_root = full_root
 		
 		self._set_envconfig_entities()
