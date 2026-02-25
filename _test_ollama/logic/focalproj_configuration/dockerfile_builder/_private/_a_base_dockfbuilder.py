@@ -56,7 +56,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			lambda source: source.rstrip("/"),
 			sources
 		))
-		dest_snized: str = f"{dest.rstrip("/")}/"
+		dest_snized: str = f"{dest.rstrip('/')}/"
 		sources_str: str = " ".join(sources_snized)
 		
 		self._ap__add_instr(
@@ -135,7 +135,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			raise ValueError()
 		
 		self._ap__add_instr(
-			f"WORKDIR {dest.rstrip("/")}/"
+			f"WORKDIR {dest.rstrip('/')}/"
 		)
 	
 	
