@@ -2,11 +2,17 @@ from typing import List, Tuple, Dict
 from abc import abstractmethod
 from .. import IDockfBuilder
 
+# ============ Path Utilities ============ #
+from os.path import sep, altsep
+# ======================================== #
 # ============== JSON Utilities ============== #
 from json import JSONEncoder
 # ============================================ #
 
 from ...exceptions import BaseImageNotSetError
+
+
+_PATH_SEPS: str = f"{sep}{altsep if altsep is not None else ''}"
 
 
 
@@ -53,7 +59,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			raise ValueError()
 		
 		sources_snized: List[str] = list(map(
-			lambda source: source.rstrip("/"),
+			lambda source: source.rstrip(_PATH_SEPS),
 			sources
 		))
 		dest_snized: str = f"{dest.rstrip('/')}/"

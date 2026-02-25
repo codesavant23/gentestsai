@@ -23,16 +23,21 @@ from os import (
 	remove as os_remove,
 	environ as os_getenv
 )
+from shutil import rmtree as os_dremove
 from os.path import exists as os_fdexists
 # ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
 	join as path_join,
 	split as path_split,
+	sep, altsep
 )
 from pathlib import (
 	Path as SystemPath,
 	PosixPath
+)
+from shutil import (
+	copytree as os_dcopy
 )
 # ======================================== #
 # ============== JSON Utilities ============== #
@@ -45,6 +50,9 @@ from ....exceptions import (
 	FocalProjectNotSetError,
 	DefaultPythonVersionNotSetError
 )
+
+
+_PATH_SEPS: str = f"{sep}{altsep if altsep is not None else ''}"
 
 
 
@@ -230,7 +238,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._postscrpy_path: str = None
 		
 		# Path dei tools dell' ambiente reale
-		self._tools_root: str = tools_root.rstrip("/")
+		self._tools_root: str = tools_root.rstrip(_PATH_SEPS)
 		# Directory dei tools per il calcolo della coverage
 		self._covtools_dir: str = covtools_dir
 		# Directory dei tools per la verifica di linting
@@ -351,17 +359,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._dockf_builder.add_shellcmd(f'python3 -m pip install pylint=="{self._ap__pylint_version()}"')
 		
 		# Copia dei tools per la coverage
-		covtools_path: str = SystemPath(self._tools_root, self._covtools_dir).as_posix()
-		self._dockf_builder.add_copy(
-			[covtools_path],
-			f"{self._conttools_root}/{self._covtools_dir}/",
-		)
+		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
+		self._copy_tool_subroot_infullroot(str(covtools_path))
+		
 		# Copia dei tools per il linting
-		linttools_path: str = SystemPath(self._tools_root, self._linttools_dir).as_posix()
-		self._dockf_builder.add_copy(
-			[linttools_path],
-			f"{self._conttools_root}/{self._linttools_dir}/"
-		)
+		linttools_path: SystemPath = SystemPath(self._tools_root, self._linttools_dir)
+		self._copy_tool_subroot_infullroot(str(linttools_path))
 		
 		# Impostazione della directory corrente sul path prefix
 		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}")
@@ -691,6 +694,32 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			self._dockf_builder.add_shellcmd_step(f"source {self._postscrpy_path}")
 
 		self._dockf_builder.commit_cmds_tran()
+		
+		
+	def _copy_tool_subroot_infullroot(self, tool_subroot: str):
+		"""
+			Copia la sotto-root dei tools per l' ambiente focale specificata
+			all' interno della Full Project Root Path del progetto focale corrente.
+			Ciò viene utilizzato per permettere le operazioni di `COPY` durante il build
+			delle immagini degli ambienti focali.
+			
+			Parameters
+			----------
+				tool_subroot: str
+					Una stringa contenente la sotto-root da copiare all' interno della
+					Full Project Root Path del progetto focale impostato
+		"""
+		tooldest_path: str = path_join(
+			self._orig_full_root, path_split(tool_subroot)[1]
+		)
+		if os_fdexists(tooldest_path):
+			os_dremove(tooldest_path)
+		
+		os_dcopy(
+			tool_subroot,
+			tooldest_path,
+			dirs_exist_ok=False
+		)
 		
 		
 	@classmethod
