@@ -226,8 +226,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._prescr_path: str = None
 		self._postscr_fname: str = deps_files[3]
 		self._postscr_path: str = None
-		self._postscrpy_fname: str = None
-		self._postscrpy_path: str = deps_files[4]
+		self._postscrpy_fname: str = deps_files[4]
+		self._postscrpy_path: str = None
 		
 		# Path dei tools dell' ambiente reale
 		self._tools_root: str = tools_root.rstrip("/")
