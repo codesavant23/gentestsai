@@ -83,10 +83,10 @@ class FocalContainer:
 			raise ValueError()
 		
 		self._docker: DockerClient = None
-		docker_host: str = os_getenv["DOCKER_HOST"]
-		if docker_host is not None:
+		try:
+			docker_host: str = os_getenv["DOCKER_HOST"]
 			self._docker = DockerClient(base_url=docker_host)
-		else:
+		except KeyError:
 			self._docker = docker_getclient()
 
 		self._image = docker_image

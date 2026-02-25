@@ -101,7 +101,7 @@ class ProjectsConfigValidator(_ABaseConfigValidator):
 				config_fields.difference(self._REQ_FIELDS).union(
 				self._REQ_FIELDS.difference(config_fields))
 			)
-			if extra_fields != self._OPT_FIELDS:
+			if extra_fields.difference(self._OPT_FIELDS) != set():
 				raise ConfigExtraFieldsError()
 			
 			focal_excl = project.get("focal_excluded", None)

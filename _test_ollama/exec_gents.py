@@ -131,7 +131,8 @@ if __name__ == "__main__":
 			gents_args.models_config,
 			gents_args.projects_config,
 			gents_args.projsenv_config,
-			gents_args.prompts_config
+			gents_args.prompts_config,
+			gents_args.caches_config
 		)
 	)
 	platf_config: Dict[str, Any] = configs["platform"]
@@ -165,7 +166,7 @@ if __name__ == "__main__":
 	focal_envs: Dict[str, DockerImage] = create_focal_images(
 		projs_config,
 		projsenv_config["os_image"],
-		projsenv_config["dockerfile"], projsenv_config["images_prefix"],
+		projenv_config["dockerfile"], projsenv_config["images_prefix"],
 		general_config["gen_tests_dir"],
 		projsenv_config["envconfig_dir"],
 		projsenv_config["python_version"],
@@ -175,7 +176,7 @@ if __name__ == "__main__":
 			projenv_config["ext_deps_file"],
 			projenv_config["pre_extdeps_script"],
 			projenv_config["post_extdeps_script"],
-			projsenv_config["post_pydeps_script"]
+			projenv_config["post_pydeps_script"]
 		),
 		tools_config["tools_root"],
 		tools_config["linting"],

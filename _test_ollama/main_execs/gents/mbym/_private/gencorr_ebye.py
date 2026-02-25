@@ -6,7 +6,7 @@ from logic.ptsuite_generation.llm_access.llm_chat import ILlmChat
 from logic.ptsuite_generation.core.generation import EntityPtsuiteGenerator
 
 from logic.ptsuite_generation.core.checking.synt_checker import ISyntacticChecker
-from logic.ptsuite_generation.core.correction.synt_corrector import ISyntCorrector
+from logic.ptsuite_generation.core.correction.synt_corrector import PtsuiteSyntacticCorrector
 
 from logic.ptsuite_generation.core.checking.lint_checker import LintingChecker
 from logic.ptsuite_generation.core.correction.lint_corrector import PtsuiteLintingCorrector
@@ -29,7 +29,7 @@ def generate_correct_ebye(
 		entity_placeh: str,
 		corr_placehs: Tuple[str, str, str],
 		ptsuite_gen: EntityPtsuiteGenerator,
-		ptsuite_corrs: Tuple[ISyntCorrector, PtsuiteLintingCorrector],
+		ptsuite_corrs: Tuple[PtsuiteSyntacticCorrector, PtsuiteLintingCorrector],
 		ptsuite_chkers: Tuple[ISyntacticChecker, LintingChecker],
 		chat: ILlmChat,
 		max_tries: Tuple[int, int], resp_timeout: int,

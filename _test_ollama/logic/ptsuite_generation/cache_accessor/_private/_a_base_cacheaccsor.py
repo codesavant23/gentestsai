@@ -6,10 +6,7 @@ from .. import IPtsuiteCacheAccessor
 from os.path import splitext as path_split_ext
 # ======================================== #
 # ============== OS Utilities ============== #
-from os.path import (
-	exists as os_fdexists,
-	isfile as os_isfile,
-)
+from os.path import isdir as os_isdir
 # ========================================== #
 
 from ..exceptions import (
@@ -47,19 +44,16 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 						
 						- Il parametro `cache_path` ha valore `None`
 						- Il parametro `cache_path` è una stringa vuota
-						
-				OSError
-					Si verifica se non esiste un file alla path `cache_path` data
 		"""
 		if (cache_path is None) or (cache_path == ""):
 			raise ValueError()
-		if not os_fdexists(cache_path):
-			raise OSError()
-		if not os_isfile(cache_path):
-			raise OSError()
 		
-		self._cache_path: str = cache_path
+		self._cache_path: str = cache_path.strip(" \t\n")
 		self._proj_spaces: Set[str] = set()
+	
+	
+	def close(self):
+		return
 	
 	
 	def create_projspace(self, proj_name: str):
@@ -158,18 +152,46 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 					Si verifica se la path non rappresenta un file di caching compatibile
 					con la tecnologia implementativa specificata dai discendenti di questa
 					classe astratta.
+					
+				OSError
+					Si verifica se il parametro `cache_path` punta ad una directory
 		"""
 		extens: str = self._p__file_extension()
 		if extens != "":
 			if path_split_ext(self._cache_path)[1].lower() != f".{extens}":
 				raise CacheFileTypeError()
-			
-		self._ap__assert_cache_type(self._cache_path)
+		
+		if os_isdir(self._cache_path):
+			raise OSError()
+		
+		just_created: bool = False
+		try:
+			open(self._cache_path, "r").close()
+		except FileNotFoundError:
+			self._ap__create_new_cache(self._cache_path)
+			just_created = True
+		
+		if not just_created:
+			self._ap__assert_cache_type(self._cache_path)
 	
 	
 	#	============================================================
 	#						ABSTRACT METHODS
 	#	============================================================
+	
+	
+	@abstractmethod
+	def _ap__create_new_cache(self, cache_path: str):
+		"""
+			Crea un nuovo file di cache alla path fornita
+			
+			Raises
+			------
+				OSError
+					Si verifica se il file non può essere creato per qualche
+					ragione alla path fornita
+		"""
+		pass
 	
 	
 	@abstractmethod

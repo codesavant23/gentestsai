@@ -86,7 +86,7 @@ class _ABaseFormattableLogger(IFormattableLogger):
 	
 	
 	def set_messages_sep(self, new_sep: str):
-		if (self._sep is None):
+		if (new_sep is None):
 			raise ValueError()
 		
 		self._sep = new_sep

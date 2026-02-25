@@ -1,4 +1,4 @@
-from logic.configuration.config_validator import IPlatSpecCfgValidatorFactory
+from .i_platspec_cfgvalidator_f import IPlatSpecCfgValidatorFactory
 from .e_platspec_purpose import EPlatSpecCfgPurpose
 
 from .accsor_platspeccfgval_f import AccessorPlatSpecCfgValidatorFactory

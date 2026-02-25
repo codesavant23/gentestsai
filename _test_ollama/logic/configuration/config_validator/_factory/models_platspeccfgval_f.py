@@ -1,9 +1,9 @@
 from typing import Dict, Any
-from logic.configuration.config_validator import IPlatSpecCfgValidatorFactory
-from logic.variability import EImplementedPlatform
+from .i_platspec_cfgvalidator_f import IPlatSpecCfgValidatorFactory
+from ....variability import EImplementedPlatform
 
-from logic.configuration.config_validator import AModelsConfigValidator
-from logic.configuration.config_validator._private.models_validators.ollama_models_cfgvalidator import OllamaModelsConfigValidator
+from .._private.models_validators.a_models_cfgvalidator import AModelsConfigValidator
+from .._private.models_validators.ollama_models_cfgvalidator import OllamaModelsConfigValidator
 
 
 

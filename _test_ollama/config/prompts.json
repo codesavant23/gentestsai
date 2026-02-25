@@ -1,5 +1,5 @@
 {
-    "base_path": "C:\\Users\\filip\\Desktop\\Python_Projects\\thesis_project\\_test_ollama\\prompts\\",
+    "base_path": "C:\\Users\\filip\\Desktop\\Python_Projects\\gentestsai\\_test_ollama\\prompts\\",
     "generic_dirname": "generic",
 	"file_names": {
 		"functional": "template_fbyf_func.txt",

@@ -21,9 +21,11 @@ class IPtsuiteCacheAccessor(ABC):
 			La chiamata a quest' operazione è obbligatoria alla fine dell' utilizzo di questo
 			`IPtsuiteCacheAccessor`.
 			Se si utilizza quest' oggetto con "Context Manager" allora la chiamata a questa
-			operazione è già assicurata
+			operazione è già assicurata.
 			
 			Se non c'è da rilasciare nulla quest' operazione è equivalente ad una no-op.
+			
+			L' implementazione di default è vuota
 		"""
 		pass
 

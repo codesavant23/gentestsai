@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from ... import AAccessorConfigValidator
+from .a_accessor_cfgvalidator import AAccessorConfigValidator
 
 # ============= URL Utilities ============== #
 from urllib3.util import parse_url as url_parse
@@ -54,7 +54,7 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 		super().__init__(config_dict)
 		
 		self._api_addr: str = None
-		self._userpass_pair: str = None
+		self._user_token: str = None
 		self._conn_tout: int = None
 	
 	
@@ -66,15 +66,16 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 			self,
 			config_read: Dict[str, Any]
 	):
-		self._api_addr = config_read["api_addr"]
-		self._userpass_pair = config_read["userpass_pair"]
-		self._conn_tout = config_read["connect_timeout"]
+		platf_options = config_read["platform_options"]
+		self._api_addr = platf_options["api_url"]
+		self._user_token = platf_options["userpass_pair"]
+		self._conn_tout = platf_options["connect_timeout"]
 		
 		if not isinstance(self._api_addr, str):
 			raise InvalidConfigValueError()
 		self._assert_api_addr()
 		
-		if not isinstance(self._userpass_pair, str):
+		if not isinstance(self._user_token, str):
 			raise InvalidConfigValueError()
 		self._assert_userpass_pair()
 		

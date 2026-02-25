@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from ... import AModelsConfigValidator
+from .a_models_cfgvalidator import AModelsConfigValidator
 
 
 

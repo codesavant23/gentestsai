@@ -79,7 +79,7 @@ class ATemporalFormattLogger(AMutableFormattLogger):
 			placehs.difference(self._DATE_PLACEHS).union(
 			self._DATE_PLACEHS.difference(placehs))
 		)
-		if extra_fields != {}:
+		if extra_fields != set():
 			raise InvalidFormatError()
 		
 		self._curr_placehs = placehs

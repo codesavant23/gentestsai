@@ -30,8 +30,8 @@
 			"C:\\Users\\filip\\Desktop\\Thesis_Repos\\saleor-main\\saleor-main\\saleor\\tests\\"
 		]
 	},
-	"pytext": {
-		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\pytext-main\\pytext\\",
-		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\pytext-main\\pytext-main\\tests\\"
+	"torchtext": {
+		"focal_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\torchtext-main\\torchtext\\",
+		"tests_root": "C:\\Users\\filip\\Desktop\\Thesis_Repos\\torchtext-main\\test\\torchtext_unittest\\"
 	}
 }

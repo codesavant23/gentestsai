@@ -32,6 +32,7 @@ def read_arguments(
 					- `.projects_config`: Il nome (con estensione) del file di configurazione dei progetti focali
 					- `.projsenv_config`: Il nome (con estensione) del file di configurazione dei parametri degli ambienti focali
 					- `.prompts_config`: Il nome (con estensione) del file di configurazione dei prompts dei LLMs da utilizzare
+					- `.caches_config`: Il nome (con estensione) del file di configurazione delle caches di test-suites parziali da utilizzare
 	"""
 	arg_parser: ArgumentParser = ArgumentParser(
 		description="Main GenTestsAI's executable for generating test-suites",
@@ -72,6 +73,7 @@ def read_arguments(
 			"--projects-config <projs_config_name>\n"
 			"--projsenv-config <projsenv_config_name>\n"
 			"--prompts-config <platf_config_name>\n"
+			"--caches-config <caches_config_name>\n"
 		)
 	)
 	
@@ -111,6 +113,12 @@ def read_arguments(
 		required=False,
 		default="prompts.json"
 	)
+	arg_parser.add_argument(
+		"--caches-config",
+		help='Optional. Name of the file that contains caches configuration parameters',
+		required=False,
+		default="caches.json"
+	)
 	
 	args: ArgumentsList = arg_parser.parse_args()
 	
@@ -120,7 +128,8 @@ def read_arguments(
         args.models_config,
 		args.projects_config,
 		args.projsenv_config,
-		args.prompts_config
+		args.prompts_config,
+		args.caches_config
 	)
 	if any(config_names_args) and not args.config_type:
 		arg_parser.error("--config-type must be specified if any of the <config_names> is specified")

@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from ... import AGeneralConfigValidator
+from .a_general_cfgvalidator import AGeneralConfigValidator
 
 from ...exceptions import InvalidConfigValueError
 
@@ -61,7 +61,7 @@ class OllamaGeneralConfigValidator(AGeneralConfigValidator):
 			if num_predict < -2:
 				raise InvalidConfigValueError()
 			
-		num_gpu: int = config_read["num_gpu"].get("num_gpu", None)
+		num_gpu: int = config_read["default_model_params"].get("num_gpu", None)
 		if num_predict is not None:
 			if not isinstance(num_gpu, int):
 				raise InvalidConfigValueError()

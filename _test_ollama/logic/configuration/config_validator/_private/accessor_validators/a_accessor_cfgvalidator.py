@@ -54,10 +54,6 @@ class AAccessorConfigValidator(_APlatSpecConfigValidator):
 						- Il dizionario fornito è vuoto
 		"""
 		super().__init__(config_dict)
-		
-		self._api_url: str = None
-		self._user_token: str = None
-		self._resp_tout: int = -1
 	
 	
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:

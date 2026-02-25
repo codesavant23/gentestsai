@@ -22,8 +22,6 @@ class ProcessLogger:
 				logger: ATemporalFormattLogger
 					Un oggetto `ATemporalFormattLogger` rappresentante il logger da
 					utilizzare per registrare l' inizio e la fine dei processi.
-					ASSUNZIONE: Il separatore dei messaggi e il formato sono già stati
-					impostati
 					
 				mess_sep: str
 					Una stringa contenente il separatore dei messaggi da utilizzare
@@ -51,8 +49,8 @@ class ProcessLogger:
 					l' inizio del processo voluto
 		"""
 		self._log_frmt = self._logger.unset_format()
-		self._logger.log(message)
 		self._logger.set_messages_sep(" ")
+		self._logger.log(message)
 		
 		
 	def process_end(self):
@@ -60,8 +58,8 @@ class ProcessLogger:
 			Registra la fine di una serie di steps di un processo
 		"""
 		self._logger.set_format(self._log_frmt)
-		self._logger.log(self._end_mess)
 		self._logger.set_messages_sep(self._mess_sep)
+		self._logger.log(self._end_mess)
 		
 		
 	##	============================================================

@@ -46,7 +46,7 @@ class PtsuiteCacheAccessorFactory:
 						- Il parametro `cache_path` è una stringa vuota
 						
 				OSError
-					Si verifica se non esiste un file alla path `cache_path` data
+					Si verifica se il parametro `cache_path` punta ad una directory
 						
 				CacheFileTypeError
 					Si verifica se la path non rappresenta un file di caching compatibile
@@ -56,7 +56,7 @@ class PtsuiteCacheAccessorFactory:
 		match tech:
 			case ECacheAccessorType.SQLITE3:
 				obj = Sqlite3CacheAccessor(cache_path)
-			
+		
 		obj._P__objinit()
 		return obj
 		

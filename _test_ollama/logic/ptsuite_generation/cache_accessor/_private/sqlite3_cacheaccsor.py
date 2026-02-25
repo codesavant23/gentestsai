@@ -52,6 +52,10 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 		return (row is not None)
 	
 	
+	def _ap__create_new_cache(self, cache_path: str):
+		open(cache_path, "w").close()
+	
+	
 	def _ap__create_projspace_spec(self, proj_name: str):
 		self._cursor.execute(f"""
 			CREATE TABLE IF NOT EXISTS "{proj_name}" (
@@ -92,7 +96,7 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 		with open(cache_path, "rb") as fp:
 			header = fp.read(16)
 			
-		if header != b"SQLite format 3\x00":
+		if (header != b"SQLite format 3\x00") and (header != b""):
 			raise CacheFileTypeError()
 
 

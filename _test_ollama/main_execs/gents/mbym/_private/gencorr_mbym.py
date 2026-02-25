@@ -8,7 +8,7 @@ from os.path import (
 )
 # ======================================== #
 
-from main_execs.gents.mbym import generate_correct_ebye
+from main_execs.gents.mbym._private.gencorr_ebye import generate_correct_ebye
 
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 

@@ -131,7 +131,7 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 			raise InvalidConfigValueError()
 		if (
 				(max_gens <= 0) or (max_corrs <= 0) or
-				(gen_dirname != "")
+				(gen_dirname == "")
 		):
 			raise InvalidConfigValueError()
 		
