@@ -53,7 +53,7 @@ class SimpleTransactDockfBuilder(ATransactDockfBuilder):
 	) -> str:
 		# Scrittura degli eventuali argomenti globali
 		content: str = glob_args + "\n"
-		content += "\n\n" if glob_args is not "" else ""
+		content += "\n\n" if glob_args != "" else ""
 
 		# Scrittura dell' immagine base
 		content += base_image + "\n"
