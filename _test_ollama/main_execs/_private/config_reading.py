@@ -4,6 +4,7 @@ from typing import List, Tuple, Dict, Any
 from os.path import (
 	join as path_join,
 	split as path_split,
+	sep, altsep
 )
 # ======================================== #
 
@@ -17,6 +18,9 @@ from logic.configuration.config_validator import (
 	PromptsConfigValidator, CacheConfigValidator,
 	CalcCovConfigValidator
 )
+
+
+_PATH_SEPS: str = f"{sep}{altsep if altsep is not None else ''}"
 
 
 
@@ -77,6 +81,11 @@ def read_projs_config(
 	)
 	projs_chker: IConfigValidator = ProjectsConfigValidator(projs_dict)
 	projs_chker.validate_sem()
+	
+	for proj_name, proj_info in projs_dict.items():
+		projs_dict[proj_name]["focal_root"] = projs_dict[proj_name]["focal_root"].rstrip(_PATH_SEPS)
+		projs_dict[proj_name]["tests_root"] = projs_dict[proj_name]["tests_root"].rstrip(_PATH_SEPS)
+	
 	return projs_dict
 
 
@@ -100,6 +109,10 @@ def read_projsenv_config(
 		environ_dict, full_roots, docker_hub_vers
 	)
 	environ_chker.validate_sem()
+	
+	environ_dict["tools"]["tools_root"] = environ_dict["tools"]["tools_root"].rstrip(_PATH_SEPS)
+	environ_dict["environ"]["path_prefix"] = environ_dict["environ"]["path_prefix"].rstrip(_PATH_SEPS)
+	environ_dict["environ"]["tools_root"] = environ_dict["environ"]["tools_root"].rstrip(_PATH_SEPS)
 	return environ_dict
 
 
@@ -114,6 +127,8 @@ def read_prompts_config(
 	)
 	prompts_chker: IConfigValidator = PromptsConfigValidator(prompts_dict)
 	prompts_chker.validate_sem()
+	
+	prompts_dict["base_path"] = prompts_dict["base_path"].rstrip(_PATH_SEPS)
 	return prompts_dict
 
 
@@ -128,6 +143,8 @@ def read_caches_config(
 	)
 	caches_chker: IConfigValidator = CacheConfigValidator(caches_dict)
 	caches_chker.validate_sem()
+	
+	caches_dict["cache_root"] = caches_dict["cache_root"].rstrip(_PATH_SEPS)
 	return caches_dict
 
 
