@@ -149,7 +149,6 @@ class IFocalEnvConfigurator(ABC):
 					- `TESTS_ROOT`: La Tests Project Root Path all' interno dell' ambiente focale
 					- `GENTESTS_ROOT`: La Gen-tests Project Root Path all' interno dell' ambiente focale
 					- `LINTTOOLS_DIR`: Il nome della cartella con i tools per la verifica di linting
-					- `CONTTOOLS_ROOT`: La root path che contiene i tools per operazioni da eseguire all' interno dell' ambiente focale
 					
 				- Vengono installate tutte le dipendenze del progetto focale, siano esse Python o non-Python,
 				  specificate tramite i files nella sua Env-config Project Root Path

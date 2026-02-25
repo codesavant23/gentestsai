@@ -73,7 +73,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	_PYVERS_PATT: str = r"^[0-9]+\.[0-9]+(\.[0-9]+)?$"
 	_LINUXPATH_PATT: str = r"^(?P<path_prefix>(/[\w.-]+/?)+)$"
 	PATH_PREFIX: str = "/app"
-	CONTTOOLS_ROOT: str = "/etc/container"
 	
 	def __init__(
 			self,
@@ -238,11 +237,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._covtools_dir: str = covtools_dir
 		# Directory dei tools per la verifica di linting
 		self._linttools_dir: str = linttools_dir
-		
-		# Path dei tools dell' ambiente all' interno del container
-		self._conttools_root: str = self.CONTTOOLS_ROOT
-		if conttools_root is not None:
-			self._conttools_root = conttools_root.rstrip("/")
 	
 	
 	def set_default_pyversion(self, python_version: str):
@@ -634,7 +628,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._dockf_builder.set_envvar("FOCAL_ROOT", self._focal_root)
 		self._dockf_builder.set_envvar("TESTS_ROOT", self._tests_root)
 		self._dockf_builder.set_envvar("GENTESTS_ROOT", self._gentests_root)
-		self._dockf_builder.set_envvar("CONTTOOLS_ROOT", self._conttools_root)
 		self._dockf_builder.set_envvar("LINTTOOLS_DIRNAME", self._linttools_dir)
 		self._dockf_builder.set_envvar("COVTOOLS_DIRNAME", self._covtools_dir)
 
