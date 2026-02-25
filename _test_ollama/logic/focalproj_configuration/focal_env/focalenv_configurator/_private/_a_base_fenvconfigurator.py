@@ -528,7 +528,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		)
 		self._ext_deps_path = self._set_envc_entity_ifexists(
 			orig_envconfig_root,
-			self._ext_deps_path
+			self._ext_deps_fname
 		)
 
 		if self._ext_deps_path != "":
