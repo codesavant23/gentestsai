@@ -83,7 +83,7 @@ class ATransactDockfBuilder(_ABaseDockfBuilder):
 		self._assert_transaction_started()
 
 		if len(self._tran_cmds) > 0:
-			self._ap__add_instr(f"RUN {" && ".join(self._tran_cmds)}")
+			self._ap__add_instr(f"RUN {' && '.join(self._tran_cmds)}")
 
 		self._tran_open = False
 	
