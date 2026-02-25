@@ -7,5 +7,4 @@ from ._private.config_reading import (
 	read_projs_config, read_projsenv_config,
 	read_prompts_config,
 	read_caches_config,
-	read_calccov_config
 )
