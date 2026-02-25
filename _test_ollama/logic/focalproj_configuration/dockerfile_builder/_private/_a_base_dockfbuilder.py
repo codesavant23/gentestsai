@@ -73,17 +73,20 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		if self._bimage is None:
 			raise BaseImageNotSetError()
 		
-		entryp_cmd, entryp_args = self._get_entryp_parts()
-		
 		global_args: str = ""
 		if len(self._glob_args.keys()) > 0:
 			for glob_arg, value in self._glob_args.items():
 				global_args += f"ARG {glob_arg}={value}" + "\n"
 		
+		entryp: Tuple[str, str]  = self._get_entryp_parts()
+		entryp_dockfinstr: str = f''
+		if len(entryp) > 0:
+			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
+		
 		dockf_content: str = self._ap__get_dockf_content(
 			f'FROM {self._bimage}',
 			global_args,
-			f'ENTRYPOINT {entryp_cmd}'+'\n'+f'CMD {entryp_args}'
+			entryp_dockfinstr
 		)
 		with open(dockf_path, "w") as fdockf:
 			fdockf.writelines(dockf_content)
@@ -278,13 +281,20 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			
 			Returns
 			-------
-				str
-					Una stringa contenente l' istruzione `ENTRYPOINT` da scrivere nel dockerfile.
-					Viene restituito `None` se non è impostato un entrypoint per il dockerfile
+				Tuple[str, str]
+					Una tupla di 2 stringhe contenente, eventualmente:
+						
+						- [0]: L' operando da postporre alla direttiva `ENTRYPOINT` (da scrivere nel dockerfile)
+						- [1]: L' operando da postporre alla direttiva `CMD` (da scrivere nel dockerfile)
+						
+					Viene restituita una tupla vuota se non è impostato un entrypoint per il dockerfile
 		"""
 		json_enc: JSONEncoder = JSONEncoder()
 		
-		entryp_cmd: str = json_enc.encode(f'["{self._entryp[0]}"]')
-		entryp_args: str = json_enc.encode(self._entryp[1:])
-		
-		return (entryp_cmd, entryp_args)
+		if len(self._entryp) > 0:
+			entryp_cmd: str = json_enc.encode(f'["{self._entryp[0]}"]')
+			entryp_args: str = json_enc.encode(self._entryp[1:])
+			
+			return (entryp_cmd, entryp_args)
+		else:
+			return tuple()
