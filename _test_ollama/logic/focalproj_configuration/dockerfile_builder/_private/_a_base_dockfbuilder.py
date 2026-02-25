@@ -74,9 +74,8 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			raise BaseImageNotSetError()
 		
 		global_args: str = ""
-		if len(self._glob_args.keys()) > 0:
-			for glob_arg, value in self._glob_args.items():
-				global_args += f"ARG {glob_arg}={value}" + "\n"
+		for glob_arg, value in self._glob_args.items():
+			global_args += f"ARG {glob_arg}={value}" + "\n"
 		
 		entryp: Tuple[str, str]  = self._get_entryp_parts()
 		entryp_dockfinstr: str = f''
@@ -91,17 +90,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		with open(dockf_path, "w") as fdockf:
 			fdockf.writelines(dockf_content)
 			fdockf.flush()
-			
-		"""
-			if dockignore:
-				dockf_path_nof, dockf_fname = path_split(dockf_path)
-				docki_path: str = path_join(
-					dockf_path_nof, ".dockignore"
-				)
-				with open(docki_path, "w") as fdocki:
-					fdocki.write(f"./{dockf_fname}")
-					fdocki.flush()
-		"""
 	
 	
 	def set_global_args(self, global_args: Dict[str, str]):
