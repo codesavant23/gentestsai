@@ -112,7 +112,6 @@ def read_projsenv_config(
 	
 	environ_dict["tools"]["tools_root"] = environ_dict["tools"]["tools_root"].rstrip(_PATH_SEPS)
 	environ_dict["environ"]["path_prefix"] = environ_dict["environ"]["path_prefix"].rstrip(_PATH_SEPS)
-	environ_dict["environ"]["tools_root"] = environ_dict["environ"]["tools_root"].rstrip(_PATH_SEPS)
 	return environ_dict
 
 
@@ -146,6 +145,20 @@ def read_caches_config(
 	
 	caches_dict["cache_root"] = caches_dict["cache_root"].rstrip(_PATH_SEPS)
 	return caches_dict
+
+
+def read_calccov_config(
+		config_root: str,
+		config_fname: str,
+		config_parser: IConfigParser
+) -> Dict[str, Any]:
+	# Lettura del file con i parametri per il calcolo della coverage
+	calccov_dict: Dict[str, Any] = config_parser.read_config(
+		path_join(config_root, config_fname)
+	)
+	calccov_chker: IConfigValidator = CalcCovConfigValidator(calccov_dict)
+	calccov_chker.validate_sem()
+	return calccov_dict
 
 
 def read_config_files(
