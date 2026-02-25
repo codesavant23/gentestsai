@@ -165,12 +165,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
-						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		self._check_initargs(
 			dockf_builder, tag_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
-			tools_root, linttools_dir, conttools_root
+			tools_root, linttools_dir
 		)
 		
 		self._json_dec: JSONDecoder = JSONDecoder()
@@ -722,7 +721,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			deps_files: Tuple[str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
-			conttools_root: str = None
 	):
 		"""
 			Verifica la validità degli argomenti del costruttore forniti.
@@ -742,7 +740,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
-						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		if (
 			(dockf_builder is None) or
@@ -764,8 +761,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			(dockerfile_fname == "") or
 			(py_vers_fname == "") or
 			(deps_files == tuple()) or
-			(tools_root == "") or
-			(conttools_root == "")
+			(tools_root == "")
 		):
 			raise ValueError()
 		
