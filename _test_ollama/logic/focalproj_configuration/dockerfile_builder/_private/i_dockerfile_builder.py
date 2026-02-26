@@ -78,19 +78,16 @@ class IDockfBuilder(ABC):
 	
 	
 	@abstractmethod
-	def set_shell(
+	def add_shell(
 			self,
 			shell_touse: str,
 			args: List[str]=None
 	):
 		"""
-			Imposta la shell da utilizzare per l' esecuzione dei comandi che verranno aggiunti
-			nel dockerfile attualmente in costruzione.
-			La chiamata a questo metodo equivale all' aggiunta/modifica dell' istruzione `SHELL`
-			nel dockerfile risultante.
-			
-			Se `shell_touse` ha valore `None` allora si rimuove l' eventuale istruzione `SHELL`
-			precedentemente impostata
+			Aggiunge la dichiarazione di utilizzo di una shell per le prossime esecuzioni dei comandi
+			che verranno aggiunt nel dockerfile attualmente in costruzione.
+			La chiamata a questo metodo equivale all' aggiunta dell' istruzione `SHELL` nel dockerfile
+			risultante.
 			
 			Parameters
 			----------
@@ -106,6 +103,7 @@ class IDockfBuilder(ABC):
 				ValueError
 					Si verifica se:
 						
+						- Il parametro `shell_touse` ha valore `None`
 						- Il parametro `shell_touse` è una stringa vuota
 						- Il parametro `args` è una lista vuota
 		"""

@@ -49,7 +49,6 @@ class SimpleTransactDockfBuilder(ATransactDockfBuilder):
 			self,
 			base_image: str,
 			glob_args: str,
-			shell_instr: str,
 			epcmd_instrs: str
 	) -> str:
 		# Scrittura degli eventuali argomenti globali
@@ -57,13 +56,7 @@ class SimpleTransactDockfBuilder(ATransactDockfBuilder):
 		content += "\n\n" if glob_args != "" else ""
 
 		# Scrittura dell' immagine base
-		content += base_image + "\n"
-		
-		# Scrittura dell' eventuale coppia di istruzioni
-		if shell_instr != "":
-			content += shell_instr + "\n"
-			
-		content += "\n"
+		content += base_image + "\n\n"
 		
 		# Scrittura delle eventuali variabili d'ambiente
 		for var_name, value in self._env_vars.items():

@@ -33,7 +33,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		self._bimage: str = None
 		self._glob_args: Dict[str, str] = dict()
 		self._entryp: List[str] = list()
-		self._shell_touse: List[str] = list()
 		
 		
 	def new_dockerfile(self):
@@ -43,7 +42,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		self._glob_args = dict()
 		
 		self._entryp.clear()
-		self._shell_touse.clear()
 		
 		self._ap__new_dockerf_spec()
 		
@@ -55,21 +53,19 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		self._bimage = base_image
 	
 	
-	def set_shell(self, shell_touse: str, args: List[str] = None):
-		if (shell_touse == ""):
+	def add_shell(self, shell_touse: str, args: List[str] = None):
+		if (shell_touse == "") or (shell_touse is None):
 			raise ValueError()
+		operands: List[str] = list()
+		operands.append(shell_touse)
+		
 		if args is not None:
 			if len(args) == 0:
 				raise ValueError()
+			operands.extend(args)
 		
-		if shell_touse is not None:
-			if len(self._shell_touse) > 0:
-				self._shell_touse[0] = shell_touse
-			else:
-				self._shell_touse.append(shell_touse)
-			self._shell_touse.extend(args)
-		else:
-			self._shell_touse.clear()
+		self._ap__add_instr("SHELL " + json_dumps(operands))
+		
 	
 	
 	def add_copy(self, sources: List[str], dest: str):
@@ -166,14 +162,9 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		if len(entryp) > 0:
 			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
 		
-		shell_touse_dockfinstr: str = ""
-		if len(self._shell_touse) > 0:
-			shell_touse_dockfinstr = "SHELL " + json_dumps(self._shell_touse)
-		
 		dockf_content: str = self._ap__get_dockf_content(
 			f'FROM {self._bimage}',
 			global_args,
-			shell_touse_dockfinstr,
 			entryp_dockfinstr
 		)
 		with open(dockf_path, "w") as fdockf:
@@ -261,7 +252,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			self,
 			base_image: str,
 			glob_args: str,
-			shell_instr: str,
 	        epcmd_instrs: str
 	) -> str:
 		"""
@@ -276,10 +266,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 				glob_args: str
 					Una stringa contenente le istruzioni `ARG` che definiscono gli argomenti globali
 					del dockerfile che verrà costruito
-					
-				shell_instr: str
-					Una stringa contenente l' eventuale istruzione `SHELL` da inserire nel contenuto
-					del dockerfile
 			
 				epcmd_instrs: str
 					Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`

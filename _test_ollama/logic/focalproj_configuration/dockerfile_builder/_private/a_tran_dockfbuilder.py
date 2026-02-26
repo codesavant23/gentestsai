@@ -148,7 +148,6 @@ class ATransactDockfBuilder(_ABaseDockfBuilder):
 			self,
 			base_image: str,
 			glob_args: str,
-			shell_instr: str,
 			epcmd_instrs: str
 	) -> str:
 		"""

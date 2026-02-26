@@ -324,15 +324,32 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		python_version: str = self._get_python_version()
 		ext_deps: List[str] = self._get_ext_deps()
 		
+		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y bash")
+		
 		# Impostazione di BASH come shell per l' esecuzione dei comandi
-		self._dockf_builder.set_shell("/bin/sh", ["-c"])
+		self._dockf_builder.add_shell("/bin/bash", ["-c"])
 
 		# Impostazione della versione dell' interprete Python che verrà utilizzata
 		self._dockf_builder.set_envvar("PYTHON_VERSION", python_version)
 		
-		# Creazione del path prefix e impostazione della directory corrente su di esso
-		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}")
-		self._dockf_builder.add_workdir(self._path_prefix)
+		# Creazione del path prefix e della tools root
+		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}/tools")
+		
+		# Copia dei tools per il linting
+		linttools_path: SystemPath = SystemPath(self._tools_root, self._linttools_dir)
+		self._copy_tool_subroot_infullroot(str(linttools_path))
+		self._dockf_builder.add_copy(
+			[self._linttools_dir],
+			f"{self._path_prefix}/tools/{self._linttools_dir}/"
+		)
+		
+		# Copia dei tools per la coverage
+		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
+		self._copy_tool_subroot_infullroot(str(covtools_path))
+		self._dockf_builder.add_copy(
+			[self._covtools_dir],
+			f"{self._path_prefix}/tools/{self._covtools_dir}/"
+		)
 		
 		self._dockf_builder.begin_cmds_tran()
 		
@@ -341,7 +358,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		# Installazione di `pyenv`
 		self._configure_pyenv()
-
+		
+		# Installazione di Python
+		self._dockf_builder.add_shellcmd_step("pyenv install $PYTHON_VERSION")
+		
 		# Configurazione delle variabili d'ambiente locali
 		self._configure_local_envvars()
 		
@@ -355,14 +375,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		self._dockf_builder.commit_cmds_tran()
 		
-		# Copia dei tools per la coverage
-		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
-		self._copy_tool_subroot_infullroot(str(covtools_path))
-		
-		# Copia dei tools per il linting
-		linttools_path: SystemPath = SystemPath(self._tools_root, self._linttools_dir)
-		self._copy_tool_subroot_infullroot(str(linttools_path))
-		
 		# Impostazione della directory corrente sul path prefix
 		self._dockf_builder.add_workdir(self._path_prefix)
 		
@@ -374,6 +386,15 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			dockerfile=self._dockf_fname,
 			tag=f"{self._tag_prefix}_{self._proj_name}"
 		)[0]
+		
+		# Rimozione delle directories dei tools copiate dentro alla Full Project Root Path
+		# per inserirle nel contesto di building
+		os_dremove(
+			path_join(self._orig_full_root, self._linttools_dir)
+		)
+		os_dremove(
+			path_join(self._orig_full_root, self._covtools_dir)
+		)
 
 		match post_steps:
 			case EImageBuiltOption.DOCKF_REMOVE:
@@ -660,6 +681,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			"libffi-dev libbz2-dev libsqlite3-dev"
 		)
 		self._dockf_builder.add_shellcmd_step("git clone https://github.com/pyenv/pyenv.git ~/.pyenv")
+		self._dockf_builder.add_shellcmd_step('eval "$(pyenv init -)"')
 
 
 	def _configure_local_envvars(self):
@@ -694,10 +716,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una lista di stringhe contenente un elemento per ogni dipendenza esterna da installare.
 					Ogni dipendenza esterna è identificata dal nome del pacchetto da installare tramite `apt-get install`
 		"""
+		tools_root: str = f"{self._path_prefix}/tools"
+		
 		# Esecuzione dello script Pre-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._prescr_path != "":
-				self._dockf_builder.add_shellcmd_step(f". {self._prescr_path}")
+				self._dockf_builder.add_shellcmd_step(f". {tools_root}/{self._prescr_path}")
 
 		# Installazione delle dipendenze esterne
 		for ext_dep in ext_deps:
@@ -706,7 +730,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._postscr_path != "":
-				self._dockf_builder.add_shellcmd_step(f". {self._postscr_path}")
+				self._dockf_builder.add_shellcmd_step(f". {tools_root}/{self._postscr_path}")
 
 		# Installazione delle dipendenze (packages) Python
 		py_packs: str
@@ -725,7 +749,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			
 		# Esecuzione dello script Post-installazione delle dipendenze Python
 		if os_fdexists(self._postscrpy_path):
-			self._dockf_builder.add_shellcmd_step(f". {self._postscrpy_path}")
+			self._dockf_builder.add_shellcmd_step(f". {tools_root}/{self._postscrpy_path}")
 		
 		
 	def _copy_tool_subroot_infullroot(self, tool_subroot: str):
