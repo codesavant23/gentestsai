@@ -353,7 +353,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Installazione di `pylint`
 		self._dockf_builder.add_shellcmd_step(f'python3 -m pip install pylint=="{self._ap__pylint_version()}"')
 		
-		self._dockf_builder.end_cmds_tran()
+		self._dockf_builder.commit_cmds_tran()
 		
 		# Copia dei tools per la coverage
 		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
