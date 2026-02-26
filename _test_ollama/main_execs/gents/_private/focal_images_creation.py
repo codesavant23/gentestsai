@@ -14,8 +14,9 @@ from logic.focalproj_configuration.dockerfile_builder import (
 from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 	IFocalEnvConfigurator, V1FocalEnvConfigurator, EImageBuiltOption
 )
-
 from ..._private.getting_contmanager import retrieve_contmanager
+
+from logic.utils.process_logger._private.process_logger import ProcessLogger
 
 
 
@@ -30,10 +31,11 @@ def create_focal_images(
 		tools_root: str,
 		linttools_dir: str,
 		covtools_dir: str,
-		path_prefix: str
+		path_prefix: str,
+		gents_logger: ProcessLogger
 ) -> Dict[str, DockerImage]:
 	"""
-		Crea le immagini che corrispondono agli ambienti focali dei progetti focali	
+		Crea/Ottiene le immagini che corrispondono agli ambienti focali dei progetti focali
 		con cui si intende testare le capacità dei LLMs
 		
 		Parameters
@@ -88,6 +90,10 @@ def create_focal_images(
 			path_prefix: str
 				Una stringa rappresentante il path prefix da utilizzare negli ambienti focali prodotti
 				
+			gents_logger: ProcessLogger
+				Un oggetto `ProcessLogger` rappresentante il logger da utilizzare per registrare gli steps
+				del processo di creazione/ottenimento delle immagini di ogni progetto focale
+				
 		Raises
 		------
 			ValueError
@@ -99,7 +105,9 @@ def create_focal_images(
 					- Il parametro `py_vers_fname` ha valore `None` o è una stringa vuota
 					- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 					- Il parametro `tools_root` ha valore ``None`, è una stringa vuota, oppure è una path invalida
-					- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in tools_root
+					- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
+					- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
+					- Il parametro `gents_logger` ha valore `None`
 	"""
 	focal_envs: Dict[str, DockerImage] = dict()
 	
@@ -122,10 +130,12 @@ def create_focal_images(
 	
 	full_root: str
 	for proj_name, proj_info in projs_config.items():
+		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}"')
 		try:
 			focal_envs[proj_name] = cont_manager.images.get(
 				f"{image_prefix}_{proj_name}"
 			)
+			gents_logger.set_endmessage("OTTENUTA!")
 		except ImageNotFound:
 			full_root = path_split(proj_info["focal_root"])[0]
 			fenv_confgor.set_focal_project(
@@ -135,5 +145,7 @@ def create_focal_images(
 				proj_info["tests_root"]
 			)
 			focal_envs[proj_name] = fenv_confgor.build_image(EImageBuiltOption.DOCKIGNORE)
+			gents_logger.set_endmessage("CREATA!")
+		gents_logger.process_end()
 	
 	return focal_envs

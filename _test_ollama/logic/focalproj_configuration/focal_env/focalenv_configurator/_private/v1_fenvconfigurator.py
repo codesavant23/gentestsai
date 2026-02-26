@@ -100,7 +100,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
-						- Il parametro `conttools_root` è una stringa vuota, oppure è una path Linux invalida
+						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		super().__init__(
 			dockf_builder, tag_prefix,

@@ -157,7 +157,8 @@ if __name__ == "__main__":
 	)
 	
 	## ===== Creazione delle immagini per gli ambienti focali =====
-	logger.process_start('Creazione delle immagini docker come ambienti focali ...')
+	console_logger.log('Preparazione delle immagini docker come ambienti focali ...')
+	console_logger.set_messages_sep("\n\t")
 	
 	projenv_config: Dict[str, str] = projsenv_config["project"]
 	tools_config: Dict[str, str] = projsenv_config["tools"]
@@ -182,10 +183,12 @@ if __name__ == "__main__":
 		tools_config["tools_root"],
 		tools_config["linting"],
 		tools_config["coverage"],
-		environ_config["path_prefix"]
+		environ_config["path_prefix"],
+		logger, console_logger
 	)
 	
-	logger.process_end()
+	console_logger.set_messages_sep("\n")
+	console_logger.log("Ambienti focali pronti!")
 	
 	## ===== Lettura dei templates dei prompts (di fallback) =====
 	logger.process_start('Lettura dei template prompts di fallback ...')

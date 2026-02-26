@@ -47,7 +47,18 @@ class ProcessLogger:
 				message: str
 					Una stringa contenente il messaggio da utilizzare per segnare
 					l' inizio del processo voluto
+					
+			Raises
+			------
+				ValueError
+					Si verifica se:
+					
+						- Il parametro `message` ha valore `None`
+						- Il parametro `message` è una stringa vuota
 		"""
+		if (message == "") or (message is None):
+			raise ValueError()
+		
 		self._log_frmt = self._logger.unset_format()
 		self._logger.set_messages_sep(" ")
 		self._logger.log(message)
@@ -60,6 +71,30 @@ class ProcessLogger:
 		self._logger.set_format(self._log_frmt)
 		self._logger.set_messages_sep(self._mess_sep)
 		self._logger.log(self._end_mess)
+		
+		
+	def set_endmessage(self, end_message: str):
+		"""
+			Imposta un nuovo messaggio per indicare la fine del processo
+			
+			Parameters
+			----------
+				end_message: str
+					Una stringa contenente il messaggio da utilizzare per segnare
+					la fine dei prossimi processi
+			
+			Raises
+			------
+				ValueError
+					Si verifica se:
+					
+						- Il parametro `end_message` ha valore `None`
+						- Il parametro `end_message` è una stringa vuota
+		"""
+		if (end_message == "") or (end_message is None):
+			raise ValueError()
+		
+		self._end_mess = end_message
 		
 		
 	##	============================================================

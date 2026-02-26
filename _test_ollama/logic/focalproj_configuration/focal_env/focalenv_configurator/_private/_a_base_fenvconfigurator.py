@@ -165,11 +165,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
+						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		self._check_initargs(
 			dockf_builder, tag_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
-			tools_root, linttools_dir
+			tools_root, linttools_dir, path_prefix
 		)
 		
 		self._json_dec: JSONDecoder = JSONDecoder()
@@ -784,6 +785,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			deps_files: Tuple[str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
+			path_prefix: str
 	):
 		"""
 			Verifica la validità degli argomenti del costruttore forniti.
@@ -796,6 +798,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Si verifica se:
 					
 						- Il parametro `dockf_builder` ha valore `None`
+						- Il parametro `tag_prefix` ha valore `None` o è una stringa vuota
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `dockerfile_fname` ha valore `None` o è una stringa vuota
@@ -803,6 +806,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `deps_files` ha valore `None`, è una tupla vuota; oppure uno dei suoi elementi è `None` o almeno uno è una stringa vuota
 						- Il parametro `tools_root` ha valore `None, è una stringa vuota, oppure è una path invalida
 						- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
+						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		if (
 			(dockf_builder is None) or
@@ -813,7 +817,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			(py_vers_fname is None) or
 			(deps_files is None) or
 			(tools_root is None) or
-			(linttools_dir is None)
+			(linttools_dir is None) or
+			(path_prefix is None)
 		):
 			raise ValueError()
 
@@ -824,7 +829,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			(dockerfile_fname == "") or
 			(py_vers_fname == "") or
 			(deps_files == tuple()) or
-			(tools_root == "")
+			(tools_root == "") or
+			(path_prefix == "") or (reg_search(cls._LINUXPATH_PATT, path_prefix) is None)
 		):
 			raise ValueError()
 		
