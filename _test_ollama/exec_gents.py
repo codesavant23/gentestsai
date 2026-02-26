@@ -165,6 +165,7 @@ if __name__ == "__main__":
 	
 	focal_envs: Dict[str, DockerImage] = create_focal_images(
 		projs_config,
+		projsenv_config["images_prefix"],
 		projsenv_config["os_image"],
 		projenv_config["dockerfile"], projsenv_config["images_prefix"],
 		general_config["gen_tests_dir"],

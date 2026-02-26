@@ -269,13 +269,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._proj_name = proj_name
 		self._orig_full_root = full_root
 		
-		self._set_envconfig_entities()
-		
 		self._full_root: str = f"{self._path_prefix}/{full_dirname}"
 		self._focal_root: str = f"{self._full_root}/{focal_dirname}"
 		self._tests_root: str = f"{self._full_root}/{tests_relpath}"
 		self._gentests_root: str = f"{self._full_root}/{self._gentests_dir}"
 		self._envconfig_root: str = f"{self._full_root}/{self._envconfig_dir}"
+		
+		self._set_envconfig_entities()
 
 		self._project_set = True
 	
@@ -323,11 +323,18 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		python_version: str = self._get_python_version()
 		ext_deps: List[str] = self._get_ext_deps()
+		
+		# Impostazione di BASH come shell per l' esecuzione dei comandi
+		self._dockf_builder.set_shell("/bin/sh", ["-c"])
 
 		# Impostazione della versione dell' interprete Python che verrà utilizzata
 		self._dockf_builder.set_envvar("PYTHON_VERSION", python_version)
 		
-		self._dockf_builder.add_shellcmd("apt-get update")
+		# Creazione del path prefix e impostazione della directory corrente su di esso
+		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}")
+		self._dockf_builder.add_workdir(self._path_prefix)
+		
+		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y python3-pip")
 		
 		# Installazione del comando `yes` (utilizzato per le installazioni silenziose)
 		self._dockf_builder.add_shellcmd("apt-get install -y yes")
@@ -355,7 +362,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._copy_tool_subroot_infullroot(str(linttools_path))
 		
 		# Impostazione della directory corrente sul path prefix
-		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}")
 		self._dockf_builder.add_workdir(self._path_prefix)
 		
 		dockerfile_path: str = f"{self._orig_full_root}/{self._dockf_fname}"
@@ -507,37 +513,80 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			Imposta le paths degli elementi della Env-config Project Root Path
 			(in base alla loro esistenza)
 		"""
-		path: str
+		orig_envconfig_root = path_join(self._orig_full_root, self._envconfig_dir)
 		
-		path = path_join(self._orig_full_root, self._envconfig_dir, self._py_vers_fname)
-		self._py_vers_path = ""
-		if os_fdexists(path):
-			self._py_vers_path = path
+		self._py_vers_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
+			self._py_vers_fname,
+		)
 		
-		path = path_join(self._orig_full_root, self._envconfig_dir, self._py_deps_fname)
-		self._py_deps_path = ""
-		if os_fdexists(path):
-			self._py_deps_path = path
+		self._py_deps_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
+			self._py_deps_fname,
+		)
+		self._ext_deps_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
+			self._ext_deps_fname,
+		)
 		
-		path = path_join(self._orig_full_root, self._envconfig_dir, self._ext_deps_fname)
-		self._ext_deps_path = ""
-		if os_fdexists(path):
-			self._ext_deps_path = path
+		if self._ext_deps_path != "":
+			self._prescr_path = self._set_envc_entity_ifexists(
+				orig_envconfig_root,
+				self._prescr_fname,
+				container=True
+			)
+
+			self._postscr_path = self._set_envc_entity_ifexists(
+				orig_envconfig_root,
+				self._postscr_fname,
+				container=True
+			)
+			
+		self._postscrpy_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
+			self._postscrpy_fname,
+			container=True
+		)
 		
-		path = path_join(self._orig_full_root, self._envconfig_dir, self._prescr_fname)
-		self._prescr_path = ""
-		if os_fdexists(path):
-			self._prescr_path = path
 		
-		path = path_join(self._orig_full_root, self._envconfig_dir, self._postscr_fname)
-		self._postscr_path = ""
-		if os_fdexists(path):
-			self._postscr_path = path
-		
-		path = path_join(self._orig_full_root, self._envconfig_dir, self._postscrpy_fname)
-		self._postscrpy_path = ""
-		if os_fdexists(path):
-			self._postscrpy_path = path
+	def _set_envc_entity_ifexists(
+			self,
+			envconfig_root: str,
+			entity_fname: str,
+			container: bool = False
+	) -> str:
+		"""
+			Imposta il valore di un file della Env-config Project Root Path, da utilizzarsi
+			all' interno dell' ambiente focale, se esiste realmente
+
+			Parameters
+			----------
+				envconfig_root: str
+					Una stringa contenente la Env-Config Project Root Path reale
+			
+				entity_fname: str
+					Una stringa contenente il nome del file di cui impostare la path relativamente
+					all' ambiente focale
+					
+				container: bool
+					Opzionale. Default = `False`. Un booleano che indica se la path che deve essere
+					ritornata è relativa al container.
+					Nel caso in cui questo flag sia `False` la path che viene ritornata è la path reale
+					dell' oggetto della Env-config Project Root Path fornito
+
+			Returns
+			-------
+				str
+					Una stringa contenente la path (relativa al container) del file dato
+		"""
+		orig_entity_path: str = path_join(envconfig_root, entity_fname)
+		if not os_fdexists(orig_entity_path):
+			return ""
+		else:
+			if container:
+				return f"{self._envconfig_root}/{entity_fname}"
+			else:
+				return orig_entity_path
 		
 		
 	def _get_python_version(self) -> str:
@@ -649,7 +698,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		# Esecuzione dello script Pre-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
-			if os_fdexists(self._prescr_path):
+			if self._prescr_path != "":
 				self._dockf_builder.add_shellcmd_step(f"source {self._prescr_path}")
 
 		# Installazione delle dipendenze esterne
@@ -658,7 +707,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
-			if os_fdexists(self._postscr_path):
+			if self._postscr_path != "":
 				self._dockf_builder.add_shellcmd_step(f"source {self._postscr_path}")
 
 		# Installazione delle dipendenze (packages) Python

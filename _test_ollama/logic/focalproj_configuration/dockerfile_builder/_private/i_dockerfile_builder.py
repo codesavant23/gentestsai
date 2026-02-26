@@ -75,6 +75,41 @@ class IDockfBuilder(ABC):
 						- Il parametro `value` è una stringa vuota
 		"""
 		pass
+	
+	
+	@abstractmethod
+	def set_shell(
+			self,
+			shell_touse: str,
+			args: List[str]=None
+	):
+		"""
+			Imposta la shell da utilizzare per l' esecuzione dei comandi che verranno aggiunti
+			nel dockerfile attualmente in costruzione.
+			La chiamata a questo metodo equivale all' aggiunta/modifica dell' istruzione `SHELL`
+			nel dockerfile risultante.
+			
+			Se `shell_touse` ha valore `None` allora si rimuove l' eventuale istruzione `SHELL`
+			precedentemente impostata
+			
+			Parameters
+			----------
+				shell_touse: str
+					Una stringa contenente la path all' eseguibile della shell da utilizzare
+
+				args: List[str]
+					Opzionale. Default = `None`. Una lista di stringhe contenente gli argomenti
+					da fornire alla shell per l' esecuzione dei comandi
+					
+			Raises
+			------
+				ValueError
+					Si verifica se:
+						
+						- Il parametro `shell_touse` è una stringa vuota
+						- Il parametro `args` è una lista vuota
+		"""
+		pass
 
 
 	@abstractmethod

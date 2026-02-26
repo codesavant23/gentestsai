@@ -148,7 +148,8 @@ class ATransactDockfBuilder(_ABaseDockfBuilder):
 			self,
 			base_image: str,
 			glob_args: str,
-			epcmd_instrs: str = None
+			shell_instr: str,
+			epcmd_instrs: str
 	) -> str:
 		"""
 			Restituisce il contenuto del dockerfile attuale per scriverlo in un file.
@@ -165,9 +166,13 @@ class ATransactDockfBuilder(_ABaseDockfBuilder):
 				glob_args: str
 					Una stringa contenente le istruzioni `ARG` che definiscono gli argomenti globali
 					del dockerfile che verrà costruito
+					
+				shell_instr: str
+					Una stringa contenente l' eventuale istruzione `SHELL` da inserire nel contenuto
+					del dockerfile
 			
 				epcmd_instrs: str
-					Opzionale. Default = `None`. Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
+					Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
 					da inserire nel contenuto del dockerfile
 					
 			Returns

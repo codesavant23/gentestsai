@@ -49,7 +49,8 @@ class SimpleTransactDockfBuilder(ATransactDockfBuilder):
 			self,
 			base_image: str,
 			glob_args: str,
-			epcmd_instrs: str = None
+			shell_instr: str,
+			epcmd_instrs: str
 	) -> str:
 		# Scrittura degli eventuali argomenti globali
 		content: str = glob_args + "\n"
@@ -58,14 +59,26 @@ class SimpleTransactDockfBuilder(ATransactDockfBuilder):
 		# Scrittura dell' immagine base
 		content += base_image + "\n"
 		
+		# Scrittura dell' eventuale coppia di istruzioni
+		if shell_instr != "":
+			content += shell_instr + "\n"
+			
+		content += "\n"
+		
 		# Scrittura delle eventuali variabili d'ambiente
 		for var_name, value in self._env_vars.items():
 			content += f'ENV {var_name}={value}\n'
 		if len(self._env_vars.keys()) > 0:
 			content += "\n"
 			
+		content += "\n"
+			
 		# Scrittura delle istruzioni del Dockerfile
 		content += "\n".join(self._instrs)
+		
+		# Scrittura dell' eventuale coppia di istruzioni per l' entrypoint
+		if epcmd_instrs != "":
+			content += "\n\n" + epcmd_instrs
 		
 		return content
 

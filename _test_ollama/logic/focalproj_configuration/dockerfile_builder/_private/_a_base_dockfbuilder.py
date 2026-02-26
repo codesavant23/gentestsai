@@ -32,6 +32,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		self._bimage: str = None
 		self._glob_args: Dict[str, str] = dict()
 		self._entryp: List[str] = list()
+		self._shell_touse: List[str] = list()
 		
 		
 	def new_dockerfile(self):
@@ -41,6 +42,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		self._glob_args = dict()
 		
 		self._entryp.clear()
+		self._shell_touse.clear()
 		
 		self._ap__new_dockerf_spec()
 		
@@ -50,6 +52,20 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			raise ValueError()
 		
 		self._bimage = base_image
+	
+	
+	def set_shell(self, shell_touse: str, args: List[str] = None):
+		if (shell_touse == ""):
+			raise ValueError()
+		if args is not None:
+			if len(args) == 0:
+				raise ValueError()
+		
+		if shell_touse is not None:
+			self._shell_touse[0] = shell_touse
+			self._shell_touse.extend(args)
+		else:
+			self._shell_touse.clear()
 	
 	
 	def add_copy(self, sources: List[str], dest: str):
@@ -68,34 +84,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		self._ap__add_instr(
 			f"COPY {sources_str} {dest_snized}"
 		)
-	
-	
-	def build_dockerfile(
-			self,
-			dockf_path: str
-	):
-		if (dockf_path is None) or (dockf_path == ""):
-			raise ValueError()
-		if self._bimage is None:
-			raise BaseImageNotSetError()
-		
-		global_args: str = ""
-		for glob_arg, value in self._glob_args.items():
-			global_args += f"ARG {glob_arg}={value}" + "\n"
-		
-		entryp: Tuple[str, str]  = self._get_entryp_parts()
-		entryp_dockfinstr: str = f''
-		if len(entryp) > 0:
-			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
-		
-		dockf_content: str = self._ap__get_dockf_content(
-			f'FROM {self._bimage}',
-			global_args,
-			entryp_dockfinstr
-		)
-		with open(dockf_path, "w") as fdockf:
-			fdockf.writelines(dockf_content)
-			fdockf.flush()
 	
 	
 	def set_global_args(self, global_args: Dict[str, str]):
@@ -154,6 +142,40 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			self._entryp = list()
 			
 		self._entryp.insert(0, entry_cmd)
+		
+		
+	def build_dockerfile(
+			self,
+			dockf_path: str
+	):
+		if (dockf_path is None) or (dockf_path == ""):
+			raise ValueError()
+		if self._bimage is None:
+			raise BaseImageNotSetError()
+		
+		global_args: str = ""
+		for glob_arg, value in self._glob_args.items():
+			global_args += f"ARG {glob_arg}={value}" + "\n"
+		
+		entryp: Tuple[str, str]  = self._get_entryp_parts()
+		entryp_dockfinstr: str = f''
+		if len(entryp) > 0:
+			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
+		
+		json_enc: JSONEncoder = JSONEncoder()
+		shell_touse_dockfinstr: str = ""
+		if len(self._shell_touse) > 0:
+			shell_touse_dockfinstr = "SHELL " + json_enc.encode(f'{self._shell_touse[0:]}')
+		
+		dockf_content: str = self._ap__get_dockf_content(
+			f'FROM {self._bimage}',
+			global_args,
+			shell_touse_dockfinstr,
+			entryp_dockfinstr
+		)
+		with open(dockf_path, "w") as fdockf:
+			fdockf.writelines(dockf_content)
+			fdockf.flush()
 	
 	
 	##	============================================================
@@ -236,7 +258,8 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			self,
 			base_image: str,
 			glob_args: str,
-	        epcmd_instrs: str=None
+			shell_instr: str,
+	        epcmd_instrs: str
 	) -> str:
 		"""
 			Restituisce il contenuto del dockerfile attuale per scriverlo in un file
@@ -250,9 +273,13 @@ class _ABaseDockfBuilder(IDockfBuilder):
 				glob_args: str
 					Una stringa contenente le istruzioni `ARG` che definiscono gli argomenti globali
 					del dockerfile che verrà costruito
+					
+				shell_instr: str
+					Una stringa contenente l' eventuale istruzione `SHELL` da inserire nel contenuto
+					del dockerfile
 			
 				epcmd_instrs: str
-					Opzionale. Default = `None`. Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
+					Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
 					da inserire nel contenuto del dockerfile
 					
 			Returns

@@ -5,6 +5,8 @@ from os.path import split as path_split
 # ======================================== #
 # ============== Docker SDK Utilities =============== #
 from docker.models.images import Image as DockerImage
+from docker.errors import ImageNotFound
+from docker.client import DockerClient
 # =================================================== #
 from logic.focalproj_configuration.dockerfile_builder import (
 	ATransactDockfBuilder, SimpleTransactDockfBuilder
@@ -13,10 +15,13 @@ from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 	IFocalEnvConfigurator, V1FocalEnvConfigurator, EImageBuiltOption
 )
 
+from ..._private.getting_contmanager import retrieve_contmanager
+
 
 
 def create_focal_images(
 		projs_config: Dict[str, Dict[str, Any]],
+		image_prefix: str,
 		base_image: str,
 		dockerfile_fname: str, tag_prefix: str,
 		gentests_dir: str, envconfig_dir: str,
@@ -113,15 +118,22 @@ def create_focal_images(
 	dockf_bder.set_base_image(base_image)
 	fenv_confgor.set_default_pyversion(def_pyvers)
 	
+	cont_manager: DockerClient = retrieve_contmanager()
+	
 	full_root: str
 	for proj_name, proj_info in projs_config.items():
-		full_root = path_split(proj_info["focal_root"])[0]
-		fenv_confgor.set_focal_project(
-			proj_name,
-			full_root,
-			proj_info["focal_root"],
-			proj_info["tests_root"]
-		)
-		focal_envs[proj_name] = fenv_confgor.build_image(EImageBuiltOption.DOCKIGNORE)
+		try:
+			focal_envs[proj_name] = cont_manager.images.get(
+				f"{image_prefix}_{proj_name}"
+			)
+		except ImageNotFound:
+			full_root = path_split(proj_info["focal_root"])[0]
+			fenv_confgor.set_focal_project(
+				proj_name,
+				full_root,
+				proj_info["focal_root"],
+				proj_info["tests_root"]
+			)
+			focal_envs[proj_name] = fenv_confgor.build_image(EImageBuiltOption.DOCKIGNORE)
 	
 	return focal_envs
