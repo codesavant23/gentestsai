@@ -506,12 +506,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				new_path_prefix: str
 					Una stringa contenente il nuovo path prefix con cui modificare le paths
 		"""
-		if self._py_deps_path != "":
-			self._py_deps_path = self._change_prefix_of_path(
-				new_path_prefix,
-				self._py_deps_path,
-			)
-
 		if os_fdexists(self._ext_deps_path):
 			if self._prescr_path != "":
 				self._prescr_path = self._change_prefix_of_path(
@@ -554,19 +548,19 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		if self._ext_deps_path != "":
 			self._prescr_path = self._set_envc_entity_ifexists(
-				orig_envconfig_root,
+				self._path_prefix,
 				self._prescr_fname,
 				container=True
 			)
 
 			self._postscr_path = self._set_envc_entity_ifexists(
-				orig_envconfig_root,
+				self._path_prefix,
 				self._postscr_fname,
 				container=True
 			)
 			
 		self._postscrpy_path = self._set_envc_entity_ifexists(
-			orig_envconfig_root,
+			self._path_prefix,
 			self._postscrpy_fname,
 			container=True
 		)
@@ -721,7 +715,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Esecuzione dello script Pre-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._prescr_path != "":
-				self._dockf_builder.add_shellcmd_step(f". {tools_root}/{self._prescr_path}")
+				self._dockf_builder.add_shellcmd_step(f". {self._prescr_path}")
 
 		# Installazione delle dipendenze esterne
 		for ext_dep in ext_deps:
@@ -730,7 +724,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._postscr_path != "":
-				self._dockf_builder.add_shellcmd_step(f". {tools_root}/{self._postscr_path}")
+				self._dockf_builder.add_shellcmd_step(f". {self._postscr_path}")
 
 		# Installazione delle dipendenze (packages) Python
 		py_packs: str
@@ -749,7 +743,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			
 		# Esecuzione dello script Post-installazione delle dipendenze Python
 		if os_fdexists(self._postscrpy_path):
-			self._dockf_builder.add_shellcmd_step(f". {tools_root}/{self._postscrpy_path}")
+			self._dockf_builder.add_shellcmd_step(f". {self._postscrpy_path}")
 		
 		
 	def _copy_tool_subroot_infullroot(self, tool_subroot: str):
