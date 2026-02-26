@@ -7,6 +7,7 @@ from os.path import sep, altsep
 # ======================================== #
 # ============== JSON Utilities ============== #
 from json import JSONEncoder
+from json import dumps as json_dumps
 # ============================================ #
 
 from ...exceptions import BaseImageNotSetError
@@ -165,10 +166,9 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		if len(entryp) > 0:
 			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
 		
-		json_enc: JSONEncoder = JSONEncoder()
 		shell_touse_dockfinstr: str = ""
 		if len(self._shell_touse) > 0:
-			shell_touse_dockfinstr = "SHELL " + json_enc.encode(f'{self._shell_touse[0:]}')
+			shell_touse_dockfinstr = "SHELL " + json_dumps(self._shell_touse)
 		
 		dockf_content: str = self._ap__get_dockf_content(
 			f'FROM {self._bimage}',

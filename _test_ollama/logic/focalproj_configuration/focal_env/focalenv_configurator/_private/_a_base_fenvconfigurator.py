@@ -334,10 +334,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}")
 		self._dockf_builder.add_workdir(self._path_prefix)
 		
-		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y python3-pip")
+		self._dockf_builder.begin_cmds_tran()
 		
-		# Installazione del comando `yes` (utilizzato per le installazioni silenziose)
-		self._dockf_builder.add_shellcmd("apt-get install -y yes")
+		# Installazione di `pip` e del comando `yes` (utilizzato per le installazioni silenziose)
+		self._dockf_builder.add_shellcmd_step("apt-get update && apt install -y coreutils python3-pip")
 
 		# Installazione di `pyenv`
 		self._configure_pyenv()
@@ -349,9 +349,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._configure_deps_install(ext_deps)
 
 		# Installazione di `coverage.py`
-		self._dockf_builder.add_shellcmd(f'python3 -m pip install coverage=="{self._ap__covpy_version()}"')
+		self._dockf_builder.add_shellcmd_step(f'python3 -m pip install coverage=="{self._ap__covpy_version()}"')
 		# Installazione di `pylint`
-		self._dockf_builder.add_shellcmd(f'python3 -m pip install pylint=="{self._ap__pylint_version()}"')
+		self._dockf_builder.add_shellcmd_step(f'python3 -m pip install pylint=="{self._ap__pylint_version()}"')
+		
+		self._dockf_builder.end_cmds_tran()
 		
 		# Copia dei tools per la coverage
 		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
@@ -651,7 +653,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			Configura il costruttore di dockerfiles per l' installazione di `pyenv` nelle immagini
 			che verranno prodotte successivamente
 		"""
-		self._dockf_builder.begin_cmds_tran()
 		self._dockf_builder.add_shellcmd_step(
 			"apt-get install -y "
 			"build-essential curl git zlib1g-dev "
@@ -659,7 +660,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			"libffi-dev libbz2-dev libsqlite3-dev"
 		)
 		self._dockf_builder.add_shellcmd_step("git clone https://github.com/pyenv/pyenv.git ~/.pyenv")
-		self._dockf_builder.commit_cmds_tran()
 
 
 	def _configure_local_envvars(self):
@@ -694,12 +694,10 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una lista di stringhe contenente un elemento per ogni dipendenza esterna da installare.
 					Ogni dipendenza esterna è identificata dal nome del pacchetto da installare tramite `apt-get install`
 		"""
-		self._dockf_builder.begin_cmds_tran()
-
 		# Esecuzione dello script Pre-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._prescr_path != "":
-				self._dockf_builder.add_shellcmd_step(f"source {self._prescr_path}")
+				self._dockf_builder.add_shellcmd_step(f". {self._prescr_path}")
 
 		# Installazione delle dipendenze esterne
 		for ext_dep in ext_deps:
@@ -708,7 +706,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._postscr_path != "":
-				self._dockf_builder.add_shellcmd_step(f"source {self._postscr_path}")
+				self._dockf_builder.add_shellcmd_step(f". {self._postscr_path}")
 
 		# Installazione delle dipendenze (packages) Python
 		py_packs: str
@@ -727,9 +725,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			
 		# Esecuzione dello script Post-installazione delle dipendenze Python
 		if os_fdexists(self._postscrpy_path):
-			self._dockf_builder.add_shellcmd_step(f"source {self._postscrpy_path}")
-
-		self._dockf_builder.commit_cmds_tran()
+			self._dockf_builder.add_shellcmd_step(f". {self._postscrpy_path}")
 		
 		
 	def _copy_tool_subroot_infullroot(self, tool_subroot: str):
