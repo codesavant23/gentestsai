@@ -62,7 +62,10 @@ class _ABaseDockfBuilder(IDockfBuilder):
 				raise ValueError()
 		
 		if shell_touse is not None:
-			self._shell_touse[0] = shell_touse
+			if len(self._shell_touse) > 0:
+				self._shell_touse[0] = shell_touse
+			else:
+				self._shell_touse.append(shell_touse)
 			self._shell_touse.extend(args)
 		else:
 			self._shell_touse.clear()
