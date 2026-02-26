@@ -184,7 +184,7 @@ if __name__ == "__main__":
 		tools_config["linting"],
 		tools_config["coverage"],
 		environ_config["path_prefix"],
-		logger, console_logger
+		logger
 	)
 	
 	console_logger.set_messages_sep("\n")
