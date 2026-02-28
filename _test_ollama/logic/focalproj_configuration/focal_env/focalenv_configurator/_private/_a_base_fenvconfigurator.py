@@ -634,7 +634,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			return ""
 		else:
 			if container:
-				return f"{self._envconfig_root}/{entity_fname}"
+				return f"{self._path_prefix}/{self._envconfig_dir}/{entity_fname}"
 			else:
 				return orig_entity_path
 		
