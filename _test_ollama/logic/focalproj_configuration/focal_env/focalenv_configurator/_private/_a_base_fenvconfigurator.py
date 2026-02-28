@@ -21,7 +21,7 @@ from regex import (
 # ============== OS Utilities ============== #
 from os import (
 	remove as os_remove,
-	environ as os_getenv
+	environ as os_envvar
 )
 from shutil import rmtree as os_dremove
 from os.path import exists as os_fdexists
@@ -44,7 +44,7 @@ from shutil import (
 from json import JSONDecoder
 # ============================================ #
 
-from ....dockerfile_builder import ATransactDockfBuilder
+from ....dockerfile_builder import (ATransactDockfBuilder, SimpleTransactDockfBuilder)
 
 from ....exceptions import (
 	FocalProjectNotSetError,
@@ -58,8 +58,8 @@ _PATH_SEPS: str = f"{sep}{altsep if altsep is not None else ''}"
 
 class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	"""
-		Rappresenta un `IFocalEnvConfigurator` di base, ovvero che contiene la logica
-		comune ad ogni `IFocalEnvConfigurator`.
+		Rappresenta un `IFocalEnvConfigurator` di base, ovvero che contiene la logica comune
+		ad ogni `IFocalEnvConfigurator`.
 		
 		Attributi di Classe Pubblici:
 			- `PATH_PREFIX` (str) : Prefisso, di default, del percorso, interno al container docker, a cui verrà collegato il contenuto del progetto focale per renderlo accessibile al suo interno.
@@ -70,14 +70,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		dai discendenti di questa classe astratta
 	"""
 	
-	_PYVERS_PATT: str = r"^[0-9]+\.[0-9]+(\.[0-9]+)?$"
+	_PYVERS_PATT: str = r"[0-9]+\.[0-9]+(\.[0-9]+)?"
 	_LINUXPATH_PATT: str = r"^(?P<path_prefix>(/[\w.-]+/?)+)$"
 	PATH_PREFIX: str = "/app"
 	
 	def __init__(
 			self,
-			dockf_builder: ATransactDockfBuilder,
-			tag_prefix: str,
+			image_prefix: str,
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
@@ -102,11 +101,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				
 			Parameters
 			----------
-				dockf_builder: ATransactDockfBuilder
-					Un oggetto `ATransactDockfBuilder` rappresentante il costruttore di dockerfiles
-					da utilizzare per generare le immagini degli ambienti focali
-					
-				tag_prefix: str
+				image_prefix: str
 					Una stringa contenente il prefisso da apporre al tag di ogni immagine
 					che verrà costruita
 					
@@ -123,8 +118,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					di ambiente focale
 					
 				py_vers_fname: str
-					Una stringa contenente il nome dell' eventuale file che contiene la versione specifica
-					dell' interprete Python da utilizzare nell' ambiente focale
+					Una stringa rappresentante il nome dell' eventuale file che contiene il tag specifico
+					dell' immagine "python" da utilizzarsi al posto di quella di fallback
 					
 				deps_files: Tuple[str, str, str, str, str]
 					Una 5-tupla di stringhe contenente:
@@ -155,8 +150,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			------
 				ValueError
 					Si verifica se:
-					
-						- Il parametro `dockf_builder` ha valore `None`
+
 						- Il parametro `tag_prefix` ha valore `None` o è una stringa vuota
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
@@ -168,7 +162,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		self._check_initargs(
-			dockf_builder, tag_prefix,
+			dockf_builder, image_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
 			tools_root, linttools_dir, path_prefix
 		)
@@ -180,14 +174,16 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 
 		self._docker: DockerClient = None
 		try:
-			docker_host: str = os_getenv["DOCKER_HOST"]
+			docker_host: str = os_envvar["DOCKER_HOST"]
 			self._docker = DockerClient(base_url=docker_host)
 		except KeyError:
 			self._docker = docker_getclient()
 		
-		self._dockf_builder: ATransactDockfBuilder = dockf_builder
+		self._dockf_builder: ATransactDockfBuilder = SimpleTransactDockfBuilder()
+		self._dockf_builder.new_dockerfile()
 		self._dockf_fname: str = dockerfile_fname
-		self._tag_prefix: str = tag_prefix
+		
+		self._tag_prefix: str = image_prefix
 
 		self._envconfig_dir: str = envconfig_dir
 		self._gentests_dir: str = gentests_dir
@@ -322,59 +318,53 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	) -> DockerImage:
 		self._assert_inited()
 
-		python_version: str = self._get_python_version()
+		python_tag: str = self._get_python_version()
 		ext_deps: List[str] = self._get_ext_deps()
 		
-		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y bash")
+		self._dockf_builder.set_base_image(f"python:{python_tag}")
 		
-		# Impostazione di BASH come shell per l' esecuzione dei comandi
-		self._dockf_builder.add_shell("/bin/bash", ["-c"])
+		# Installazione di BaSH
+		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y bash")
 
 		# Impostazione della versione dell' interprete Python che verrà utilizzata
-		self._dockf_builder.set_envvar("PYTHON_VERSION", python_version)
+		py_version: str = reg_search(self._PYVERS_PATT, python_tag).group()
+		self._dockf_builder.set_envvar("PYTHON_VERSION", py_version)
 		
 		# Creazione del path prefix e della tools root
-		self._dockf_builder.add_shellcmd(f"mkdir -p {self._path_prefix}/tools")
+		self._dockf_builder.add_copy(["."], f"{self._full_root}")
 		
-		# Copia dei tools per il linting
-		linttools_path: SystemPath = SystemPath(self._tools_root, self._linttools_dir)
-		self._copy_tool_subroot_infullroot(str(linttools_path))
+		# Copia dei tools per il linting e per la coverage
 		self._dockf_builder.add_copy(
-			[self._linttools_dir],
-			f"{self._path_prefix}/tools/{self._linttools_dir}/"
+			[self._linttools_dir, self._covtools_dir],
+			f"{self._path_prefix}/tools/"
 		)
-		
-		# Copia dei tools per la coverage
-		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
-		self._copy_tool_subroot_infullroot(str(covtools_path))
-		self._dockf_builder.add_copy(
-			[self._covtools_dir],
-			f"{self._path_prefix}/tools/{self._covtools_dir}/"
-		)
-		
-		self._dockf_builder.begin_cmds_tran()
-		
-		# Installazione di `pip` e del comando `yes` (utilizzato per le installazioni silenziose)
-		self._dockf_builder.add_shellcmd_step("apt-get update && apt install -y coreutils python3-pip")
-
-		# Installazione di `pyenv`
-		self._configure_pyenv()
-		
-		# Installazione di Python
-		self._dockf_builder.add_shellcmd_step("pyenv install $PYTHON_VERSION")
+		# Eliminazione delle directories di linting e coverage duplicate
+		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._linttools_dir} "
+		                                 f"{self._full_root}/{self._covtools_dir} "
+		                                 f"{self._full_root}/{self._envconfig_dir}")
 		
 		# Configurazione delle variabili d'ambiente locali
 		self._configure_local_envvars()
 		
+		# Installazione del comando `yes` (utilizzato per le installazioni silenziose)
+		self._dockf_builder.add_shellcmd("apt-get update && apt install -y coreutils")
+
+		# Upgrade del package manager PIP
+		self._dockf_builder.add_shellcmd("python -m pip install --upgrade pip")
+		
 		# Configurazione dell' installazione delle dipendenze
 		self._configure_deps_install(ext_deps)
 
+		self._dockf_builder.begin_cmds_tran()
 		# Installazione di `coverage.py`
-		self._dockf_builder.add_shellcmd_step(f'python3 -m pip install coverage=="{self._ap__covpy_version()}"')
+		self._dockf_builder.add_shellcmd_step(f'pip install coverage=="{self._ap__covpy_version()}"')
 		# Installazione di `pylint`
-		self._dockf_builder.add_shellcmd_step(f'python3 -m pip install pylint=="{self._ap__pylint_version()}"')
-		
+		self._dockf_builder.add_shellcmd_step(f'pip install pylint=="{self._ap__pylint_version()}"')
 		self._dockf_builder.commit_cmds_tran()
+		
+		# Installazione dei softwares aggiuntivi specificati
+		# dai discendenti di questa classe astratta
+		self._p__install_extra_softws(self._dockf_builder)
 		
 		# Impostazione della directory corrente sul path prefix
 		self._dockf_builder.add_workdir(self._path_prefix)
@@ -382,14 +372,22 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		dockerfile_path: str = f"{self._orig_full_root}/{self._dockf_fname}"
 		self._dockf_builder.build_dockerfile(dockerfile_path)
 
+		# Copia delle directories dei tools nel build context
+		linttools_path: SystemPath = SystemPath(self._tools_root, self._linttools_dir)
+		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
+		self._copy_tool_subroot_infullroot(str(linttools_path))
+		self._copy_tool_subroot_infullroot(str(covtools_path))
+		
+		# Build dell' immagine ambiente focale
 		proj_image: DockerImage = self._docker.images.build(
 			path=self._orig_full_root,
 			dockerfile=self._dockf_fname,
-			tag=f"{self._tag_prefix}_{self._proj_name}"
+			tag=f"{self._tag_prefix}_{self._proj_name}",
+			rm=True
 		)[0]
 		
 		# Rimozione delle directories dei tools copiate dentro alla Full Project Root Path
-		# per inserirle nel contesto di building
+		# per inserirle nel build context
 		os_dremove(
 			path_join(self._orig_full_root, self._linttools_dir)
 		)
@@ -445,6 +443,38 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	##	============================================================
 	
 	
+	def _p__install_extra_softws(self, dockf_builder: ATransactDockfBuilder):
+		"""
+			Aggiunge le istruzioni al dockerfile per installare i software aggiuntivi
+			specificati dai discendenti di questa classe astratta.
+			
+			L' implementazione di default è vuota.
+			
+			Nel dockerfile builder fornito sono già disponibili le seguenti variabili d' ambiente:
+			
+				- `PYTHON_VERSION`: La versione dell' interprete Python presente nell' ambiente focale
+				- `FULL_ROOT`: La Full Project Root Path all' interno dell' ambiente focale
+				- `FOCAL_ROOT`: La Focal Project Root Path all' interno dell' ambiente focale
+				- `TESTS_ROOT`: La Tests Project Root Path all' interno dell' ambiente focale
+				- `GENTESTS_ROOT`: La Gen-tests Project Root Path all' interno dell' ambiente focale
+				- `LINTTOOLS_DIR`: Il nome della cartella con i tools per la verifica di linting
+				
+			ASSUNZIONE: Si assume che vengano effettuate soltanto operazioni di aggiunta
+			e nessuna modifica al contenuto del dockerfile builder fornito.
+			Sono dunque vietate le operazioni:
+				
+				- `.new_dockerfile(...)` e `.set_base_image(...)`
+				- `.set_global_args(...)` e `.set_entrypoint(...)`
+			
+			Parameters
+			----------
+				dockf_builder: ATransactDockfBuilder
+					Un oggetto `ATransactDockfBuilder` rappresentante il dockerfile builder
+					in cui aggiungere le istruzioni per installare i softwares aggiuntivi
+		"""
+		return
+	
+	
 	def _assert_inited(self):
 		"""
 			Asserisce che questo _ABaseFocalEnvConfigurator sia stato inizializzato completamente
@@ -458,7 +488,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Se non è impostato un progetto focale prima di chiamare quest' operazione
 
 				DefaultPythonVersionNotSetError
-					Se non è stata impostata alcuna versione di default dell' interprete Python da utilizzare
+					Se non è stato impostato alcun tag di default per l' immagine "python"
 					prima di chiamare quest' operazione
 		"""
 		if not self._project_set:
@@ -549,19 +579,19 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		if self._ext_deps_path != "":
 			self._prescr_path = self._set_envc_entity_ifexists(
-				self._path_prefix,
+				orig_envconfig_root,
 				self._prescr_fname,
 				container=True
 			)
 
 			self._postscr_path = self._set_envc_entity_ifexists(
-				self._path_prefix,
+				orig_envconfig_root,
 				self._postscr_fname,
 				container=True
 			)
 			
 		self._postscrpy_path = self._set_envc_entity_ifexists(
-			self._path_prefix,
+			orig_envconfig_root,
 			self._postscrpy_fname,
 			container=True
 		)
@@ -609,13 +639,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 	def _get_python_version(self) -> str:
 		"""
-			Restituisce la versione di Python da utilizzare nell' ambiente focale
+			Restituisce il tag dell' immagine "python" da utilizzare per l' ambiente focale
 
 			Returns
 			-------
 				str
-					Una stringa contenente la versione dell' interprete Python da utilizzare
-					all' interno dell' ambiente focale
+					Una stringa contenente il tag dell' immagine "python" da utilizzare
+					per la creazione dell' ambiente focale
 		"""
 		python_vers: str
 		if self._py_vers_path != "":
@@ -664,30 +694,14 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		return ext_deps
 
 
-	def _configure_pyenv(self):
-		"""
-			Configura il costruttore di dockerfiles per l' installazione di `pyenv` nelle immagini
-			che verranno prodotte successivamente
-		"""
-		self._dockf_builder.add_shellcmd_step(
-			"apt-get install -y "
-			"build-essential curl git zlib1g-dev "
-			"libssl-dev libreadline-dev "
-			"libffi-dev libbz2-dev libsqlite3-dev"
-		)
-		self._dockf_builder.add_shellcmd_step("git clone https://github.com/pyenv/pyenv.git ~/.pyenv")
-		self._dockf_builder.add_shellcmd_step('eval "$(pyenv init -)"')
-
-
 	def _configure_local_envvars(self):
 		"""
 			Configura il costruttore di dockerfiles per definire le variabili d'ambiente locali nelle
 			immagini che verranno prodotte successivamente
 		"""
-		self._dockf_builder.set_envvar("PYENV_ROOT", "/root/.pyenv")
 		self._dockf_builder.set_envvar(
 			"PATH",
-		    "$HOME/.local/bin:$HOME/bin:$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+		    "$HOME/.local/bin:$HOME/bin:$PATH"
 		)
 		self._dockf_builder.set_envvar("FULL_ROOT", self._full_root)
 		self._dockf_builder.set_envvar("FOCAL_ROOT", self._focal_root)
@@ -695,6 +709,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._dockf_builder.set_envvar("GENTESTS_ROOT", self._gentests_root)
 		self._dockf_builder.set_envvar("LINTTOOLS_DIRNAME", self._linttools_dir)
 		self._dockf_builder.set_envvar("COVTOOLS_DIRNAME", self._covtools_dir)
+		self._dockf_builder.set_envvar("CONTTOOLS_ROOT", f"{self._path_prefix}/tools")
 
 
 	def _configure_deps_install(
@@ -711,26 +726,38 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una lista di stringhe contenente un elemento per ogni dipendenza esterna da installare.
 					Ogni dipendenza esterna è identificata dal nome del pacchetto da installare tramite `apt-get install`
 		"""
-		tools_root: str = f"{self._path_prefix}/tools"
-		
 		# Esecuzione dello script Pre-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._prescr_path != "":
-				self._dockf_builder.add_shellcmd_step(f". {self._prescr_path}")
+				self._dockf_builder.add_shellcmd(
+					f'chmod a+x {self._prescr_path} && '
+					f'/bin/bash {self._prescr_path}'
+				)
 
 		# Installazione delle dipendenze esterne
+		if os_fdexists(self._ext_deps_path):
+			self._dockf_builder.begin_cmds_tran()
+			self._dockf_builder.add_shellcmd_step("apt-get update")
 		for ext_dep in ext_deps:
 			self._dockf_builder.add_shellcmd_step(f"apt-get install -y {ext_dep}")
+		if os_fdexists(self._ext_deps_path):
+			self._dockf_builder.commit_cmds_tran()
 
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
 		if os_fdexists(self._ext_deps_path):
 			if self._postscr_path != "":
-				self._dockf_builder.add_shellcmd_step(f". {self._postscr_path}")
+				self._dockf_builder.add_shellcmd(
+					f'chmod a+x {self._postscr_path} && '
+					f'/bin/bash {self._postscr_path}'
+				)
 
 		# Installazione delle dipendenze (packages) Python
+		py_deps: List[Dict[str, str]] = self._get_py_deps()
 		py_packs: str
 		pip_flags: str
-		for pydep_dict in self._get_py_deps():
+		if len(py_deps) > 0:
+			self._dockf_builder.begin_cmds_tran()
+		for pydep_dict in py_deps:
 			pip_flags = ""
 			py_packs = pydep_dict.pop("r")
 			for flag, value in pydep_dict.items():
@@ -739,12 +766,17 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					pip_flags += f" {value}"
 					
 			self._dockf_builder.add_shellcmd_step(
-				f"yes | pip install -q -q -q {pip_flags} \"{py_packs}\""
+				f"yes | python -m pip install -q -q -q {pip_flags} \"{py_packs}\""
 			)
+		if len(py_deps) > 0:
+			self._dockf_builder.commit_cmds_tran()
 			
 		# Esecuzione dello script Post-installazione delle dipendenze Python
 		if os_fdexists(self._postscrpy_path):
-			self._dockf_builder.add_shellcmd_step(f". {self._postscrpy_path}")
+			self._dockf_builder.add_shellcmd_step(
+				f'chmod a+x {self._postscrpy_path} && '
+				f'/bin/bash {self._postscrpy_path}'
+			)
 		
 		
 	def _copy_tool_subroot_infullroot(self, tool_subroot: str):

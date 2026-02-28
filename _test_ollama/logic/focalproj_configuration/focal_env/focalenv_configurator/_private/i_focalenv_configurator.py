@@ -26,16 +26,17 @@ class IFocalEnvConfigurator(ABC):
 	@abstractmethod
 	def set_default_pyversion(self, python_version: str):
 		"""
-			Imposta una nuova versione di default dell' interprete Python da utilizzare in caso
-			il file contenente la versione specifica dell' interprete, per il progetto
-			focale corrente, non esista
+			Imposta un nuovo tag per l' immagine "python" da utilizzare in caso il file
+			contenente la versione specifica dell' interprete, per il progetto focale corrente,
+			non esista
 
 			Parameters
 			----------
 				python_version: str
-					Una stringa contenente la versione dell' interprete Python da utilizzare come
-					default.
-					Il formato della versione è il seguente: `<maj>.<min>.<patch>` oppure `<maj>.<min>`
+					Una stringa contenente il tag dell' immagine "python" da utilizzare come fallback
+					per la configurazione degli ambienti focali.
+					Viene verificato che contenga una versione del seguente formato:
+					`<maj>.<min>.<patch>` oppure `<maj>.<min>`.
 
 			Raises
 			------
@@ -44,7 +45,7 @@ class IFocalEnvConfigurator(ABC):
 					
 						- Il parametro `python_version` ha valore `None`
 						- Il parametro `python_version` è una stringa vuota
-						- Il parametro `python_version` non è nel formato specificato
+						- Il parametro `python_version` non contiene una versione nel formato specificato
 		"""
 		pass
 	
@@ -109,7 +110,7 @@ class IFocalEnvConfigurator(ABC):
 					Se non è impostato un progetto focale prima di chiamare quest' operazione
 
 				DefaultPythonVersionNotSetError
-					Se non è stata impostata alcuna versione di default dell' interprete Python da utilizzare
+					Se non è stato impostato alcun tag di default per l' immagine "python"
 					prima di chiamare quest' operazione
 		"""
 		pass
@@ -135,15 +136,13 @@ class IFocalEnvConfigurator(ABC):
 				
 					- `curl` in versione latest
 					- `git` in versione latest
-					- `pyenv` in versione latest
-					- `python` con versione in base a come è scelta (dal progetto focale, o fallback sulla versione di default impostata in questo configuratore)
+					- `python` con versione in base a come è scelta (dal progetto focale, o fallback sul tag di default impostato in questo configuratore)
 					- `pylint` con versione in base a come è scelta (dal progetto focale, o fallback sulla versione di default specificata dai discendenti)
 					- `coverage.py` con versione in base a come è scelta (dal progetto focale, o fallback sulla versione di default specificata dai discendenti)
 			
 				- Vengono definite le seguenti variabili d'ambiente:
 					
-					- `PYTHON_VERSION`: La versione dell' interprete Python che è stata installata
-					- `PYENV_ROOT`: La root path che contiene il software `pyenv` per l' installazione dell' interprete Python specifico
+					- `PYTHON_VERSION`: La versione dell' interprete Python presente nell' ambiente focale
 					- `FULL_ROOT`: La Full Project Root Path all' interno dell' ambiente focale
 					- `FOCAL_ROOT`: La Focal Project Root Path all' interno dell' ambiente focale
 					- `TESTS_ROOT`: La Tests Project Root Path all' interno dell' ambiente focale
@@ -167,15 +166,11 @@ class IFocalEnvConfigurator(ABC):
 
 			Raises
 			------
-				BaseImageNotSetError
-					Se non è stata impostata alcuna immagine base per il costruttore di dockerfiles
-					alla chiamata di questa operazione
-			
 				FocalProjectNotSetError
 					Se non è impostato nessun progetto focale prima di chiamare quest' operazione
 
 				DefaultPythonVersionNotSetError
-					Se non è stata impostata alcuna versione di default dell' interprete Python da utilizzare
+					Se non è stato impostato alcun tag di default per l' immagine "python"
 					prima di chiamare quest' operazione
 		"""
 		pass

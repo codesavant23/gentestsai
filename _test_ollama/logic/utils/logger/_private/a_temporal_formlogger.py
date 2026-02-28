@@ -102,6 +102,6 @@ class ATemporalFormattLogger(AMutableFormattLogger):
 		if "min" in self._curr_placehs:
 			placehs["min"] = str(datenow.minute)
 		if "second" in self._curr_placehs:
-			placehs["second"] = str(datenow.minute)
+			placehs["second"] = str(datenow.second)
 			
 		return placehs

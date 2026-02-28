@@ -5,7 +5,6 @@ from ._a_base_cfgvalidator import _ABaseConfigValidator
 from regex import (
 	search as reg_search,
 	Match,
-	RegexFlag as RegexFlags,
 )
 # ========================================== #
 # =========== RequestsForHumans Utilities =========== #
@@ -19,7 +18,6 @@ from os.path import exists as os_fdexists
 # ========================================== #
 # ============ Path Utilities ============ #
 from os.path import join as path_join
-from pathlib import Path as SystemPath
 # ======================================== #
 
 from ....utils.path_validator import (
@@ -42,9 +40,8 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		
 		Il file di configurazione letto sarà composto da un dizionario contenente:
 			- "envconfig_dir" (str): Il nome dell' eventuale directory che contiene i files di configurazione per gli ambienti focali
-			- "os_image" (str): L' immagine 'base' di docker da cui derivare ogni immagine degli ambienti focali
+			- "image_tag" (str): L' immagine 'base' di docker da cui derivare ogni immagine degli ambienti focali
 			- "images_prefix" (str): Il prefisso da anteporre al tag delle immagini degli ambienti focali
-			- "python_version" (str): La versione di fallback dell' interprete Python da utilizzare (nel caso in cui il progetto non ne abbia una specifica)
 			- "tools" (Dict[str, str]): Dizionario che contiene le path/directories relative ai tools da utilizzare in ogni ambiente focale. Contiene:
 			
 				* "tools_root" (str): La root path che contiene i tools da aggiungere all' interno di ogni ambiente focale
@@ -53,8 +50,9 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 				
 			- "environ" (Dict[str, str]): Dizionario che contiene i parametri relativi agli ambienti focali. Contiene:
 			
-				* "lint_executer" (str): Il nome dello script che eseguirà la verifica di linting all' interno di ogni ambiente focale
 				* "path_prefix" (str): La path di base che ospita la Full Project Root Path, del progetto focale, all' interno di ogni ambiente focale
+				* "lint_executer" (str): Il nome dello script che eseguirà la verifica di linting all' interno di ogni ambiente focale
+				* "shared_dir" (str): Il nome della directory, all' interno del "path_prefix", che verrà utilizzata per la condivisione dei files tra il progetto focale e il suo ambiente
 				
 			- "project" (Dict[str, str]): Dizionario che contiene i parametri relativi ad ogni progetto focale. Contiene:
 			
@@ -70,7 +68,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	_OUTER_FIELDS: Set[str] = {
 		"envconfig_dir",
 		"images_prefix",
-		"os_image", "python_version",
+		"image_tag",
 		"environ",
 		"tools",
 		"project"
@@ -81,8 +79,9 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		"coverage"
 	}
 	_ENVIRON_FIELDS: Set[str] = {
+		"path_prefix",
 		"lint_executer",
-		"path_prefix"
+		"shared_dir"
 	}
 	_1PROJ_FIELDS: Set[str] = {
 		"dockerfile",
@@ -155,8 +154,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
 		envconfig_dir: str = config_read["envconfig_dir"]
 		imgs_prefix: str = config_read["images_prefix"]
-		os_image: str = config_read["os_image"]
-		py_version: str = config_read["python_version"]
+		image_tag: str = config_read["image_tag"]
 		project: Dict[str, str] = config_read["project"]
 		tools: Dict[str, str] = config_read["tools"]
 		environ: Dict[str, str] = config_read["environ"]
@@ -198,22 +196,10 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		if linux_path_found.group("linux_path") is None:
 			raise ValueError()
 		
-		is_pyvers_valid: bool = reg_search(r"[0-9]+\.[0-9]+(\.[0-9]+)?", py_version) is not None
+		is_pyvers_valid: bool = reg_search(r"[0-9]+\.[0-9]+(\.[0-9]+)?", image_tag) is not None
 		if not is_pyvers_valid:
-			raise InvalidConfigValueError("La versione di fallback dell' interprete Python è invalida")
-		
-		# TODO: Implementare la validazione del nome del formato dell' immagine
-		"""namespace: str = "library"
-		image: str = os_image
-		
-		has_namespace: bool = "/" in os_image
-		if has_namespace:
-			namespace, image = os_image.split("/", 1)
-		
-		tag: str
-		image, tag = image.split(":")
-		#self._assert_base_image_exists(os_image, image, tag)
-		"""
+			raise InvalidConfigValueError("Il tag di fallback dell' immagine Python è invalido")
+		self._assert_base_image_exists("registry.hub.docker.com", "python", image_tag)
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
@@ -287,7 +273,6 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	def _assert_base_image_exists(
 			self,
 			registry: str,
-			namespace: str,
 			image: str,
 			tag: str
 	):
@@ -301,9 +286,6 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 				registry: str
 					Una stringa contenente il registry da cui proviene l' immagine
 					
-				namespace: str
-					Una stringa contenente il namespace dell' immagine
-					
 				image: str
 					Una stringa contenente il nome dell' immagine
 					
@@ -315,10 +297,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 				InvalidConfigValueError
 					Si verifica se l' immagine non esiste nel registry fornito
 		"""
-		#TODO: Da implementare, necessario OAuth
-		"""
-			url = f"https://{registry}/{self._dhub_vers}/repositories/{namespace}/{image}/tags/{tag}/"
-			response: HttpResponse = req_get(url, timeout=5)
-			if not (response.status_code == 200):
-				raise InvalidConfigValueError()
-		"""
+		url = f"https://{registry}/{self._dhub_vers}/repositories/library/{image}/tags/{tag}/"
+		response: HttpResponse = req_get(url, timeout=5)
+		if not (response.status_code == 200):
+			raise InvalidConfigValueError()

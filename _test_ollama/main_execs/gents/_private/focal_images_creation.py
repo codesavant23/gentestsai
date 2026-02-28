@@ -22,11 +22,10 @@ from logic.utils.process_logger._private.process_logger import ProcessLogger
 
 def create_focal_images(
 		projs_config: Dict[str, Dict[str, Any]],
-		image_prefix: str,
-		base_image: str,
-		dockerfile_fname: str, tag_prefix: str,
+		image_prefix: str, image_tag: str,
+		dockerfile_fname: str,
 		gentests_dir: str, envconfig_dir: str,
-		def_pyvers: str, py_vers_fname: str,
+		py_vers_fname: str,
 		deps_files: Tuple[str, str, str, str, str],
 		tools_root: str,
 		linttools_dir: str,
@@ -44,8 +43,8 @@ def create_focal_images(
 				Un dizionario di dizionari variegati rappresentante il file di configurazione dei progetti
 				focali
 		
-			base_image: str
-				Una stringa contenente il nome dell' immagine base da utilizzare per ogni
+			image_tag: str
+				Una stringa contenente il tag dell' immagine base "python" da utilizzare per ogni
 				immagine di ambiente focale che verrà creata
 		
 			gentests_dir: str
@@ -57,16 +56,13 @@ def create_focal_images(
 			dockerfile_fname: str
 				Una stringa contenente il nome del dockerfile che verrà generato per ogni immagine di ambiente focale
 				
-			tag_prefix: str
-				Una stringa contenente il prefisso da utilizzare per il tag delle immagini focali
-			
-			def_pyvers: str
-				Una stringa contenente la versione di default dell' interprete Python da utilizzare nel caso in cui per un
-				determinato progetto non sia richiesta una versione specifica
+			image_prefix: str
+				Una stringa contenente il prefisso da utilizzare per il tag delle immagini focali create
+				(o da ottenere)
 			
 			py_vers_fname: str
-				Una stringa contenente il nome dell' eventuale file che contiene la versione specifica dell' interprete Python
-				da utilizzare nell' ambiente focale
+				Una stringa rappresentante il nome dell' eventuale file che contiene il tag specifico
+				dell' immagine "python" da utilizzarsi al posto di quella di fallback
 				
 			deps_files : Tuple[str, str, str, str]
 				Una 4-tupla di stringhe contenente:
@@ -111,11 +107,8 @@ def create_focal_images(
 	"""
 	focal_envs: Dict[str, DockerImage] = dict()
 	
-	dockf_bder: ATransactDockfBuilder = SimpleTransactDockfBuilder()
-	dockf_bder.new_dockerfile()
-	
 	fenv_confgor: IFocalEnvConfigurator = V1FocalEnvConfigurator(
-		dockf_bder, tag_prefix,
+		image_prefix,
 		gentests_dir, envconfig_dir,
 		dockerfile_fname,
 		py_vers_fname, deps_files,
@@ -123,14 +116,13 @@ def create_focal_images(
 		path_prefix=path_prefix
 	)
 	
-	dockf_bder.set_base_image(base_image)
-	fenv_confgor.set_default_pyversion(def_pyvers)
+	fenv_confgor.set_default_pyversion(image_tag)
 	
 	cont_manager: DockerClient = retrieve_contmanager()
 	
 	full_root: str
 	for proj_name, proj_info in projs_config.items():
-		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}"')
+		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}" ... ')
 		try:
 			focal_envs[proj_name] = cont_manager.images.get(
 				f"{image_prefix}_{proj_name}"

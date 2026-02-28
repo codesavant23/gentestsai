@@ -102,10 +102,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		if (value == ""):
 			raise ValueError()
 		
-		if value is None:
-			self._ap__rem_envvar(var_name)
-		else:
-			self._ap__addupd_envvar(var_name, value)
+		self._ap__add_instr(f'ENV {var_name}={value}')
 	
 	
 	def add_shellcmd(self, shell_cmd: str):
@@ -162,11 +159,13 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		if len(entryp) > 0:
 			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
 		
-		dockf_content: str = self._ap__get_dockf_content(
+		dockf_content: str = self._build_content(
 			f'FROM {self._bimage}',
 			global_args,
+			self._ap__get_dockf_body(),
 			entryp_dockfinstr
 		)
+		
 		with open(dockf_path, "w") as fdockf:
 			fdockf.writelines(dockf_content)
 			fdockf.flush()
@@ -207,74 +206,20 @@ class _ABaseDockfBuilder(IDockfBuilder):
 	
 	
 	@abstractmethod
-	def _ap__addupd_envvar(self, var_name: str, value: str):
+	def _ap__get_dockf_body(self) -> str:
 		"""
-			Aggiunge/modifica la definizione di una variabile d'ambiente shell (visibile anche nel dockerfile).
-			La chiamata a questo metodo equivale all' aggiunta/modifica di un istruzione `ENV var_name=value`
-			nel dockerfile risultante, corrispondente al `var_name` specificato.
-			Se si specifica una nuova variabile d' ambiente viene aggiunto un nuovo layer al dockerfile.
+			Restituisce il corpo centrale del dockerfile attuale per scriverlo in un file.
+			Con corpo centrale si intendono tutte le istruzioni che non sono:
 			
-			E' garantito all' interno di questo metodo:
-				- Che `var_name` non ha valore `None` ne è una stringa vuota
-				- Che `value` non ha valore `None` ne è una stringa vuota
-			
-			Parameters
-			----------
-				var_name: str
-					Una stringa contenente la variabile d' ambiente di cui aggiungere/modificare la definizione
-
-				value: str
-					Una stringa contenente il valore da impostare per la variabile d' ambiente
-		"""
-		pass
-	
-	
-	@abstractmethod
-	def _ap__rem_envvar(self, var_name: str):
-		"""
-			Rimuove la definizione di una variabile d' ambiente shell (visibile anche nel dockerfile).
-			La chiamata a questo metodo equivale alla rimozione di un istruzione `ENV var_name=value`
-			nel dockerfile risultante, corrispondente al `var_name` specificato.
-			Viene rimosso il layer della variabile `var_name` nel dockerfile.
-			
-			E' garantito all' interno di questo metodo che `var_name` non ha valore `None` ne è una stringa vuota
-			
-			Parameters
-			----------
-				var_name: str
-					Una stringa contenente il nome della variabile d' ambiente che è necessario rimuovere
-		"""
-		pass
-	
-	
-	@abstractmethod
-	def _ap__get_dockf_content(
-			self,
-			base_image: str,
-			glob_args: str,
-	        epcmd_instrs: str
-	) -> str:
-		"""
-			Restituisce il contenuto del dockerfile attuale per scriverlo in un file
-			
-			Parameters
-			----------
-				base_image: str
-					Una stringa contenente l' ultima immagine base impostata per il dockerfile
-					che verrà costruito
-					
-				glob_args: str
-					Una stringa contenente le istruzioni `ARG` che definiscono gli argomenti globali
-					del dockerfile che verrà costruito
-			
-				epcmd_instrs: str
-					Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
-					da inserire nel contenuto del dockerfile
+				- FROM
+				- ARG
+				- ENTRYPOINT o CMD
 					
 			Returns
 			-------
 				str
-					Una stringa rappresentante il contenuto del dockerfile costruito
+					Una stringa rappresentante il corpo centrale del dockerfile che
+					contiene le sue istruzioni
 		"""
 		pass
 	
@@ -308,3 +253,48 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			return (entryp_cmd, entryp_args)
 		else:
 			return tuple()
+		
+		
+	@classmethod
+	def _build_content(
+			cls,
+			base_image: str,
+			glob_args: str,
+			body: str,
+			epcmd_instrs: str
+	) -> str:
+		"""
+			Assembla l' intero contenuto del dockerfile che si vuole creare
+			
+			Parameters
+			----------
+				base_image: str
+					Una stringa contenente l' ultima immagine base impostata per il dockerfile
+					che verrà costruito
+					
+				glob_args: str
+					Una stringa contenente le istruzioni `ARG` che definiscono gli argomenti globali
+					del dockerfile che verrà costruito
+					
+				body: str
+					Una stringa contenente il corpo centrale del dockerfile
+			
+				epcmd_instrs: str
+					Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
+					da inserire nel contenuto del dockerfile
+		"""
+		# Scrittura degli eventuali argomenti globali
+		content: str = glob_args + "\n"
+		content += "\n\n" if glob_args != "" else ""
+
+		# Scrittura dell' immagine base
+		content += base_image + "\n\n"
+		
+		# Scrittura delle istruzioni del Dockerfile
+		content += (body + "\n\n")
+		
+		# Scrittura dell' eventuale coppia di istruzioni per l' entrypoint
+		if epcmd_instrs != "":
+			content += "\n\n" + epcmd_instrs
+			
+		return content

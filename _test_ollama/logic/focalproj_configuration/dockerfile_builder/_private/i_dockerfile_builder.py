@@ -50,18 +50,14 @@ class IDockfBuilder(ABC):
 	@abstractmethod
 	def set_envvar(self, var_name: str, value: str):
 		"""
-			Aggiunge/modifica la definizione di una variabile d'ambiente shell (visibile anche nel dockerfile).
-			La chiamata a questo metodo equivale all' aggiunta/modifica dell' istruzione `ENV var_name=value`
-			nel dockerfile risultante, corrispondente al `var_name` specificato.
-			Se si specifica una nuova variabile d' ambiente viene aggiunto un nuovo layer al dockerfile.
-			
-			Se `value` ha valore `None` allora si rimuove la variabile d' ambiente corrispondente
-			(e il layer corrispondente)
+			Aggiunge una definizione di una variabile d'ambiente shell (visibile anche nel dockerfile).
+			La chiamata a questo metodo equivale all' aggiunta di un istruzione `ENV var_name=value`
+			nel dockerfile risultante
 
 			Parameters
 			----------
 				var_name: str
-					Una stringa contenente la variabile d' ambiente di cui aggiungere/modificare la definizione
+					Una stringa contenente la variabile d' ambiente di cui aggiungere la definizione
 
 				value: str
 					Una stringa contenente il valore da impostare per la variabile d' ambiente
@@ -72,7 +68,7 @@ class IDockfBuilder(ABC):
 					Si verifica se:
 						
 						- Il parametro `var_name` ha valore `None` o è una stringa vuota
-						- Il parametro `value` è una stringa vuota
+						- Il parametro `value` ha valore `None` o è una stringa vuota
 		"""
 		pass
 	

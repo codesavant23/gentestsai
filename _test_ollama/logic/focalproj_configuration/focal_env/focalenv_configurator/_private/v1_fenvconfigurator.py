@@ -13,8 +13,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 	
 	def __init__(
 			self,
-			dockf_builder: ATransactDockfBuilder,
-			tag_prefix: str,
+			image_prefix: str,
 			gentests_dir: str,
 			envconfig_dir: str,
 			dockerfile_fname: str,
@@ -39,11 +38,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 				
 			Parameters
 			----------
-				dockf_builder: ATransactDockfBuilder
-					Un oggetto `ATransactDockfBuilder` rappresentante il costruttore di dockerfiles
-					da utilizzare per generare le immagini degli ambienti focali
-					
-				tag_prefix: str
+				image_prefix: str
 					Una stringa contenente il prefisso da apporre al tag di ogni immagine
 					che verrà costruita
 					
@@ -60,8 +55,8 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 					di ambiente focale
 					
 				py_vers_fname: str
-					Una stringa contenente il nome dell' eventuale file che contiene la versione specifica
-					dell' interprete Python da utilizzare nell' ambiente focale
+					Una stringa rappresentante il nome dell' eventuale file che contiene il tag specifico
+					dell' immagine "python" da utilizzarsi al posto di quella di fallback
 					
 				deps_files: Tuple[str, str, str, str]
 					Una 4-tupla di stringhe contenente:
@@ -91,8 +86,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			------
 				ValueError
 					Si verifica se:
-					
-						- Il parametro `dockf_builder` ha valore `None`
+
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `dockerfile_fname` ha valore `None` o è una stringa vuota
@@ -103,8 +97,11 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		super().__init__(
-			dockf_builder, tag_prefix,
-			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
+			image_prefix,
+			gentests_dir, envconfig_dir,
+			dockerfile_fname,
+			py_vers_fname,
+			deps_files,
 			tools_root, linttools_dir, covtools_dir,
 			path_prefix
 		)

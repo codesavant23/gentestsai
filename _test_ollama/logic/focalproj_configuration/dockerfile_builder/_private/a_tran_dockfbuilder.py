@@ -134,50 +134,23 @@ class ATransactDockfBuilder(_ABaseDockfBuilder):
 	
 	
 	@abstractmethod
-	def _ap__addupd_envvar(self, var_name: str, value: str):
-		pass
-	
-	
-	@abstractmethod
-	def _ap__rem_envvar(self, var_name: str):
-		pass
-	
-	
-	@abstractmethod
-	def _ap__get_dockf_content(
-			self,
-			base_image: str,
-			glob_args: str,
-			epcmd_instrs: str
-	) -> str:
+	def _ap__get_dockf_body(self) -> str:
 		"""
-			Restituisce il contenuto del dockerfile attuale per scriverlo in un file.
+			Restituisce il corpo centrale del dockerfile attuale per scriverlo in un file.
+			Con corpo centrale si intendono tutte le istruzioni che non sono:
+			
+				- FROM
+				- ARG
+				- ENTRYPOINT o CMD
 			
 			E' garantito all' interno di questo metodo che un' eventuale transazione di comandi
 			shell, che era in corso, è già stata chiusa
 			
-			Parameters
-			----------
-				base_image: str
-					Una stringa contenente l' ultima immagine base impostata per il dockerfile
-					che verrà costruito
-					
-				glob_args: str
-					Una stringa contenente le istruzioni `ARG` che definiscono gli argomenti globali
-					del dockerfile che verrà costruito
-					
-				shell_instr: str
-					Una stringa contenente l' eventuale istruzione `SHELL` da inserire nel contenuto
-					del dockerfile
-			
-				epcmd_instrs: str
-					Una stringa contenente le eventuali istruzioni `ENTRYPOINT`+`CMD`
-					da inserire nel contenuto del dockerfile
-					
 			Returns
 			-------
 				str
-					Una stringa rappresentante il contenuto del dockerfile costruito
+					Una stringa rappresentante il corpo centrale del dockerfile che
+					contiene le sue istruzioni
 		"""
 		pass
 	

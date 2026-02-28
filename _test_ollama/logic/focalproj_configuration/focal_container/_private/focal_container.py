@@ -1,8 +1,22 @@
 from typing import Tuple
 
 # ============== OS Utilities ============== #
-from os import environ as os_getenv
+# ============== OS Utilities ============== #
+from os import (
+	makedirs as os_mkdirs,
+	environ as os_getenv
+)
+from shutil import rmtree as os_dremove
+from os.path import exists as os_fdexists
 # ========================================== #
+# ============ Path Utilities ============ #
+from os.path import (
+	sep as path_sep,
+	altsep as path_altsep,
+	join as path_join
+)
+_PATH_SEPS: str = f"{path_sep}{path_altsep if path_altsep is not None else ''}"
+# ======================================== #
 # ============ Docker SDK Utilities ============ #
 from docker import (
 	from_env as docker_getclient,
@@ -40,6 +54,8 @@ class FocalContainer:
 			docker_image: DockerImage,
 			full_root: str,
 			path_prefix: str,
+			shared_dirname: str = "gtsai__shared",
+			results_dirname: str = "gtsai__results",
 			stop_timeout: int=100
 	):
 		"""
@@ -60,6 +76,17 @@ class FocalContainer:
 					Una stringa contenente il path prefix, stabilito alla costruzione dell' immagine, che
 					rappresenta la Full Project Root Path all' interno del container docker gestito
 
+				shared_dirname: str
+					Opzionale. Default = `"gtsai__shared"`. Una stringa rappresentante il nome della directory-volume,
+					all' interno del `path_prefix`, che conterrà i files da esporre all' ambiente focale
+					successivamente  alla sua creazione.
+					Si presuppone l' esistenza di questa path nel sistema operativo che hosta il
+					gestore degli ambienti focali, all' interno di `full_root`.
+					
+				results_dirname: str
+					Opzionale. Default = `"gtsai__results"`. Una stringa rappresentante il nome della directory-volume,
+					all' interno del `path_prefix`, che conterrà i files prodotti dall' ambiente focale come risultato
+	
 				stop_timeout: int
 					Opzionale. Default = `100`. Un intero che indica il valore di timeout (in millisecondi)
 					per lo stop del container docker, gestito da questo FocalContainer
@@ -72,14 +99,19 @@ class FocalContainer:
 						- Il parametro `docker_image` ha valore `None`
 						- Il parametro `full_root` ha valore `None` o è una stringa vuota
 						- Il parametro `path_prefix` ha valore `None` o è una stringa vuota
+						- Il parametro `shared_dirname` ha valore `None` o è una stringa vuota
+						- Il parametro `shared_dirname` rappresenta una path che non esiste in `full_root`
+						- Il parametro `results_dirname` ha valore `None` o è una stringa vuota
 						- Il parametro `stop_timeout` è minore di 1
 		"""
 		if (
 			(docker_image is None) or
-			(full_root is None) or
-			(path_prefix is None) or
+			(full_root is None) or (full_root == "") or
+			(path_prefix is None) or (path_prefix == "") or
 			(stop_timeout < 1)
 		):
+			raise ValueError()
+		if not os_fdexists(path_join(full_root, shared_dirname)):
 			raise ValueError()
 		
 		self._docker: DockerClient = None
@@ -90,9 +122,12 @@ class FocalContainer:
 			self._docker = docker_getclient()
 
 		self._image = docker_image
-		self._full_root: str = full_root
+		self._full_root: str = full_root.rstrip(_PATH_SEPS)
 
 		self._path_prefix: str = path_prefix
+		
+		self._shared_dir: str = shared_dirname
+		self._results_dir: str = results_dirname
 
 		self._timeout: float = stop_timeout
 
@@ -119,13 +154,23 @@ class FocalContainer:
 		"""
 		if self._running:
 			raise ContainerAlreadyRunningError()
+		
+		shared_path: str = path_join(self._full_root, self._shared_dir)
+		results_path: str = path_join(self._full_root, self._results_dir)
+		
+		os_dremove(results_path, ignore_errors=True)
+		os_mkdirs(results_path)
 
 		self._environ = self._docker.containers.run(
 			image=self._image,
 			detach=True,
 			volumes={
-				self._full_root: {
-					"bind": self._path_prefix,
+				shared_path: {
+					"bind": f"{self._path_prefix}/{self._shared_dir}",
+					"mode": "rw"
+				},
+				results_path: {
+					"bind": f"{self._path_prefix}/{self._results_dir}",
 					"mode": "rw"
 				}
 			}
@@ -182,7 +227,7 @@ class FocalContainer:
 
 	def stop_container(self):
 		"""
-			Termina l' esecuzione del container docker, gestito da questo FocalContainer.
+			Termina l' esecuzione del container docker, gestito da questo FocalContainer
 
 			Raises
 			------

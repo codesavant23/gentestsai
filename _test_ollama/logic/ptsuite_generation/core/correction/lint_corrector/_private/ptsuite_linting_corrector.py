@@ -45,15 +45,9 @@ class PtsuiteLintingCorrector:
 		desiderato.
 		
 		Attributi di Classe Pubblici:
-			- `LINTING_TEMP_DIR` (str) : Rappresenta il nome, di default, della directory temporanea, nel container, in cui verranno memorizzati i files usati temporaneamente durante la verifica del codice
-			- `LINTING_TOOLS_DIRNAME` (str) : Rappresenta il nome, di default, della directory in cui sono contenuti i tools necessari per la verifica, a livello di linting, che verrà effettuata all' interno dell' ambiente del progetto focale
-			- `LINTING_SCRIPT` (str) : Rappresenta il nome, di default, dello script Python, contenuto della directory dei tools per la verifica a livello di linting, che eseguirà la verifica nell' ambiente del progetto focale tramite gli strumenti scelti
 			- `GENCODE_PATT` (str) : Rappresenta il pattern regex, di default, da utilizzare per identificare il codice nella risposta di un tentativo di correzione
 	"""
 	
-	LINTING_TEMP_DIR: str = "gtsai_linting_temp"
-	LINTING_TOOLS_DIR: str = "gtsai_linting_tools"
-	LINTING_SCRIPT: str = "exec_linting_check.py"
 	GENCODE_PATT: str = r"```python\n?(?P<gen_code>[\s\S]+)\n?```"
 	
 	def __init__(
@@ -102,6 +96,8 @@ class PtsuiteLintingCorrector:
 					Si verfica se:
 					
 						- Il parametro `max_tries` è minore di 1
+						- Il parametro `llm_accsor` ha valore `None`
+						- Il parametro `lint_checker` ha valore `None`
 						- Il parametro `response_format` viene fornito ma non contiene un named group che si chiama "gen_code"
 		"""
 		if max_tries < 1:

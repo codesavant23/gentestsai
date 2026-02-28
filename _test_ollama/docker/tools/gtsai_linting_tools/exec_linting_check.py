@@ -3,6 +3,9 @@ from typing import List
 # ============== OS Utilities ============== #
 from os import environ as os_getenv
 # ========================================== #
+# ============ Path Utilities ============ #
+from os.path import split as path_split
+# ======================================== #
 # =========== ArgParse Utilities =========== #
 from argparse import (
 	ArgumentParser,
@@ -30,7 +33,7 @@ if __name__ == "__main__":
 	)
 	arg_parser.add_argument(
 		"result_relpath",
-		help="Linting result JSON file path (relative to the Full Project Root Path)"
+		help="Linting result JSON file path (relative to the container path prefix)"
 	)
 	arg_parser.add_argument(
 		"--pyl_args",
@@ -45,8 +48,10 @@ if __name__ == "__main__":
 	result_relpath: str = script_args.result_relpath
 	
 	full_root: str = os_getenv["FULL_ROOT"]
+	path_prefix: str = path_split(full_root)[0]
+	
 	ptsuite_path: str = f"{full_root}/{ptsuite_relpath}"
-	result_path: str = f"{full_root}/{result_relpath}"
+	result_path: str = f"{path_prefix}/{result_relpath}"
 	
 	ptsuite_checker: PartialTsuite1TimeLintingChecker = PartialTsuite1TimeLintingChecker(
 		full_root,
