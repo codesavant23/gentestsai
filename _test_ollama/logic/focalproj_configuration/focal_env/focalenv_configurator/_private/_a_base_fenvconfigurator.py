@@ -266,7 +266,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._proj_name = proj_name
 		self._orig_full_root = full_root
 		
-		self._full_root: str = f"{self._path_prefix}/{full_dirname}"
+		self._full_root: str = f"{self._path_prefix}/project"
 		self._focal_root: str = f"{self._full_root}/{focal_dirname}"
 		self._tests_root: str = f"{self._full_root}/{tests_relpath}"
 		self._gentests_root: str = f"{self._full_root}/{self._gentests_dir}"
@@ -341,6 +341,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Eliminazione delle directories di linting e coverage duplicate
 		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._linttools_dir} "
 		                                 f"{self._full_root}/{self._covtools_dir}")
+		# Copia della Env-Config Project Root Path esternamente al progetto focale
+		self._dockf_builder.add_copy(
+			[self._envconfig_dir],
+			f"{self._path_prefix}/{self._envconfig_dir}/"
+		)
+		# Rimuove la Env-Config Project Root Path all' interno della Full Project Root Path dell' ambiente focale
+		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._envconfig_dir}")
 		
 		# Configurazione delle variabili d'ambiente locali
 		self._configure_local_envvars()
@@ -360,9 +367,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Installazione di `pylint`
 		self._dockf_builder.add_shellcmd_step(f'pip install pylint=="{self._ap__pylint_version()}"')
 		self._dockf_builder.commit_cmds_tran()
-		
-		# Rimuove la Env-Config Project Root Path all' interno dell' ambiente focale
-		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._envconfig_dir}")
 		
 		# Installazione dei softwares aggiuntivi specificati
 		# dai discendenti di questa classe astratta
@@ -768,13 +772,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					pip_flags += f" {value}"
 					
 			self._dockf_builder.add_shellcmd_step(
-				f"yes | python -m pip install -q -q -q {pip_flags} \"{py_packs}\""
+				f"yes | python -m pip install -q -q -q {pip_flags} {py_packs}"
 			)
 		if len(py_deps) > 0:
 			self._dockf_builder.commit_cmds_tran()
 			
 		# Esecuzione dello script Post-installazione delle dipendenze Python
-		if os_fdexists(self._postscrpy_path):
+		if self._postscrpy_path != "":
 			self._dockf_builder.add_shellcmd(
 				f'chmod a+x {self._postscrpy_path} && '
 				f'/bin/bash {self._postscrpy_path}'
