@@ -340,8 +340,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		)
 		# Eliminazione delle directories di linting e coverage duplicate
 		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._linttools_dir} "
-		                                 f"{self._full_root}/{self._covtools_dir} "
-		                                 f"{self._full_root}/{self._envconfig_dir}")
+		                                 f"{self._full_root}/{self._covtools_dir}")
 		
 		# Configurazione delle variabili d'ambiente locali
 		self._configure_local_envvars()
@@ -361,6 +360,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Installazione di `pylint`
 		self._dockf_builder.add_shellcmd_step(f'pip install pylint=="{self._ap__pylint_version()}"')
 		self._dockf_builder.commit_cmds_tran()
+		
+		# Rimuove la Env-Config Project Root Path all' interno dell' ambiente focale
+		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._envconfig_dir}")
 		
 		# Installazione dei softwares aggiuntivi specificati
 		# dai discendenti di questa classe astratta
