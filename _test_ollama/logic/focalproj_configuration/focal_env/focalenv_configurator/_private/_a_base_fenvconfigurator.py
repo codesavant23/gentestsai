@@ -775,7 +775,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			
 		# Esecuzione dello script Post-installazione delle dipendenze Python
 		if os_fdexists(self._postscrpy_path):
-			self._dockf_builder.add_shellcmd_step(
+			self._dockf_builder.add_shellcmd(
 				f'chmod a+x {self._postscrpy_path} && '
 				f'/bin/bash {self._postscrpy_path}'
 			)
