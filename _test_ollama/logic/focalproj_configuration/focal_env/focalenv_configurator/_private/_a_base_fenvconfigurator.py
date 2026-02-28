@@ -162,7 +162,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		self._check_initargs(
-			dockf_builder, image_prefix,
+			image_prefix,
 			gentests_dir, envconfig_dir, dockerfile_fname, py_vers_fname, deps_files,
 			tools_root, linttools_dir, path_prefix
 		)
@@ -808,7 +808,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	@classmethod
 	def _check_initargs(
 			cls,
-			dockf_builder: ATransactDockfBuilder,
 			tag_prefix: str,
 			gentests_dir: str,
 			envconfig_dir: str,
@@ -829,7 +828,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				ValueError
 					Si verifica se:
 					
-						- Il parametro `dockf_builder` ha valore `None`
 						- Il parametro `tag_prefix` ha valore `None` o è una stringa vuota
 						- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 						- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota
@@ -841,7 +839,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 						- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
 		"""
 		if (
-			(dockf_builder is None) or
 			(tag_prefix is None) or
 			(gentests_dir is None) or
 			(envconfig_dir is None) or
