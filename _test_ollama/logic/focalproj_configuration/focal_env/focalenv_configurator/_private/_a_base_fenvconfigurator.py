@@ -321,6 +321,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		python_tag: str = self._get_python_version()
 		ext_deps: List[str] = self._get_ext_deps()
 		
+		# Inizializzazione di un nuovo dockerfile
+		self._dockf_builder.new_dockerfile()
 		self._dockf_builder.set_base_image(f"python:{python_tag}")
 		
 		# Installazione di BaSH
