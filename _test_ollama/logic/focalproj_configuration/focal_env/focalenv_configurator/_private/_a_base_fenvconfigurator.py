@@ -383,6 +383,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Impostazione della directory corrente sul path prefix
 		self._dockf_builder.add_workdir(self._path_prefix)
 		
+		# Impostazione del processo principale dell' ambiente focale
+		self._dockf_builder.set_entrypoint("/bin/bash")
+		
 		dockerfile_path: str = f"{self._orig_full_root}/{self._dockf_fname}"
 		self._dockf_builder.build_dockerfile(dockerfile_path)
 
@@ -391,9 +394,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
 		self._copy_tool_subroot_infullroot(str(linttools_path))
 		self._copy_tool_subroot_infullroot(str(covtools_path))
-		
-		# Impostazione del processo principale dell' ambiente focale
-		self._dockf_builder.set_entrypoint("/bin/bash")
 		
 		# Build dell' immagine ambiente focale
 		proj_image: DockerImage = self._docker.images.build(

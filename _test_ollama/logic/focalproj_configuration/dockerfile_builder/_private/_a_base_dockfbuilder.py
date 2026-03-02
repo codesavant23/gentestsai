@@ -158,7 +158,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		entryp_dockfinstr: str = ""
 		if len(entryp) > 0:
 			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'
-			if len(entryp[1]) > 0:
+			if entryp[1] != "[]":
 				entryp_dockfinstr += f'CMD {entryp[1]}'
 		
 		dockf_content: str = self._build_content(
@@ -216,7 +216,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 				- FROM
 				- ARG
 				- ENTRYPOINT o CMD
-					
+				
 			Returns
 			-------
 				str
@@ -249,7 +249,7 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		json_enc: JSONEncoder = JSONEncoder()
 		
 		if len(self._entryp) > 0:
-			entryp_cmd: str = json_enc.encode(f'["{self._entryp[0]}"]')
+			entryp_cmd: str = json_dumps(self._entryp[0:])
 			entryp_args: str = json_enc.encode(self._entryp[1:])
 			
 			return (entryp_cmd, entryp_args)
@@ -297,6 +297,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		
 		# Scrittura dell' eventuale coppia di istruzioni per l' entrypoint
 		if epcmd_instrs != "":
-			content += "\n\n" + epcmd_instrs
+			content += epcmd_instrs
 			
 		return content
