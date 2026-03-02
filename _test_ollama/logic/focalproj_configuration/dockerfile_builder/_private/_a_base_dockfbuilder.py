@@ -155,9 +155,11 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			global_args += f"ARG {glob_arg}={value}" + "\n"
 		
 		entryp: Tuple[str, str]  = self._get_entryp_parts()
-		entryp_dockfinstr: str = f''
+		entryp_dockfinstr: str = ""
 		if len(entryp) > 0:
-			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'+f'CMD {entryp[1]}'
+			entryp_dockfinstr = f'ENTRYPOINT {entryp[0]}'+'\n'
+			if len(entryp[1]) > 0:
+				entryp_dockfinstr += f'CMD {entryp[1]}'
 		
 		dockf_content: str = self._build_content(
 			f'FROM {self._bimage}',

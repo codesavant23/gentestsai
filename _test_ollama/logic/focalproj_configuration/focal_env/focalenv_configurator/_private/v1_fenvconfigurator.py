@@ -1,14 +1,12 @@
 from typing import Tuple
 from ._a_base_fenvconfigurator import _ABaseFocalEnvConfigurator
 
-from ....dockerfile_builder import ATransactDockfBuilder
-
 
 
 class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 	"""
 		Rappresenta un `IFocalEnvConfigurator` che crea immagini di ambienti focali
-		con installato `pylint=="4.0.4"` e `coverage.py=="7.10.4"`
+		con installato `pylint=="3.2.3"` e `coverage.py=="7.2.3"`
 	"""
 	
 	def __init__(
@@ -108,11 +106,11 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 	
 	
 	def _ap__pylint_version(self) -> str:
-		return "4.0.4"
+		return "3.2.3"
 	
 	
 	def _ap__covpy_version(self) -> str:
-		return "7.10.4"
+		return "7.2.3"
 	
 
 	##	============================================================

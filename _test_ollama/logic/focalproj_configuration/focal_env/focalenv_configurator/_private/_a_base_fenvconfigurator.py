@@ -333,14 +333,20 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Creazione del path prefix e della tools root
 		self._dockf_builder.add_copy(["."], f"{self._full_root}")
 		
-		# Copia dei tools per il linting e per la coverage
+		# Copia dei tools per il linting
 		self._dockf_builder.add_copy(
-			[self._linttools_dir, self._covtools_dir],
-			f"{self._path_prefix}/tools/"
+			[self._linttools_dir],
+			f"{self._path_prefix}/tools/{self._linttools_dir}/"
+		)
+		# Copia dei tools per la coverage
+		self._dockf_builder.add_copy(
+			[self._covtools_dir],
+			f"{self._path_prefix}/tools/{self._covtools_dir}/"
 		)
 		# Eliminazione delle directories di linting e coverage duplicate
 		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._linttools_dir} "
 		                                 f"{self._full_root}/{self._covtools_dir}")
+		
 		# Copia della Env-Config Project Root Path esternamente al progetto focale
 		self._dockf_builder.add_copy(
 			[self._envconfig_dir],
@@ -383,6 +389,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		covtools_path: SystemPath = SystemPath(self._tools_root, self._covtools_dir)
 		self._copy_tool_subroot_infullroot(str(linttools_path))
 		self._copy_tool_subroot_infullroot(str(covtools_path))
+		
+		# Impostazione del processo principale dell' ambiente focale
+		self._dockf_builder.set_entrypoint("/bin/bash")
 		
 		# Build dell' immagine ambiente focale
 		proj_image: DockerImage = self._docker.images.build(
