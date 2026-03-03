@@ -11,10 +11,11 @@ from os.path import (
 	join as path_join,
 	split as path_split,
 	dirname as path_getdir,
+	commonpath as path_intersect,
 	abspath as path_absolute,
-	relpath as path_relative,
-	commonpath as path_intersect
+	relpath as path_relative
 )
+_PATH_SEPS: str = f"{path_sep}{path_altsep if path_altsep is not None else ''}"
 # ======================================== #
 # ============== OS Utilities ============== #
 from sys import stdout as os_stdout
@@ -43,7 +44,7 @@ from main_execs.gents.mbym import (
 from main_execs.gents.reading import read_fallback_templprompts, read_1model_templprompts
 from main_execs.gents import normalize_llmname
 
-from main_execs import read_config_files
+from main_execs import read_gents_configfiles
 from logic.configuration.config_parser import (
 	IConfigParser,
 	ConfigParserFactory, EParserFiletype
@@ -121,7 +122,7 @@ if __name__ == "__main__":
 	config_parser: IConfigParser = ConfigParserFactory.create(
 		EParserFiletype[gents_args.config_type.upper()]
 	)
-	configs: Dict[str, Dict[str, Any]] = read_config_files(
+	configs: Dict[str, Dict[str, Any]] = read_gents_configfiles(
 		gents_args.config_root,
 		config_parser,
 		EImplementedPlatform[gents_args.platform.upper()],
@@ -368,14 +369,18 @@ if __name__ == "__main__":
 			
 			# ===== Ottenimento delle informazioni del progetto focale =====
 			project_info = projs_config[project_name]
+			# Ottenimento della Full Project Root Path
+			full_root = project_info["full_root"].rstrip(_PATH_SEPS)
 			# Ottenimento della Focal Project Root Path
-			focal_root = project_info["focal_root"].rstrip(path_sep).rstrip(path_altsep)
-			# Calcolo della Full Project Root Path
-			full_root = path_split(focal_root)[0].rstrip(path_sep).rstrip(path_altsep)
+			focal_root = project_info["focal_root"].rstrip(_PATH_SEPS)
+			focal_root = path_join(full_root, focal_root)
 			# Ottenimento della Tests Project Root Path
-			tests_root = project_info["tests_root"].rstrip(path_sep).rstrip(path_altsep)
+			tests_root = project_info["tests_root"].rstrip(_PATH_SEPS)
+			tests_root = path_join(full_root, tests_root)
 			# Ottenimento della lista di paths/files esclusi dal codice focale
 			focal_excluded = project_info.get("focal_excluded", [])
+			for i, focal_excl in enumerate(focal_excluded):
+				focal_excluded[i] = path_join(focal_root, focal_excl)
 			
 			# Impostazione dell' immagine dell' ambiente focale nel verificatore di linting
 			lint_chker.set_focal_project(

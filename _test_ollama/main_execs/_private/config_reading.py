@@ -150,18 +150,19 @@ def read_caches_config(
 def read_calccov_config(
 		config_root: str,
 		config_fname: str,
-		config_parser: IConfigParser
+		config_parser: IConfigParser,
+		covtools_root: str
 ) -> Dict[str, Any]:
 	# Lettura del file con i parametri per il calcolo della coverage
 	calccov_dict: Dict[str, Any] = config_parser.read_config(
 		path_join(config_root, config_fname)
 	)
-	calccov_chker: IConfigValidator = CalcCovConfigValidator(calccov_dict)
+	calccov_chker: IConfigValidator = CalcCovConfigValidator(calccov_dict, covtools_root)
 	calccov_chker.validate_sem()
 	return calccov_dict
 
 
-def read_config_files(
+def read_gents_configfiles(
 		config_root: str,
 		config_parser: IConfigParser,
 		inf_platf: EImplementedPlatform,

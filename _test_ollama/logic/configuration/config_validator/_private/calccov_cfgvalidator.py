@@ -62,7 +62,7 @@ class CalcCovConfigValidator(_ABaseConfigValidator):
 					
 				covtools_root: str
 					Una stringa rappresentante la path che contiene i tools per la coverage
-					da utilizzare all' interno dell' ambiente focale
+					da utilizzare all' interno degli ambienti focali
 
 			Raises
 			------
