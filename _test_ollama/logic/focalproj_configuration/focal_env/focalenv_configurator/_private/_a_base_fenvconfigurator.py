@@ -326,7 +326,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._dockf_builder.set_base_image(f"python:{python_tag}")
 		
 		# Installazione di BaSH
-		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y bash")
+		self._dockf_builder.add_shellcmd("apt-get update && apt-get install -y bash"
+		                                 " && rm -rf /var/lib/apt/lists/*")
 
 		# Impostazione della versione dell' interprete Python che verrà utilizzata
 		py_version: str = reg_search(self._PYVERS_PATT, python_tag).group()
@@ -361,7 +362,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._configure_local_envvars()
 		
 		# Installazione del comando `yes` (utilizzato per le installazioni silenziose)
-		self._dockf_builder.add_shellcmd("apt-get update && apt install -y coreutils")
+		self._dockf_builder.add_shellcmd("apt-get update && apt install -y coreutils"
+		                                 " && rm -rf /var/lib/apt/lists/*")
 
 		# Upgrade del package manager PIP
 		self._dockf_builder.add_shellcmd("python -m pip install --upgrade pip")
@@ -758,6 +760,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		for ext_dep in ext_deps:
 			self._dockf_builder.add_shellcmd_step(f"apt-get install -y {ext_dep}")
 		if os_fdexists(self._ext_deps_path):
+			self._dockf_builder.add_shellcmd_step("rm -rf /var/lib/apt/lists/*")
 			self._dockf_builder.commit_cmds_tran()
 
 		# Esecuzione dello script Post-installazione delle dipendenze esterne
