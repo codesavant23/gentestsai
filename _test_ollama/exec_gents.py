@@ -176,6 +176,7 @@ if __name__ == "__main__":
 			projenv_config["ext_deps_file"],
 			projenv_config["pre_extdeps_script"],
 			projenv_config["post_extdeps_script"],
+			projenv_config["pre_pydeps_script"],
 			projenv_config["post_pydeps_script"]
 		),
 		tools_config["tools_root"],

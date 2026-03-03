@@ -56,13 +56,15 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 					Una stringa rappresentante il nome dell' eventuale file che contiene il tag specifico
 					dell' immagine "python" da utilizzarsi al posto di quella di fallback
 					
-				deps_files: Tuple[str, str, str, str]
-					Una 4-tupla di stringhe contenente:
+				deps_files: Tuple[str, str, str, str, str, str]
+					Una 6-tupla di stringhe contenente:
 						
 						- [0]: Il nome dell' eventuale file che specifica le dipendenze Python del progetto focale
 						- [1]: Il nome dell' eventuale file che specifica le dipendenze non-Python del progetto focale
-						- [2]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima l' installazione delle dipendenze esterne
+						- [2]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima dell' installazione delle dipendenze esterne
 						- [3]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze esterne
+						- [4]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima dell' installazione delle dipendenze Python
+						- [5]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze Python
 			
 				tools_root: str
 					Una stringa rappresentante la path che contiene i tools da utilizzare all' interno

@@ -87,8 +87,8 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		"dockerfile",
 		"pyversion_file",
 		"ext_deps_file", "python_deps_file",
-		"pre_extdeps_script", "post_extdeps_script",
-		"post_pydeps_script"
+		"pre_pydeps_script", "post_pydeps_script",
+		"pre_extdeps_script", "post_extdeps_script"
 	}
 	
 	_LINUXPATH_PATT: str = r"^(?P<linux_path>(/[\w.-]+/?)+)$"

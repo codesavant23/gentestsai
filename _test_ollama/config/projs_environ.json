@@ -19,6 +19,7 @@
 		"ext_deps_file": "ext_deps.txt",
 		"pre_extdeps_script": "pre_extdeps.sh",
 		"post_extdeps_script": "post_extdeps.sh",
+		"pre_pydeps_script": "pre_pydeps.sh",
 		"post_pydeps_script": "post_pydeps.sh"
 	}
 }

@@ -81,7 +81,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			envconfig_dir: str,
 			dockerfile_fname: str,
 			py_vers_fname: str,
-			deps_files: Tuple[str, str, str, str, str],
+			deps_files: Tuple[str, str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
 			covtools_dir: str,
@@ -121,14 +121,15 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Una stringa rappresentante il nome dell' eventuale file che contiene il tag specifico
 					dell' immagine "python" da utilizzarsi al posto di quella di fallback
 					
-				deps_files: Tuple[str, str, str, str, str]
-					Una 5-tupla di stringhe contenente:
+				deps_files: Tuple[str, str, str, str, str, str]
+					Una 6-tupla di stringhe contenente:
 						
 						- [0]: Il nome dell' eventuale file che specifica le dipendenze Python del progetto focale
 						- [1]: Il nome dell' eventuale file che specifica le dipendenze non-Python del progetto focale
-						- [2]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima l' installazione delle dipendenze esterne
+						- [2]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima dell' installazione delle dipendenze esterne
 						- [3]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze esterne
-						- [4]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze Python
+						- [4]: Il nome dell' eventuale script che contiene il codice shell da eseguire prima dell' installazione delle dipendenze Python
+						- [5]: Il nome dell' eventuale script che contiene il codice shell da eseguire dopo l' installazione delle dipendenze Python
 			
 				tools_root: str
 					Una stringa rappresentante la path che contiene i tools da utilizzare all' interno
@@ -224,7 +225,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._prescr_path: str = None
 		self._postscr_fname: str = deps_files[3]
 		self._postscr_path: str = None
-		self._postscrpy_fname: str = deps_files[4]
+		self._prescrpy_fname: str = deps_files[4]
+		self._prescrpy_path: str = None
+		self._postscrpy_fname: str = deps_files[5]
 		self._postscrpy_path: str = None
 		
 		# Path dei tools dell' ambiente reale
@@ -567,7 +570,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					new_path_prefix,
 					self._postscr_path,
 				)
-				
+
+		if self._prescrpy_path != "":
+			self._prescrpy_path = self._change_prefix_of_path(
+				new_path_prefix,
+				self._prescrpy_path,
+			)
+			
 		if self._postscrpy_path != "":
 			self._postscrpy_path = self._change_prefix_of_path(
 				new_path_prefix,
@@ -608,6 +617,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				self._postscr_fname,
 				container=True
 			)
+			
+		self._prescrpy_path = self._set_envc_entity_ifexists(
+			orig_envconfig_root,
+			self._prescrpy_fname,
+			container=True
+		)
 			
 		self._postscrpy_path = self._set_envc_entity_ifexists(
 			orig_envconfig_root,
@@ -770,6 +785,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					f'chmod a+x {self._postscr_path} && '
 					f'/bin/bash {self._postscr_path}'
 				)
+				
+		# Esecuzione dello script Pre-installazione delle dipendenze Python
+		if self._prescrpy_path != "":
+			self._dockf_builder.add_shellcmd(
+				f'chmod a+x {self._prescrpy_path} && '
+				f'/bin/bash {self._prescrpy_path}'
+			)
 
 		# Installazione delle dipendenze (packages) Python
 		py_deps: List[Dict[str, str]] = self._get_py_deps()
