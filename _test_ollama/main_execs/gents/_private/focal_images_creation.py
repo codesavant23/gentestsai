@@ -1,16 +1,18 @@
 from typing import Tuple, Dict, Any
 
 # ============ Path Utilities ============ #
-from os.path import split as path_split
+from os.path import (
+	join as path_join,
+	sep as path_sep,
+	altsep as path_altsep,
+)
+_PATH_SEPS: str = f"{path_sep}{path_altsep if path_altsep is not None else ''}"
 # ======================================== #
 # ============== Docker SDK Utilities =============== #
 from docker.models.images import Image as DockerImage
 from docker.errors import ImageNotFound
 from docker.client import DockerClient
 # =================================================== #
-from logic.focalproj_configuration.dockerfile_builder import (
-	ATransactDockfBuilder, SimpleTransactDockfBuilder
-)
 from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 	IFocalEnvConfigurator, V1FocalEnvConfigurator, EImageBuiltOption
 )
@@ -121,6 +123,9 @@ def create_focal_images(
 	cont_manager: DockerClient = retrieve_contmanager()
 	
 	full_root: str
+	focal_root: str
+	tests_root: str
+	
 	for proj_name, proj_info in projs_config.items():
 		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}" ... ')
 		try:
@@ -129,12 +134,15 @@ def create_focal_images(
 			)
 			gents_logger.set_endmessage("OTTENUTA!")
 		except ImageNotFound:
-			full_root = path_split(proj_info["focal_root"])[0]
+			full_root = proj_info["full_root"].rstrip(_PATH_SEPS)
+			focal_root = path_join(full_root, proj_info["focal_root"].rstrip(_PATH_SEPS))
+			tests_root = path_join(full_root, proj_info["tests_root"].rstrip(_PATH_SEPS))
+			
 			fenv_confgor.set_focal_project(
 				proj_name,
 				full_root,
-				proj_info["focal_root"],
-				proj_info["tests_root"]
+				focal_root,
+				tests_root
 			)
 			focal_envs[proj_name] = fenv_confgor.build_image(EImageBuiltOption.DOCKIGNORE)
 			gents_logger.set_endmessage("CREATA!")

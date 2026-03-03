@@ -386,7 +386,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Impostazione del processo principale dell' ambiente focale
 		self._dockf_builder.set_entrypoint("/bin/bash")
 		
-		dockerfile_path: str = f"{self._orig_full_root}/{self._dockf_fname}"
+		dockerfile_path: str = path_join(self._orig_full_root, self._dockf_fname)
 		self._dockf_builder.build_dockerfile(dockerfile_path)
 
 		# Copia delle directories dei tools nel build context
