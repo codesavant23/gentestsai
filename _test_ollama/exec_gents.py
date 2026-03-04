@@ -41,7 +41,7 @@ from main_execs.gents.mbym import (
 	generate_correct_mbym
 )
 
-from main_execs.gents.reading import read_fallback_templprompts, read_1model_templprompts
+from main_execs.gents.reading import read_templprompts, read_1model_templprompts
 from main_execs.gents import normalize_llmname
 
 from main_execs import read_gents_configfiles
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 	start_del: str = prompts_config["placeholders"]["start_del"]
 	end_del: str = prompts_config["placeholders"]["end_del"]
 	fallback_path: str = path_join(prompts_config["base_path"], prompts_config["generic_dirname"])
-	fback_prompts: Dict[str, str] = read_fallback_templprompts(
+	fback_prompts: Dict[str, str] = read_templprompts(
 		fallback_path,
 		prompts_config["file_names"]
 	)
