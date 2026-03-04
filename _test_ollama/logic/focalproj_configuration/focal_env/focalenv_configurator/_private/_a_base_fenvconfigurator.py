@@ -2,7 +2,7 @@ from typing import List, Tuple, Dict
 from abc import abstractmethod
 from .. import (
 	IFocalEnvConfigurator,
-	EImageBuiltOption
+	EDockignoreOption
 )
 
 # ============== Docker SDK Utilities =============== #
@@ -21,7 +21,8 @@ from regex import (
 # ============== OS Utilities ============== #
 from os import (
 	remove as os_remove,
-	environ as os_envvar
+	environ as os_envvar,
+	rename as os_rename,
 )
 from shutil import rmtree as os_dremove
 from os.path import exists as os_fdexists
@@ -317,7 +318,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 	
 	def build_image(
 			self,
-			post_steps: EImageBuiltOption = EImageBuiltOption.DOCKIGNORE
+			wants_dockign: bool = True
 	) -> DockerImage:
 		self._assert_inited()
 
@@ -400,6 +401,18 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		self._copy_tool_subroot_infullroot(str(linttools_path))
 		self._copy_tool_subroot_infullroot(str(covtools_path))
 		
+		# Sostituzione di un eventuale .dockerignore se presente prima del build
+		# dell' ambiente focale
+		dockign_path: str = path_join(self._orig_full_root, ".dockignore")
+		dockign_saved_path: str = path_join(self._orig_full_root, ".dockignore.saved")
+		if os_fdexists(dockign_path):
+			os_rename(dockign_path, dockign_saved_path)
+			
+		if wants_dockign:
+			with open(dockign_path, "w") as fdocki:
+				fdocki.writelines(f"./{self._dockf_fname}")
+				fdocki.flush()
+		
 		# Build dell' immagine ambiente focale
 		proj_image: DockerImage = self._docker.images.build(
 			path=self._orig_full_root,
@@ -407,6 +420,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			tag=f"{self._tag_prefix}_{self._proj_name}",
 			rm=True
 		)[0]
+		
+		# Ri-sostituzione di un eventuale .dockerignore salvato dopo il build
+		# dell' ambiente focale
+		if os_fdexists(dockign_saved_path):
+			os_rename(dockign_saved_path, dockign_path)
 		
 		# Rimozione delle directories dei tools copiate dentro alla Full Project Root Path
 		# per inserirle nel build context
@@ -416,15 +434,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		os_dremove(
 			path_join(self._orig_full_root, self._covtools_dir)
 		)
-
-		match post_steps:
-			case EImageBuiltOption.DOCKF_REMOVE:
-				os_remove(dockerfile_path)
-			case EImageBuiltOption.DOCKIGNORE:
-				dockerignore_path: str = f"{self._orig_full_root}/.dockignore"
-				with open(dockerignore_path, "a") as fdocki:
-					fdocki.writelines(f"./{self._dockf_fname}")
-					fdocki.flush()
 
 		return proj_image
 	

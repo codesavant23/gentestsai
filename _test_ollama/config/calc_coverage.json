@@ -1,7 +1,11 @@
 {
+	"covrc_fname": ".coveragerc.gtsai",
+
 	"covconfig_dir": "config_coverage",
+
 	"pytargs_fname": "pytest_args.json",
 	"covargs_fname": "coverage_args.json",
+
 	"environ": {
 		"humancov_script": "exec_calc_humcov.py",
 		"llmcov_script": "exec_calc_llmcov.py"

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from docker.models.images import Image as DockerImage
 # =================================================== #
 
-from .e_imgbuilt_option import EImageBuiltOption
+from .e_dockign_option import EDockignoreOption
 
 
 
@@ -119,7 +119,7 @@ class IFocalEnvConfigurator(ABC):
 	@abstractmethod
 	def build_image(
 			self,
-			post_steps: EImageBuiltOption = EImageBuiltOption.DOCKIGNORE
+			wants_dockign: bool = True
 	) -> DockerImage:
 		"""
 			Crea un' immagine docker, corrispondente all' ambiente focale, dell' ultimo progetto impostato
@@ -154,9 +154,12 @@ class IFocalEnvConfigurator(ABC):
 
 			Parameters
 			----------
-				post_steps: EImageBuiltOption
-					Opzionale. Default = `DOCKIGNORE`. Un valore `EImageBuiltOption` che indica cosa fare
-					dopo aver costruito l' immagine dell' ambiente focale
+				wants_dockign: bool
+					Opzionale. Default = `True`. Un booleano che indica se scrivere un file
+					".dockerignore" prima della costruzione dell' immagine dell' ambiente focale.
+					Se il progetto focale impostato ha già un eventuale ".dockerignore", esso verrà
+					preservato e risostituito alla fine cancellando il ".dockerignore" scritto da questa
+					operazione
 
 			Returns
 			-------
