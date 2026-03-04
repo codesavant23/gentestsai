@@ -202,7 +202,7 @@ if __name__ == "__main__":
 	
 	## ===== Lettura dei placeholders dei template prompts =====
 	placehs: Dict[str, str] = prompts_config["placeholders"]["common"]
-	placehs.update(prompts_config["correctional"])
+	placehs.update(prompts_config["file_names"]["correctional"])
 	placehs["code"] = prompts_config["code"]
 	placehs["class_name"] = prompts_config["class_name"]
 	
