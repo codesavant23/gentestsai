@@ -398,8 +398,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		# Sostituzione di un eventuale .dockerignore se presente prima del build
 		# dell' ambiente focale
-		dockign_path: str = path_join(self._orig_full_root, ".dockignore")
-		dockign_saved_path: str = path_join(self._orig_full_root, ".dockignore.saved")
+		dockign_path: str = path_join(self._orig_full_root, ".dockerignore")
+		dockign_saved_path: str = path_join(self._orig_full_root, ".dockerignore.saved")
 		if os_fdexists(dockign_path):
 			os_rename(dockign_path, dockign_saved_path)
 			
