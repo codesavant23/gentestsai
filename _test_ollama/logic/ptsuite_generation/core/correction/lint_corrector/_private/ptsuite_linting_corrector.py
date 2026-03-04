@@ -259,7 +259,7 @@ class PtsuiteLintingCorrector:
 				doraise=True,
 				invalidation_mode=Pyc_InvMode.TIMESTAMP
 			)
-		except PyCompileError as err:
+		except PyCompileError:
 			raise SyntacticallyIncorrectPtsuiteError()
 		
 		if not self._corr_everperf:

@@ -1,5 +1,4 @@
 from typing import Tuple
-from abc import abstractmethod
 from ._a_base_syntcker import _ABaseSyntacticChecker
 
 from datetime import datetime as DateTime

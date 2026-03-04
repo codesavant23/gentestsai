@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from docker.models.images import Image as DockerImage
 # =================================================== #
 
-from .e_dockign_option import EDockignoreOption
-
 
 
 class IFocalEnvConfigurator(ABC):

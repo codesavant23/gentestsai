@@ -152,7 +152,6 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
-		envconfig_dir: str = config_read["envconfig_dir"]
 		imgs_prefix: str = config_read["images_prefix"]
 		image_tag: str = config_read["image_tag"]
 		project: Dict[str, str] = config_read["project"]

@@ -102,7 +102,7 @@ class OllamaAccessorConfigValidator(AAccessorConfigValidator):
 		
 		try:
 			url_parse(urltoparse_str)
-		except BaseException as err:
+		except BaseException:
 			raise InvalidConfigValueError()
 
 

@@ -1,4 +1,4 @@
-from typing import TextIO, Literal
+from typing import TextIO
 from .. import ATemporalFormattLogger
 
 from ..exceptions import InvalidStreamTypeError

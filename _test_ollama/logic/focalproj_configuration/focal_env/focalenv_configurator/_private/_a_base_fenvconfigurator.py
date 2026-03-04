@@ -1,9 +1,6 @@
 from typing import List, Tuple, Dict
 from abc import abstractmethod
-from .. import (
-	IFocalEnvConfigurator,
-	EDockignoreOption
-)
+from .. import IFocalEnvConfigurator
 
 # ============== Docker SDK Utilities =============== #
 from docker import (
@@ -20,7 +17,6 @@ from regex import (
 # ========================================= #
 # ============== OS Utilities ============== #
 from os import (
-	remove as os_remove,
 	environ as os_envvar,
 	rename as os_rename,
 )
@@ -264,7 +260,6 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		if (tests_root is None) or (tests_root == ""):
 			raise ValueError()
 		
-		full_dirname: str = path_split(full_root)[1]
 		focal_dirname: str = path_split(focal_root)[1]
 		tests_relpath: str = SystemPath(tests_root).relative_to(full_root).as_posix()
 		self._proj_name = proj_name

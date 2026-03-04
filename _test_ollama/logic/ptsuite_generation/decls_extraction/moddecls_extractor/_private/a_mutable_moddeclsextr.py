@@ -162,7 +162,7 @@ class AMutableModuleDeclsExtractor(IModuleDeclsExtractor):
 				doraise=True,
 				invalidation_mode=Pyc_InvMode.TIMESTAMP
 			)
-		except PyCompileError as err:
+		except PyCompileError:
 			os_remove(str(tmpfile_path))
 			raise IncorrectModuleCodeError()
 		
