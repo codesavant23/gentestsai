@@ -168,6 +168,7 @@ if __name__ == "__main__":
 		projs_config,
 		projsenv_config["images_prefix"], projsenv_config["image_tag"],
 		projenv_config["dockerfile"],
+		environ_config["shared_dir"],
 		general_config["gen_tests_dir"], projsenv_config["envconfig_dir"],
 		projenv_config["pyversion_file"],
 		(
@@ -477,6 +478,8 @@ if __name__ == "__main__":
 							# Pulizia della chat
 							chat.clear()
 							
+			os_dremove(path_join(full_root, environ_config["shared_dir"]))
+			
 			console_logger.set_messages_sep("\n\t\t")
 			console_logger.log(f'Generazione per il progetto "{project_name}" terminata!')
 		console_logger.set_messages_sep("\n\t")

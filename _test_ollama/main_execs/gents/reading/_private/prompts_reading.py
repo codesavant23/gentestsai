@@ -131,14 +131,13 @@ def read_1model_templprompts(
 		-------
 			Dict[str, str]
 				Un dizionario di stringhe, indicizzato da stringhe, contenente i template prompts
-				specifici del modello letti.
-				Viene restituito il valore `None` se la directory del modello non esiste
+				specifici del modello letti
 	"""
 	
 	model_dirname = normalize_llmname(model_name, algorithm, chars)
 	
 	model_path: str = path_join(templ_basepath, model_dirname)
 	if not os_fdexists(model_path):
-		return None
+		return dict()
 	
 	return read_templprompts(model_path, templ_names)

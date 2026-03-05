@@ -92,16 +92,16 @@ class ATemporalFormattLogger(AMutableFormattLogger):
 		
 		datenow: DateTime = DateTime.now()
 		if "day" in self._curr_placehs:
-			placehs["day"] = str(datenow.day)
+			placehs["day"] = str(datenow.day).zfill(2)
 		if "month" in self._curr_placehs:
-			placehs["month"] = str(datenow.month)
+			placehs["month"] = str(datenow.month).zfill(2)
 		if "year" in self._curr_placehs:
-			placehs["year"] = str(datenow.year)
+			placehs["year"] = str(datenow.year).zfill(2)
 		if "hour" in self._curr_placehs:
-			placehs["hour"] = str(datenow.hour)
+			placehs["hour"] = str(datenow.hour).zfill(2)
 		if "min" in self._curr_placehs:
-			placehs["min"] = str(datenow.minute)
+			placehs["min"] = str(datenow.minute).zfill(2)
 		if "second" in self._curr_placehs:
-			placehs["second"] = str(datenow.second)
+			placehs["second"] = str(datenow.second).zfill(2)
 			
 		return placehs

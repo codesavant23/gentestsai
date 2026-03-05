@@ -1,5 +1,8 @@
 from typing import Tuple, Dict, Any
 
+# ============== OS Utilities ============== #
+from os import makedirs as os_mkdirs
+# ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
 	join as path_join,
@@ -26,6 +29,7 @@ def create_focal_images(
 		projs_config: Dict[str, Dict[str, Any]],
 		image_prefix: str, image_tag: str,
 		dockerfile_fname: str,
+		shared_dirname: str,
 		gentests_dir: str, envconfig_dir: str,
 		py_vers_fname: str,
 		deps_files: Tuple[str, str, str, str, str, str],
@@ -130,13 +134,17 @@ def create_focal_images(
 	
 	for proj_name, proj_info in projs_config.items():
 		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}" ... ')
+		full_root = proj_info["full_root"].rstrip(_PATH_SEPS)
+		
+		os_mkdirs(path_join(full_root, shared_dirname))
+		
 		try:
 			focal_envs[proj_name] = cont_manager.images.get(
 				f"{image_prefix}_{proj_name}"
 			)
 			gents_logger.set_endmessage("OTTENUTA!")
 		except ImageNotFound:
-			full_root = proj_info["full_root"].rstrip(_PATH_SEPS)
+			
 			focal_root = path_join(full_root, proj_info["focal_root"].rstrip(_PATH_SEPS))
 			tests_root = path_join(full_root, proj_info["tests_root"].rstrip(_PATH_SEPS))
 			

@@ -19,7 +19,7 @@ class _ABaseFormattableLogger(IFormattableLogger):
 		Il tipo di stream di output è specificato dai discendenti di questa classe astratta.
 		Altri placeholders del formato sono specificati dai discendenti di questa classe astratta.
 	"""
-	
+
 	def __init__(
 			self,
 			stream: TextIO
@@ -55,7 +55,8 @@ class _ABaseFormattableLogger(IFormattableLogger):
 		self._format: str = None
 		self._parser: StrFormatter = StrFormatter()
 		
-		self._sep: str = None
+		self._sep: str = "\n"
+		self._first_message: bool = True
 
 
 	def set_format(
@@ -111,7 +112,11 @@ class _ABaseFormattableLogger(IFormattableLogger):
 			format_vars["message"] = message
 			log_message = str.format_map(self._format, format_vars)
 			
-		self._stream.write(log_message + self._sep)
+		if not self._first_message:
+			self._stream.write(self._sep)
+		else:
+			self._first_message = False
+		self._stream.write(log_message)
 		self._stream.flush()
 		
 		

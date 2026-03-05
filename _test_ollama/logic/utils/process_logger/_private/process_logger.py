@@ -60,8 +60,8 @@ class ProcessLogger:
 			raise ValueError()
 		
 		self._log_frmt = self._logger.unset_format()
-		self._logger.set_messages_sep(" ")
 		self._logger.log(message)
+		self._logger.set_messages_sep(" ")
 		
 		
 	def process_end(self):
@@ -69,8 +69,8 @@ class ProcessLogger:
 			Registra la fine di una serie di steps di un processo
 		"""
 		self._logger.set_format(self._log_frmt)
-		self._logger.set_messages_sep(self._mess_sep)
 		self._logger.log(self._end_mess)
+		self._logger.set_messages_sep(self._mess_sep)
 		
 		
 	def set_endmessage(self, end_message: str):
