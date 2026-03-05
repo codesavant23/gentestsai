@@ -67,7 +67,7 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 			raise ValueError()
 		if self._chat is None:
 			raise ChatNeverSelectedError()
-		if self._repr_api in model.compat_apis():
+		if self._repr_api not in model.compat_apis():
 			raise IncompatibleApiError()
 		
 		self._model = model

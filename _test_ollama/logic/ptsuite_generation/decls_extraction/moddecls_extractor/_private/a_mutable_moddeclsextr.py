@@ -46,16 +46,15 @@ class AMutableModuleDeclsExtractor(IModuleDeclsExtractor):
 			Raises
 			------
 				ValueError
-					Si verifica se:
-					
-						- La stringa fornita è vuota
-						- E' stato fornito `None` come valore di `module_code`
-						
+					Si verifica se il parametro `module_code` ha valore `None` o è una stringa vuota
+				
 				IncorrectModuleCodeError
 					Si verifica se il codice del modulo contiene errori da un punto di vista sintattico
 		"""
-		self._module_code: str = None
-		self.set_module_code(module_code)
+		if (module_code is None) or (module_code == ""):
+			raise ValueError()
+		
+		self._module_code: str = module_code
 
 
 	def set_module_code(
@@ -83,10 +82,9 @@ class AMutableModuleDeclsExtractor(IModuleDeclsExtractor):
 				IncorrectModuleCodeError
 					Si verifica se il codice del modulo contiene errori da un punto di vista sintattico
 		"""
-		if module_code is None:
+		if (module_code is None) or (module_code == ""):
 			raise ValueError()
-		if module_code == "":
-			raise ValueError()
+		
 		self._assert_synt_correctness(module_code)
 		
 		self._module_code = module_code
