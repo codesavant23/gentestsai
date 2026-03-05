@@ -57,8 +57,8 @@ class LlmHyperParamIdFactoryResolver:
 		obj_f: ILlmHyperParamIdFactory
 		
 		parts: List[str] = models_apis.split(";")
-		parts[0] = parts[0].replace("-","_").replace(":", "_").lower().upper()
-		parts[1] = parts[1].replace("-","_").replace(":", "_").lower().upper()
+		for i in range(0, len(parts)):
+			parts[i]: str = parts[i].replace("-","_").replace(":", "_").lower().upper()
 			
 		if len(parts) == 2:
 			obj_f = cls._create_llmsplat_factory(parts[0], parts[1])
