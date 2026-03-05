@@ -57,10 +57,8 @@ class LlmHyperParamIdFactoryResolver:
 		obj_f: ILlmHyperParamIdFactory
 		
 		parts: List[str] = models_apis.split(";")
-		for i, part in enumerate(parts):
-			parts[i] = part.replace("-","_")
-			parts[i] = part.replace(":", "_")
-			parts[i] = part.lower().upper()
+		parts[0] = parts[0].replace("-","_").replace(":", "_").lower().upper()
+		parts[1] = parts[1].replace("-","_").replace(":", "_").lower().upper()
 			
 		if len(parts) == 2:
 			obj_f = cls._create_llmsplat_factory(parts[0], parts[1])
@@ -90,9 +88,12 @@ class LlmHyperParamIdFactoryResolver:
 			models: str,
 			apis: str
 	) -> ILlmHyperParamIdFactory:
-		models_apis_combo: EModelPlatformCombo = EModelPlatformCombo[
-			"__".join([apis, models]).upper()
-		]
+		try:
+			models_apis_combo: EModelPlatformCombo = EModelPlatformCombo[
+				"__".join([apis, models]).upper()
+			]
+		except KeyError:
+			raise NotImplementedError()
 		
 		# Non ancora implementato, poichè non necessario attualmente
 		match models_apis_combo:
