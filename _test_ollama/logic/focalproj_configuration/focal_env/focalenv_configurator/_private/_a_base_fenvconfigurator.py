@@ -42,6 +42,7 @@ from json import JSONDecoder
 # ============================================ #
 
 from ....dockerfile_builder import (ATransactDockfBuilder, SimpleTransactDockfBuilder)
+from ..buildcache_cleaner import (IBuildCacheCleaner, BuildCacheCleanerFactory)
 
 from ....exceptions import (
 	FocalProjectNotSetError,
@@ -176,6 +177,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			self._docker = DockerClient(base_url=docker_host)
 		except KeyError:
 			self._docker = docker_getclient()
+		self._cache_cner: IBuildCacheCleaner = BuildCacheCleanerFactory.obtain()
 		
 		self._dockf_builder: ATransactDockfBuilder = SimpleTransactDockfBuilder()
 		self._dockf_builder.new_dockerfile()
@@ -416,6 +418,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			rm=True, forcerm=True, nocache=True,
 			pull=False
 		)[0]
+		self._cache_cner.clean_buildcache()
 		
 		# Ri-sostituzione di un eventuale .dockerignore salvato dopo il build
 		# dell' ambiente focale
@@ -713,7 +716,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 				py_deps = self._json_dec.decode(fp.read())
 			return py_deps
 		return list()
-		
+
 
 	def _get_ext_deps(self) -> List[str]:
 		"""
@@ -860,7 +863,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			envconfig_dir: str,
 			dockerfile_fname: str,
 			py_vers_fname: str,
-			deps_files: Tuple[str, str, str, str, str],
+			deps_files: Tuple[str, str, str, str, str, str],
 			tools_root: str,
 			linttools_dir: str,
 			path_prefix: str
