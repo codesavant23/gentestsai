@@ -1,4 +1,3 @@
-# TODO: (Secondario) Finire di sistemare tutti gli Spazi con i TAB in ogni file
 from typing import Dict, List, Tuple, Set, Any
 
 # =========== ArgParse Utilities =========== #
@@ -202,14 +201,18 @@ if __name__ == "__main__":
 	
 	## ===== Lettura dei placeholders dei template prompts =====
 	placehs: Dict[str, str] = prompts_config["placeholders"]["common"]
-	placehs.update(prompts_config["file_names"]["correctional"])
-	placehs["code"] = prompts_config["code"]
-	placehs["class_name"] = prompts_config["class_name"]
+	# Estensione dei placeholders comuni a tutti con quelli
+	# dei soli correctional template prompts
+	placehs.update(prompts_config["placeholders"]["correctional"])
+	# Estensione dei placeholders con quelli relativi al codice focale
+	# e quelli dei methodal template prompts
+	placehs["code"] = prompts_config["placeholders"]["code"]
+	placehs["class_name"] = prompts_config["placeholders"]["class_name"]
 	
 	## ===== Lettura degli iperparametri (di fallback) =====
 	hparams: List[ILlmHyperParam] = read_fb_hyperparams(
 		platf_config["platform"],
-		general_config["def_model_params"],
+		general_config["default_model_params"],
 		logger
 	)
 	

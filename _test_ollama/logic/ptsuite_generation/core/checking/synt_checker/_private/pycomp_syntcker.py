@@ -42,7 +42,7 @@ class PyCompileSyntChecker(_ABaseSyntacticChecker):
 			"synt"
 		)
 		
-		os_dremove(self._TEMP_BASEPATH, ignore_errors=False)
+		os_dremove(self._TEMP_BASEPATH, ignore_errors=True)
 		os_mkdirs(self._TEMP_BASEPATH)
 		self._inited: bool = True
 		
@@ -94,7 +94,7 @@ class PyCompileSyntChecker(_ABaseSyntacticChecker):
 					effettuare la verifica di correttezza sintattica
 		"""
 		if not self._inited:
-			os_dremove(self._TEMP_BASEPATH, ignore_errors=False)
+			os_dremove(self._TEMP_BASEPATH, ignore_errors=True)
 			os_mkdirs(self._TEMP_BASEPATH)
 			self._inited = True
 		

@@ -11,12 +11,12 @@ class _ABaseLlmApi(ILlmApi):
 	
 	
 	def __hash__(self):
-		return super().__hash__()
+		return hash(self.api_name())
 	
 	
 	def __eq__(self, __value):
 		if not isinstance(__value, ILlmApi):
-			raise TypeError()
+			return False
 		
 		return self.api_name() == __value.api_name()
 	

@@ -17,7 +17,7 @@ def inst_apiaccsor(
 	match platform_name:
 		case "ollama":
 			platform = LlmApiAccessorFactory.for_ollama(
-				platf_options["address"], platf_options["userpass_pair"],
+				platf_options["api_url"], platf_options["userpass_pair"],
 				platf_options["connect_timeout"],
 				logger, (True if logger else False)
 			)

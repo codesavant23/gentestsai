@@ -22,12 +22,12 @@ class _ABaseHyperParamId(ILlmHyperParamId):
 	
 	
 	def __hash__(self):
-		return super().__hash__()
+		return hash(self.id())
 		
 		
 	def __eq__(self, other):
 		if not isinstance(other, ILlmHyperParamId):
-			raise NotImplementedError()
+			return False
 		
 		return self.id() == other.id()
 	

@@ -149,5 +149,6 @@ def create_focal_images(
 			focal_envs[proj_name] = fenv_confgor.build_image(True)
 			gents_logger.set_endmessage("CREATA!")
 		gents_logger.process_end()
+	gents_logger.set_endmessage("OK!")
 	
 	return focal_envs

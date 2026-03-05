@@ -65,12 +65,13 @@ class LlmHyperParamIdFactoryResolver:
 		if len(parts) == 2:
 			obj_f = cls._create_llmsplat_factory(parts[0], parts[1])
 		else:
+			models_or_apis: str = models_apis.upper()
 			try:
-				platforms: EPlatformCombo = EPlatformCombo[models_apis]
+				platforms: EPlatformCombo = EPlatformCombo[models_or_apis]
 				obj_f = cls._create_platonly_factory(platforms)
 			except KeyError:
 				try:
-					models: EModelCombo = EModelCombo[models_apis]
+					models: EModelCombo = EModelCombo[models_or_apis]
 					obj_f = cls._create_llmonly_factory(models)
 				except KeyError:
 					raise ValueError()

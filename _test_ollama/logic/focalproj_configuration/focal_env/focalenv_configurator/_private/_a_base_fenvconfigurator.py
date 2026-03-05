@@ -413,7 +413,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			path=self._orig_full_root,
 			dockerfile=self._dockf_fname,
 			tag=f"{self._tag_prefix}_{self._proj_name}",
-			rm=True
+			rm=True, forcerm=True, nocache=True,
+			pull=False
 		)[0]
 		
 		# Ri-sostituzione di un eventuale .dockerignore salvato dopo il build
