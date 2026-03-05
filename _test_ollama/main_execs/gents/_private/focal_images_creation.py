@@ -2,6 +2,7 @@ from typing import Tuple, Dict, Any
 
 # ============== OS Utilities ============== #
 from os import makedirs as os_mkdirs
+from shutil import rmtree as os_dremove
 # ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
@@ -61,6 +62,10 @@ def create_focal_images(
 			
 			dockerfile_fname: str
 				Una stringa contenente il nome del dockerfile che verrà generato per ogni immagine di ambiente focale
+				
+			shared_dirname: str
+				Una stringa contenente il nome della directory condivisa tra ogni ambiente focale
+				e la Full Project Root Path del suo progetto focale
 				
 			image_prefix: str
 				Una stringa contenente il prefisso da utilizzare per il tag delle immagini focali create
@@ -131,12 +136,15 @@ def create_focal_images(
 	full_root: str
 	focal_root: str
 	tests_root: str
+	shared_path: str
 	
 	for proj_name, proj_info in projs_config.items():
 		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}" ... ')
 		full_root = proj_info["full_root"].rstrip(_PATH_SEPS)
 		
-		os_mkdirs(path_join(full_root, shared_dirname))
+		shared_path = path_join(full_root, shared_dirname)
+		os_dremove(shared_path, ignore_errors=True)
+		os_mkdirs(shared_path)
 		
 		try:
 			focal_envs[proj_name] = cont_manager.images.get(

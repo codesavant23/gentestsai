@@ -242,7 +242,7 @@ if __name__ == "__main__":
 	## ===== Creazione dei verificatori di correttezza delle test-suites parziali =====
 	synt_chker: ISyntacticChecker = SyntacticCheckerFactory.create(ESyntCheckerTool.PYCOMPILE)
 	lint_chker: LintingChecker = LintingChecker(
-		tools_config["linting"], environ_config["lint_executer"],
+		environ_config["lint_executer"], environ_config["shared_dir"],
 		logger=console_logger
 	)
 	
