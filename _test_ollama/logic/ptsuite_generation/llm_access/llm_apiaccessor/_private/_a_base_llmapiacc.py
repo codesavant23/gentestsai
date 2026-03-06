@@ -121,7 +121,7 @@ class _ABaseLlmApiAccessor(ILlmApiAccessor):
 			raise ValueError()
 		
 		response: str = self._ap__prompt_spec(
-			self._chat.chat_messages(),
+			self._chat,
 			self._model,
 			self._hparams,
 			timeout

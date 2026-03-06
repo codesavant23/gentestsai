@@ -9,6 +9,7 @@ from os.path import (
 	altsep as path_altsep,
 	join as path_join,
 	split as path_split,
+	splitext as path_splitext,
 	dirname as path_getdir,
 	commonpath as path_intersect,
 	abspath as path_absolute,
@@ -294,8 +295,8 @@ if __name__ == "__main__":
 	moddecl_extr: AMutableModuleDeclsExtractor = TreeSitterModuleDeclsExtractor("pass")
 	
 	is_py_file: bool
-	module_path: str
-	tsuite_path: str
+	file_path: str
+	tsuite_dirpath: str
 	module_relpath: str
 	tsuite_relpath: str
 	
@@ -411,34 +412,37 @@ if __name__ == "__main__":
 				os_dremove(gentests_root)
 			os_mkdirs(gentests_root)
 			
-			focal_excluded.append(general_config["always_excluded"])
 			# ===== Processo di "Generazione delle Test-suites per progetto focale" =====
 			for curr_path, dirs, file_names in os_walk(focal_root):
 				# Se la directory non è esclusa dal codice focale
-				if not curr_path in focal_excluded:
+				if curr_path not in focal_excluded:
 					for file_name in file_names:
 						is_py_file = file_name.endswith(".py")
 		
 						# Se il file non è escluso dal codice focale
 						# ed è un modulo Python (ha estensione ".py")
-						if ((is_py_file) and (not (file_name in focal_excluded))):
+						if (
+							(is_py_file) and
+							(file_name not in general_config["always_excluded"])
+						):
 							module_path = path_join(curr_path, file_name)
 							
 							# Calcolo della directory che conterrà la test-suite del modulo
 							common_path: str = path_intersect([curr_path, focal_root])
-							tsuite_path = path_relative(curr_path, start=common_path)
-							tsuite_path = path_join(
-								path_join(gentests_root, tsuite_path), file_name
+							tsuite_dirpath = path_relative(curr_path, start=common_path)
+							tsuite_dirpath = path_join(
+								path_join(gentests_root, tsuite_dirpath),
+								f"mod__{path_splitext(file_name)[0]}"
 							)
 						
 							# Creazione/sovrascrittura della directory test-suite
-							if os_fdexists(tsuite_path):
-								os_dremove(tsuite_path)
-							os_mkdirs(tsuite_path)
+							if os_fdexists(tsuite_dirpath):
+								os_dremove(tsuite_dirpath)
+							os_mkdirs(tsuite_dirpath)
 						
 							# Calcolo delle paths relative (da utilizzare nei prompts)
 							tsuite_relpath, module_relpath  \
-								= calculate_prompt_relpaths(focal_root, tsuite_path, module_path)
+								= calculate_prompt_relpaths(focal_root, tsuite_dirpath, module_path)
 							
 							prompt_builders = (func_bder, meth_bder, corr_bder)
 							for prompt_bder in prompt_builders:
@@ -448,11 +452,11 @@ if __name__ == "__main__":
 							# Generazione della test-suite del module-file attuale
 							generate_correct_mbym(
 								project_name, llm_model,
-								module_path,
+								module_path, tsuite_dirpath,
 								moddecl_extr,
 								(ptsuite_gen, platform, chat),
 								(synt_corr, lint_corr),
-								platf_config["response_timeout"],
+								(synt_chker, lint_chker),
 								(general_config["max_gen_times"], general_config["max_corr_times"]),
 								platf_config["response_timeout"],
 								(prompt_builders, placehs),
@@ -461,9 +465,9 @@ if __name__ == "__main__":
 								(
 									skipdtests_config["file_format"],
 									(skipdtests_config["funcs_gen"], skipdtests_config["funcs_corr"],
-									 skipdtests_config["meth_gen"], skipdtests_config["meth_corr"])
+									 skipdtests_config["meths_gen"], skipdtests_config["meths_corr"])
 								),
-								logger, console_logger
+								console_logger
 							)
 							
 							# Azzeramento dei prompts

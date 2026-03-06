@@ -2,7 +2,7 @@ from abc import abstractmethod
 from .. import ISkipWriter
 
 # ============ Path Utilities ============ #
-from os.path import splitext as path_split_ext
+from os.path import splitext as path_splitext
 # ======================================== #
 # ============== OS Utilities ============== #
 from os.path import exists as os_fdexists
@@ -95,7 +95,7 @@ class _ABaseSkipWriter(ISkipWriter):
 		"""
 		extens: str = self._p__file_extension()
 		if extens != "":
-			if path_split_ext(self._skipd_path)[1].lower() != f".{extens}":
+			if path_splitext(self._skipd_path)[1].lower() != f".{extens}":
 				raise InvalidSkippedTestsFileError()
 			
 		if os_fdexists(self._skipd_path):

@@ -50,7 +50,7 @@ class SkipWriterFactory:
 		"""
 		obj: _ABaseSkipWriter
 		match file_type:
-			case ESkippedTestsFtypeFormat.JSON_LIST:
+			case ESkippedTestsFtypeFormat.JSON:
 				obj = JsonListSkipWriter(skipdtests_path)
 		
 		obj._P__objinit()

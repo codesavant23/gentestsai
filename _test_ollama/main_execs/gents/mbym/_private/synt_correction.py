@@ -8,6 +8,8 @@ from logic.ptsuite_generation.core.correction.synt_corrector import PtsuiteSynta
 
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
+from logic.utils.logger import ATemporalFormattLogger
+
 
 
 def correct_syntactically(
@@ -21,6 +23,7 @@ def correct_syntactically(
 		max_tries: int,
 		resp_timeout: int,
 		corr_cache: IPtsuiteCacheAccessor,
+		logger: ATemporalFormattLogger,
 		cache_entprefix: str = ""
 ):
 	entity_name, entity_placeh = entityname_comps
@@ -48,7 +51,6 @@ def correct_syntactically(
 			entity_corr_pbder.set_placeholder(entity_placeh, f"{cache_entprefix}{entity_name}")
 			full_prompt = entity_corr_pbder.build_prompt()
 			if not corr_cache.does_ptsuite_exists(project_name, full_prompt, model, try_num):
-				
 				# Si re-imposta il nome dell' entità nel prompt
 				entity_corr_pbder.set_placeholder(entity_placeh, entity_name)
 				full_prompt = entity_corr_pbder.build_prompt()
@@ -62,13 +64,16 @@ def correct_syntactically(
 				# (si antepone il prefisso dell' entità nella cache)
 				entity_corr_pbder.set_placeholder(entity_placeh, f"{cache_entprefix}{entity_name}")
 				full_prompt = entity_corr_pbder.build_prompt()
+				logger.log("Salvataggio nella cache ... ")
 				corr_cache.register_ptsuite(project_name, full_prompt, model, try_num, ptsuite_code)
+				logger.log("Test-suite parziale salvata!")
 				
 				# Incremento dei tentativi da parte del LLM
 				llm_trynum += 1
 			else:
 				# Recupero del tentativo di correzione dalla cache di test-suites parziali
 				ptsuite_code = corr_cache.get_ptsuite(project_name, full_prompt, model, try_num)
+				logger.log("Test-suite parziale ottenuta dalla cache!")
 			try_num += 1
 		else:
 			break

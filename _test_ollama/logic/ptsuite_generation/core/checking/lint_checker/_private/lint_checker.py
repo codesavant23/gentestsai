@@ -192,7 +192,8 @@ class LintingChecker:
 		self._focal_env = FocalContainer(
 			env_image,
 			self._full_root,
-			path_prefix
+			path_prefix,
+			self._shared_dir
 		)
 		
 		if not self._proj_everset:

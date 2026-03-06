@@ -4,7 +4,7 @@ from typing import Dict, Tuple, List
 from os.path import (
 	join as path_join,
 	split as path_split,
-	splitext as path_split_ext,
+	splitext as path_splitext
 )
 # ======================================== #
 
@@ -33,13 +33,12 @@ from logic.ptsuite_generation.core.tests_skipping import (
 )
 
 from logic.utils.logger import ATemporalFormattLogger
-from logic.utils.process_logger import ProcessLogger
 
 
 
 def generate_correct_mbym(
 		project_name: str, model: str,
-		module_path: str,
+		module_path: str, tsuite_dirpath: str,
 		moddecl_extr: AMutableModuleDeclsExtractor,
 		gen_comps: Tuple[
 			EntityPtsuiteGenerator,
@@ -58,14 +57,13 @@ def generate_correct_mbym(
 		skipping: Tuple[
 			str, Tuple[str, str, str, str]
 		],
-		gents_logger: ProcessLogger,
 		logger: ATemporalFormattLogger,
 ):
 	"""
 		TODO: Contract ||
 	"""
-	module_dirpath, module_fname = path_split(module_path)
-	module_name: str = path_split_ext(module_fname)[0]
+	_, module_fname = path_split(module_path)
+	module_name: str = path_splitext(module_fname)[0]
 	ptsuite_gen, platform, chat = gen_comps
 	prompt_bders, placehs = prompting
 	func_pbder, meth_pbder, corr_pbder = prompt_bders
@@ -80,32 +78,34 @@ def generate_correct_mbym(
 	skipd_ftype_e: ESkippedTestsFtypeFormat = ESkippedTestsFtypeFormat[
 		skipd_ftype.replace("-","_").upper()
 	]
-	genf_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(module_dirpath, skipd_genf_fname))
-	genm_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(module_dirpath, skipd_genm_fname))
-	corrf_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(module_dirpath, skipd_corrf_fname))
-	corrm_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(module_dirpath, skipd_corrm_fname))
+	genf_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(tsuite_dirpath, skipd_genf_fname))
+	genm_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(tsuite_dirpath, skipd_genm_fname))
+	corrf_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(tsuite_dirpath, skipd_corrf_fname))
+	corrm_skipw: ISkipWriter = SkipWriterFactory.create(skipd_ftype_e, path_join(tsuite_dirpath, skipd_corrm_fname))
 	
-	gents_logger.process_start(f"Inizio fenerazione test-suite del modulo \"{module_name}\" ...")
-	logger.set_messages_sep("\n\t\t\t\t")
-	gents_logger.process_start(f"Estrazione del codice focale del modulo ...")
+	logger.log(f"Inizio generazione test-suite del modulo \"{module_name}\" ...")
+	logger.log("Estrazione del codice focale del modulo ...")
 	# ===== Lettura ed estrazione del codice focale =====
+	module_code: str
 	with open(module_path, "r") as fmodule:
-		moddecl_extr.set_module_code(fmodule.read())
+		module_code = fmodule.read()
+		moddecl_extr.set_module_code(module_code)
 	func_names: List[str] = moddecl_extr.extract_funcs()
 	clss: List[IClassDeclsExtractor] = moddecl_extr.extract_classes()
-	gents_logger.process_end()
+	logger.log("Codice focale del modulo estratto!")
 	
 	ptsuite_code: str
 	
 	func_pbder.set_placeholder(placehs["project"], project_name)
 	func_pbder.set_placeholder(placehs["module"], module_name)
+	func_pbder.set_placeholder(placehs["code"], module_code)
 	
 	# ===== Processo di "Generazione e Correzione delle test-suite parziali delle funzioni" =====
 	logger.log("Inizio generazione delle test-suites parziali delle funzioni ...")
-	logger.set_messages_sep("\n\t\t\t\t\t")
+	logger.set_messages_sep("\n\t\t\t\t")
 	generate_correct_ebye(
 		project_name, model,
-		module_dirpath,
+		tsuite_dirpath,
 		func_names,
 		(func_pbder, corr_pbder),
 		placehs["entity"],
@@ -116,22 +116,25 @@ def generate_correct_mbym(
 		max_tries, resp_timeout,
 		(genf_skipw, corrf_skipw),
 		(genf_cache, corrs_cache, corrl_cache),
+		logger
 	)
-	logger.set_messages_sep("\n\t\t\t\t")
+	logger.set_messages_sep("\n\t\t\t")
 	logger.log("Fine generazione delle test-suites parziali delle funzioni")
 	
 	# ===== Processo di "Generazione e Correzione delle test-suite parziali dei metodi" =====
 	meth_pbder.set_placeholder(placehs["project"], project_name)
 	meth_pbder.set_placeholder(placehs["module"], module_name)
+	meth_pbder.set_placeholder(placehs["code"], module_code)
+	
 	logger.log(f"Inizio generazione delle test-suites parziali dei metodi ...")
-	logger.set_messages_sep("\n\t\t\t\t\t")
+	logger.set_messages_sep("\n\t\t\t\t")
 	for cls in clss:
 		logger.log(f"Classe: {cls.class_name()}")
-		logger.set_messages_sep("\n\t\t\t\t\t\t")
+		logger.set_messages_sep("\n\t\t\t\t\t")
 		meth_pbder.set_placeholder(placehs["class_name"], cls.class_name())
 		generate_correct_ebye(
 			project_name, model,
-			module_dirpath,
+			tsuite_dirpath,
 			cls.method_names(),
 			(meth_pbder, corr_pbder),
 			placehs["entity"],
@@ -142,11 +145,12 @@ def generate_correct_mbym(
 			max_tries, resp_timeout,
 			(genm_skipw, corrm_skipw),
 			(genm_cache, corrs_cache, corrl_cache),
+			logger,
 			entityprefix_comps=(cls.class_name(), "$", ".")
 		)
-		logger.set_messages_sep("\n\t\t\t\t\t")
-	logger.set_messages_sep("\n\t\t\t\t")
+		logger.set_messages_sep("\n\t\t\t\t")
+	logger.set_messages_sep("\n\t\t\t")
 	logger.log("Fine generazione delle test-suites parziali dei metodi")
 	
-	logger.set_messages_sep("\n\t\t\t")
+	logger.set_messages_sep("\n\t\t")
 	logger.log(f"Fine generazione test-suite del modulo \"{module_name}\" ...")

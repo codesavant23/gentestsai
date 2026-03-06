@@ -228,7 +228,7 @@ class EntityPtsuiteGenerator:
 		
 		self._times_tried = 1
 		self._try_succ = False
-		self._last_genpts = None
+		self._last_genpts = ""
 		self._resp_tout = resp_timeout
 		if self._logger is not None:
 			self._logger.log(
@@ -277,7 +277,7 @@ class EntityPtsuiteGenerator:
 		if (not self._try_succ) and (self._times_tried <= self._max_tries):
 			try:
 				self._logger.log(
-					f"Inzio del tentativo di generazione no. {self._times_tried}/{self._max_tries}"
+					f"Inizio del tentativo di generazione no. {self._times_tried}/{self._max_tries}"
 				) if self._logger is not None else None
 					
 				response: str = self._llm_platf.prompt(self._resp_tout)

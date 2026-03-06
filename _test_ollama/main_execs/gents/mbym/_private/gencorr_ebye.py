@@ -1,5 +1,9 @@
 from typing import List, Tuple
 
+# ============ Path Utilities ============ #
+from os.path import join as path_join
+# ======================================== #
+
 from logic.utils.prompt_builder import PromptBuilder
 from logic.ptsuite_generation.llm_access.llm_chat import ILlmChat
 
@@ -14,6 +18,8 @@ from logic.ptsuite_generation.core.correction.lint_corrector import PtsuiteLinti
 from logic.ptsuite_generation.core.tests_skipping import ISkipWriter
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
+from logic.utils.logger import ATemporalFormattLogger
+
 from .calculating_ptsuite_name import calculate_ptsuite_name
 from .generate import generate_ptsuite
 from .synt_correction import correct_syntactically
@@ -23,7 +29,7 @@ from .lint_correction import correct_lintically
 
 def generate_correct_ebye(
 		project_name: str, model: str,
-		module_path: str,
+		module_dirpath: str,
 		entities_name: List[str],
 		prompt_builders: Tuple[PromptBuilder, PromptBuilder],
 		entity_placeh: str,
@@ -35,7 +41,8 @@ def generate_correct_ebye(
 		max_tries: Tuple[int, int], resp_timeout: int,
 		skipd_writers: Tuple[ISkipWriter, ISkipWriter],
 		caches: Tuple[IPtsuiteCacheAccessor, IPtsuiteCacheAccessor, IPtsuiteCacheAccessor],
-		entityprefix_comps: Tuple[str, str, str] = tuple()
+		logger: ATemporalFormattLogger,
+		entityprefix_comps: Tuple[str, str, str] = tuple(),
 ):
 	entity_gen_pbder, entity_corr_pbder = prompt_builders
 	synt_corr, lint_corr = ptsuite_corrs
@@ -50,12 +57,20 @@ def generate_correct_ebye(
 		entity_prefix, entity_promptsep, entity_filesep = entityprefix_comps
 	
 	entity_name: str
+	entity_name_topr: str
 	ptsuite_code: str
 	ptsuite_fname: str
 	
 	i: int = 0
 	while i < len(entities_name):
 		entity_name = entities_name[i]
+		
+		entity_name_topr = (
+			f"{(entity_prefix+entity_filesep if entity_prefix != '' else '')}"
+		    f"{entity_name}"
+		)
+		logger.log(f'Entità: ==== "{entity_name_topr}" ====')
+		
 		# Calcolo del nome della test-suite parziale
 		ptsuite_fname = calculate_ptsuite_name(entity_name, f"{entity_prefix}{entity_filesep}")
 		
@@ -66,7 +81,8 @@ def generate_correct_ebye(
 		    entity_gen_pbder.build_prompt(),
 			ptsuite_gen, chat,
 			max_gen_tries, resp_timeout,
-			gen_cache
+			gen_cache,
+			logger
 		)
 		# Se la generazione non ha avuto successo
 		if ptsuite_code is None:
@@ -87,6 +103,7 @@ def generate_correct_ebye(
 			(synt_corr, synt_chker), chat,
 			max_corr_tries, resp_timeout,
 			corrs_cache,
+			logger,
 			cache_entprefix = f"{entity_prefix}{entity_promptsep}"
 		)
 		# Se la correzione sintattica non ha avuto successo
@@ -107,6 +124,7 @@ def generate_correct_ebye(
 			(lint_corr, lint_chker), chat,
 			max_corr_tries, resp_timeout,
 			corrl_cache,
+			logger,
 			cache_entprefix = f"{entity_prefix}{entity_promptsep}"
 		)
 		# Se la correzione a livello di linting non ha avuto successo
@@ -120,7 +138,7 @@ def generate_correct_ebye(
 		# Sennò se nessuno dei casi precedenti è avvenuto allora la test-suite parziale
 		# è stata generata e viene dichiarata corretta.
 		# Viene quindi scritta all' interno del suo file che la rappresenta
-		with(f"{module_path}/{ptsuite_fname}", "w") as fptsuite:
+		with(path_join(module_dirpath, ptsuite_fname), "w") as fptsuite:
 			fptsuite.write(ptsuite_code)
 			fptsuite.flush()
 		

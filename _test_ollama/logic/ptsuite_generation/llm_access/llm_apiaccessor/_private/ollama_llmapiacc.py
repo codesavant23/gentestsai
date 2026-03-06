@@ -189,20 +189,22 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		try:
 			if logger is not None:
 				logger.log("Inizio della risposta ...")
-			if self._log_resp:
-				log_format = logger.unset_format()
-				logger.set_messages_sep("")
+				if self._log_resp:
+					log_format = logger.unset_format()
+					logger.set_messages_sep("")
 				
 			for chunk in response_iter:
 				full_response += chunk['message']['content']
-				if self._log_resp:
-					logger.log(chunk['message']['content'])
+				if logger is not None:
+					if self._log_resp:
+						logger.log(chunk['message']['content'])
 				# Se è arrivato alla fine
 				if "eval_count" in chunk:
 					resp_tokens = chunk["eval_count"]
 					prompt_tokens = chunk["prompt_eval_count"]
-					if self._log_resp:
-						logger.log(f'{self._logger_sep}')
+					if logger is not None:
+						if self._log_resp:
+							logger.log(f'{self._logger_sep}')
 						
 		except HttpxTimeoutError as httpx_tout_err:
 			gensai_exc: ResponseTimedOutError = ResponseTimedOutError()
@@ -213,10 +215,10 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			gensai_exc.args = ("known",) + ollama_err.args
 			raise gensai_exc
 		
-		if self._log_resp:
-			logger.set_format(log_format)
-			logger.set_messages_sep(self._logger_sep)
 		if logger is not None:
+			if self._log_resp:
+				logger.set_format(log_format)
+				logger.set_messages_sep(self._logger_sep)
 			logger.log(f'Fine della risposta.')
 
 		if (prompt_tokens == -1) or (resp_tokens == -1):

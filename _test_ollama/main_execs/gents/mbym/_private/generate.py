@@ -3,6 +3,8 @@ from logic.ptsuite_generation.llm_access.llm_chat import ILlmChat
 
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
+from logic.utils.logger import ATemporalFormattLogger
+
 
 
 def generate_ptsuite(
@@ -12,7 +14,8 @@ def generate_ptsuite(
 		chat: ILlmChat,
 		max_tries: int,
 		resp_timeout: int,
-		gen_cache: IPtsuiteCacheAccessor
+		gen_cache: IPtsuiteCacheAccessor,
+		logger: ATemporalFormattLogger
 ) -> str:
 	ptsuite_code: str = None
 	try_num: int = 1
@@ -20,6 +23,7 @@ def generate_ptsuite(
 	while try_num < max_tries:
 		if gen_cache.does_ptsuite_exists(project_name, full_prompt, model, try_num):
 			ptsuite_code = gen_cache.get_ptsuite(project_name, full_prompt, model, try_num)
+			logger.log("Test-suite parziale ottenuta dalla cache")
 			break
 		try_num += 1
 	
@@ -36,6 +40,8 @@ def generate_ptsuite(
 			# Viene salvato il codice della test-suite parziale generata
 			ptsuite_code, try_num = ptsuite_gen.get_lastgen()
 			# e memorizzato nella cache di generazione
+			logger.log("Salvataggio nella cache ... ")
 			gen_cache.register_ptsuite(project_name, full_prompt, model, try_num, ptsuite_code)
+			logger.log("Test-suite parziale salvata!")
 
 	return ptsuite_code

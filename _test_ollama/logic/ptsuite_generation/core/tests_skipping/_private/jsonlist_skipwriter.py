@@ -60,10 +60,13 @@ class JsonListSkipWriter(_ABaseSkipWriter):
 			raise ValueError()
 		
 		content: List[str]
-		with open(self._pf__get_skipdf_path(), "r+") as fjson:
+		with open(self._pf__get_skipdf_path(), "r") as fjson:
 			content = self._json_dec.decode(fjson.read())
-			content.append(entity_name)
-			self._json_enc.encode(content)
+		
+		content.append(entity_name)
+		with open(self._pf__get_skipdf_path(), "w") as fjson:
+			fjson.write(self._json_enc.encode(content))
+			fjson.flush()
 	
 	
 	#	============================================================
