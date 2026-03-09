@@ -9,7 +9,7 @@ from .linterrors_collection import (
 )
 
 from .linterrors_collection.execeptions import LintingNotExecutedError
-from exceptions import LintingCheckerAlreadyUsedError
+from .exceptions import LintingCheckerAlreadyUsedError
 
 
 
@@ -96,7 +96,7 @@ class PartialTsuite1TimeLintingChecker:
 		)
 		
 		if self._pyl_reporter.has_found_any_problem():
-			self._error_found = self._pyl_reporter.get_found_problems()
+			self._error_found = self._pyl_reporter.get_found_problems()[0]
 		else:
 			self._error_found = None
 			

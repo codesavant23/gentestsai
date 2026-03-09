@@ -5,7 +5,7 @@ from pylint.message.message import (
 	Message as LintingMessage
 )
 
-from . import LintingRelatedProblem
+from .lintingrelated_problem import LintingRelatedProblem
 
 from .execeptions import (
 	LintingNotExecutedError,
@@ -40,7 +40,7 @@ class ErrorCollectorPylReporter(BaseReporter):
 		"""
 		super().__init__()
 
-		self._captured_errors: List[LintingRelatedProblem] = None
+		self._captured_errors: List[LintingRelatedProblem] = list()
 		self._idle: bool = False
 		self._runned: bool = False
 		self._has_found_errors: bool = False

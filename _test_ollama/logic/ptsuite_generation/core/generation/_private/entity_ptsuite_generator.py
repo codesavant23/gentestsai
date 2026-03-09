@@ -155,7 +155,7 @@ class EntityPtsuiteGenerator:
 		if self._gen_inprogr:
 			raise PromptingSessionInProgressError()
 		
-		return not self._try_succ
+		return self._try_succ
 
 
 	def get_lastgen(self) -> Tuple[str, int]:

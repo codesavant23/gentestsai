@@ -55,7 +55,7 @@ class FocalContainer:
 			path_prefix: str,
 			shared_dirname: str = "gtsai__shared",
 			results_dirname: str = "gtsai__results",
-			stop_timeout: int=100
+			stop_timeout: int=1
 	):
 		"""
 			Costruisce un nuovo FocalContainer basandolo sull' immagine docker, pre-configurata,
@@ -87,7 +87,7 @@ class FocalContainer:
 					all' interno del `path_prefix`, che conterrà i files prodotti dall' ambiente focale come risultato
 	
 				stop_timeout: int
-					Opzionale. Default = `100`. Un intero che indica il valore di timeout (in millisecondi)
+					Opzionale. Default = `1`. Un intero che indica il valore di timeout (in secondi)
 					per lo stop del container docker, gestito da questo FocalContainer
 					
 			Raises
@@ -128,7 +128,7 @@ class FocalContainer:
 		self._shared_dir: str = shared_dirname
 		self._results_dir: str = results_dirname
 
-		self._timeout: float = stop_timeout
+		self._timeout: int = stop_timeout
 
 		self._environ: DockerContainer = None
 		self._running: bool = False
@@ -166,11 +166,11 @@ class FocalContainer:
 			volumes={
 				shared_path: {
 					"bind": f"{self._path_prefix}/{self._shared_dir}",
-					"mode": "rw"
+					"mode": "rw,rshared"
 				},
 				results_path: {
 					"bind": f"{self._path_prefix}/{self._results_dir}",
-					"mode": "rw"
+					"mode": "rw,rshared"
 				}
 			}
 		)
@@ -217,8 +217,15 @@ class FocalContainer:
 		output: Tuple[bytes, bytes] = result.output
 		
 		self._lexec_exitcode = result.exit_code
-		self._lexec_stdout = output[0].decode("utf-8")
-		self._lexec_stderr = output[1].decode("utf-8")
+		if output[0] is not None:
+			self._lexec_stdout = output[0].decode("utf-8")
+		else:
+			self._lexec_stdout = None
+		
+		if output[1] is not None:
+			self._lexec_stderr = output[1].decode("utf-8")
+		else:
+			self._lexec_stderr = None
 		
 		if not self._cmd_ever_execd:
 			self._cmd_ever_execd = True
@@ -242,6 +249,7 @@ class FocalContainer:
 			v=True,
 			force=True
 		)
+		del self._environ
 		self._environ = None
 
 		self._running = False
@@ -259,6 +267,7 @@ class FocalContainer:
 		"""
 		if self._cmd_ever_execd:
 			raise CommandNeverExecutedError()
+		
 		return self._lexec_stdout
 
 
@@ -274,6 +283,7 @@ class FocalContainer:
 		"""
 		if self._cmd_ever_execd:
 			raise CommandNeverExecutedError()
+		
 		return self._lexec_stderr
 
 
@@ -289,4 +299,5 @@ class FocalContainer:
 		"""
 		if self._cmd_ever_execd:
 			raise CommandNeverExecutedError()
+		
 		return self._lexec_exitcode

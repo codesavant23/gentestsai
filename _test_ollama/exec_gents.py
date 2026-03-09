@@ -184,7 +184,7 @@ if __name__ == "__main__":
 		tools_config["linting"],
 		tools_config["coverage"],
 		environ_config["path_prefix"],
-		logger
+		console_logger
 	)
 	
 	console_logger.set_messages_sep("\n")
@@ -244,7 +244,7 @@ if __name__ == "__main__":
 	synt_chker: ISyntacticChecker = SyntacticCheckerFactory.create(ESyntCheckerTool.PYCOMPILE)
 	lint_chker: LintingChecker = LintingChecker(
 		environ_config["lint_executer"], environ_config["shared_dir"],
-		logger=console_logger
+		logger=None
 	)
 	
 	## ===== Creazione dei correttori delle test-suites parziali =====
@@ -426,6 +426,7 @@ if __name__ == "__main__":
 							(file_name not in general_config["always_excluded"])
 						):
 							module_path = path_join(curr_path, file_name)
+							module_name = path_splitext(file_name)[0]
 							
 							# Calcolo della directory che conterrà la test-suite del modulo
 							common_path: str = path_intersect([curr_path, focal_root])
@@ -446,6 +447,8 @@ if __name__ == "__main__":
 							
 							prompt_builders = (func_bder, meth_bder, corr_bder)
 							for prompt_bder in prompt_builders:
+								prompt_bder.set_placeholder(placehs["project"], project_name)
+								prompt_bder.set_placeholder(placehs["module"], module_name)
 								prompt_bder.set_placeholder(placehs["module_path"], module_relpath)
 								prompt_bder.set_placeholder(placehs["tsuite_path"], tsuite_relpath)
 							

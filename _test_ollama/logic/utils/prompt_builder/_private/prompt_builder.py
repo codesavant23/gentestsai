@@ -197,9 +197,7 @@ class PromptBuilder:
 		full_prompt: str = self._templ
 		for placeh, value in self._placehs.items():
 			full_prompt = full_prompt.replace(
-				reg_escape(
-					f"{self._idel}{placeh}{self._edel}"
-				),
+				f"{self._idel}{placeh}{self._edel}",
 				value
 			)
 

@@ -42,7 +42,10 @@ from json import JSONDecoder
 # ============================================ #
 
 from ....dockerfile_builder import (ATransactDockfBuilder, SimpleTransactDockfBuilder)
-from ..buildcache_cleaner import (IBuildCacheCleaner, BuildCacheCleanerFactory)
+from ..buildcache_cleaner import (
+	IBuildCacheCleaner,
+	BuildCacheCleanerFactory, EContainerManager
+)
 
 from ....exceptions import (
 	FocalProjectNotSetError,
@@ -359,6 +362,9 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Rimuove la Env-Config Project Root Path all' interno della Full Project Root Path dell' ambiente focale
 		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._envconfig_dir}")
 		
+		# Aggiunta del path prefix nel PYTHONPATH per consentire l' esecuzione dei tools
+		self._dockf_builder.set_envvar("PYTHONPATH", self._path_prefix)
+		
 		# Configurazione delle variabili d'ambiente locali
 		self._configure_local_envvars()
 		
@@ -383,11 +389,11 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# dai discendenti di questa classe astratta
 		self._p__install_extra_softws(self._dockf_builder)
 		
-		# Impostazione della directory corrente sul path prefix
-		self._dockf_builder.add_workdir(self._path_prefix)
+		# Impostazione della directory corrente sulla root dei tools
+		self._dockf_builder.add_workdir(f"{self._path_prefix}/tools")
 		
 		# Impostazione del processo principale dell' ambiente focale
-		self._dockf_builder.set_entrypoint("/bin/bash")
+		self._dockf_builder.set_entrypoint("sleep infinity")
 		
 		dockerfile_path: str = path_join(self._orig_full_root, self._dockf_fname)
 		self._dockf_builder.build_dockerfile(dockerfile_path)

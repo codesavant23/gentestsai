@@ -157,7 +157,7 @@ class PtsuiteSyntacticCorrector:
 		if self._corr_inprogr:
 			raise PromptingSessionInProgressError()
 		
-		return not self._try_succ
+		return self._try_succ
 	
 	
 	def get_lastcorr(self) -> str:
@@ -303,6 +303,7 @@ class PtsuiteSyntacticCorrector:
 		corrtry_ptsuite: str = None
 		if self._is_syntact_correct():
 			self._try_succ = True
+			corrtry_ptsuite = self._last_corrpts
 		if (not self._try_succ) and (self._times_tried <= self._max_tries):
 			try:
 				self._logger.log(
@@ -328,8 +329,10 @@ class PtsuiteSyntacticCorrector:
 					self._logger.log("La serie di tentativi di correzione è terminata con successo") if self._logger is not None else None
 					self._try_succ = True
 					self._corr_inprogr = False
+					self._synt_chker.clear_resources()
 				else:
 					# Tentativo di correzione fallito
+					self._times_tried += 1
 					self._logger.log("La test-suite parziale non è stata corretta") if self._logger is not None else None
 			except (ApiResponseError,
 			        SaturatedContextWindowError,
@@ -343,137 +346,34 @@ class PtsuiteSyntacticCorrector:
 				self._last_corrpts = None
 				self._logger.log("La serie di tentativi di correzione è terminata fallendo") if self._logger is not None else None
 			self._corr_inprogr = False
+			self._synt_chker.clear_resources()
 		
 		return corrtry_ptsuite
-			
-			
-	def _pf__get_curr_ptsuite(self) -> str:
-		"""
-			Restituisce la test-suite parziale che deriva dall' ultima richiesta
-			effettuata con successo
-			
-			Returns
-			-------
-				str
-					Una stringa contenente la test-suite parziale derivante dall' ultima
-					richiesta, alla piattaforma di inferenza, effettuata con successo
-		"""
-		return self._last_corrpts
 	
 	
-	def _pf__get_max_tries(self) -> int:
+	def stop_correction(self):
 		"""
-			Restituisce il numero di tentativi massimi da effettuare
+			Termina la serie di tentativi di correzione in corso dichiarando
+			l' ultima serie di tentativi come fallita
 			
-			Returns
-			-------
-				int
-					Un intero che indica il numero di tentativi massimi di correzione sintattica
+			Raises
+			------
+				PromptingSessionNotStartedError
+					Si verifica se non è stata iniziata una serie di tentativi di correzione
 		"""
-		return self._max_tries
+		if not self._corr_inprogr:
+			raise PromptingSessionNotStartedError()
+		
+		self._last_corrpts = None
+		self._try_succ = False
+		self._synt_chker.clear_resources()
+		
+		self._corr_inprogr = False
 	
 	
 	##	============================================================
 	##						PRIVATE METHODS
 	##	============================================================
-
-
-	def _p__try_start(self, try_num: int):
-		"""
-			Esegue le eventuali operazioni necessarie all' inizio di un tentativo
-			di correzione.
-			
-			L' implementazione di default è vuota
-			
-			Parameters
-			----------
-				try_num: int
-					Un intero che indica il tentativo di correzione attuale
-					che ha avuto successo
-		"""
-		pass
-	
-	
-	def _p__post_response(self):
-		"""
-			Esegue le eventuali operazioni necessarie alla fine della richiesta di correzione
-			da parte del Large Language model.
-			
-			E' garantito all' interno di questo metodo:
-				
-				- Che la test-suite parziale è stata prodotta dal LLM
-				- Che la test-suite parziale prodotta dal LLM è stata impostata come tentativo
-				  più recente di correzione
-			
-			L' implementazione di default è vuota
-		"""
-		pass
-	
-	
-	def _p__try_endsucc(self, try_num: int):
-		"""
-			Esegue le eventuali operazioni necessarie se il tentativo di correzione,
-			in cui è chiamato, termina correggendo con successo la test-suite parziale.
-			
-			L' implementazione di default è vuota
-			
-			Parameters
-			----------
-				try_num: int
-					Un intero che indica il tentativo di correzione attuale
-					che ha avuto successo
-		"""
-		pass
-	
-	
-	def _p__try_endfail(self, try_num: int):
-		"""
-			Esegue le eventuali operazioni necessarie se il tentativo di correzione,
-			in cui è chiamato, termina fallendo la correzione della test-suite parziale.
-			
-			L' implementazione di default è vuota
-			
-			Parameters
-			----------
-				try_num: int
-					Un intero che indica il tentativo di correzione attuale che
-					non ha avuto successo
-		"""
-		pass
-	
-	
-	def _p__req_endfail(
-			self,
-	        try_num: int,
-			error_name: str
-	):
-		"""
-			Esegue le eventuali operazioni necessarie se la richiesta del tentativo
-			di correzione, in cui è chiamato, termina fallendo.
-			
-			L' implementazione di default è vuota
-			
-			Parameters
-			----------
-				try_num: int
-					Un intero che indica il tentativo di correzione attuale che
-					non ha avuto successo
-					
-				error_name: str
-					Una stringa contenente il nome dell' errore verificatosi durante la
-					richiesta di correzione
-		"""
-		pass
-	
-	
-	def _p__corr_failed(self):
-		"""
-			Esegue le eventuali operazioni necessarie se l' intera serie di tentativi
-			di correzione da cui è chiamato fallisce.
-			
-			L' implementazione di default è vuota
-		"""
-		pass
 	
 	
 	def _is_syntact_correct(self) -> bool:

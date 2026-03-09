@@ -96,11 +96,8 @@ def generate_correct_mbym(
 	
 	ptsuite_code: str
 	
-	func_pbder.set_placeholder(placehs["project"], project_name)
-	func_pbder.set_placeholder(placehs["module"], module_name)
-	func_pbder.set_placeholder(placehs["code"], module_code)
-	
 	# ===== Processo di "Generazione e Correzione delle test-suite parziali delle funzioni" =====
+	func_pbder.set_placeholder(placehs["code"], module_code)
 	logger.log("Inizio generazione delle test-suites parziali delle funzioni ...")
 	logger.set_messages_sep("\n\t\t\t\t")
 	generate_correct_ebye(
@@ -122,10 +119,7 @@ def generate_correct_mbym(
 	logger.log("Fine generazione delle test-suites parziali delle funzioni")
 	
 	# ===== Processo di "Generazione e Correzione delle test-suite parziali dei metodi" =====
-	meth_pbder.set_placeholder(placehs["project"], project_name)
-	meth_pbder.set_placeholder(placehs["module"], module_name)
 	meth_pbder.set_placeholder(placehs["code"], module_code)
-	
 	logger.log(f"Inizio generazione delle test-suites parziali dei metodi ...")
 	logger.set_messages_sep("\n\t\t\t\t")
 	for cls in clss:

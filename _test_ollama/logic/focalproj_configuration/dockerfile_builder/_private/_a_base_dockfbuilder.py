@@ -65,7 +65,6 @@ class _ABaseDockfBuilder(IDockfBuilder):
 			operands.extend(args)
 		
 		self._ap__add_instr("SHELL " + json_dumps(operands))
-		
 	
 	
 	def add_copy(self, sources: List[str], dest: str):
@@ -131,14 +130,11 @@ class _ABaseDockfBuilder(IDockfBuilder):
 		
 		if len(self._entryp) != 0:
 			del self._entryp
-			self._entryp = None
-		
-		if def_args is not None:
-			self._entryp = def_args.copy()
-		else:
 			self._entryp = list()
-			
-		self._entryp.insert(0, entry_cmd)
+		
+		self._entryp.extend(entry_cmd.split(" "))
+		if def_args is not None:
+			self._entryp.extend(def_args)
 		
 		
 	def build_dockerfile(

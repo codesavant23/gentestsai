@@ -37,6 +37,7 @@ def correct_syntactically(
 	llm_trynum: int = 1
 	ptsuite_code: str = wrong_ptsuite_code
 	
+	is_corr_success: bool = False
 	synt_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
 	while (not synt_corr.has_corr_terminated()) and (try_num <= max_tries):
 		error = synt_chker.check_synt(ptsuite_code)
@@ -76,11 +77,15 @@ def correct_syntactically(
 				logger.log("Test-suite parziale ottenuta dalla cache!")
 			try_num += 1
 		else:
+			# Se la serie di tentativi del correttore sintattico non è terminata
+			# (ma la test-suite parziale è corretta sintatticamente)
+			if not synt_corr.has_corr_terminated():
+				synt_corr.stop_correction()
+			is_corr_success = True
 			break
 	
 	# Se la serie di tentativi di correzione ha avuto successo (essendo stata effettuata)
 	# o se è stata recuperata dalla cache una test-suite parziale sintatticamente corretta
-	is_corr_success: bool = (synt_corr.has_corr_succ()) or (synt_chker.check_synt(ptsuite_code))
 	if is_corr_success:
 		# allora viene restituito il codice della test-suite parziale
 		# sintatticamente corretta

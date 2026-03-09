@@ -1,5 +1,17 @@
 from typing import Tuple
 
+from datetime import datetime as DateTime
+# ============== OS Utilities ============== #
+from os import (
+	makedirs as os_mkdirs,
+	remove as os_remove,
+)
+from os.path import exists as os_fdexists
+from tempfile import gettempdir as os_tempdir
+# ========================================== #
+# ============ Path Utilities ============ #
+from os.path import join as path_join
+# ======================================== #
 # ============= RegEx Utilities ============ #
 from regex import (
 	search as reg_search,
@@ -176,7 +188,7 @@ class PtsuiteLintingCorrector:
 		if self._corr_inprogr:
 			raise PromptingSessionInProgressError()
 		
-		return not self._try_succ
+		return self._try_succ
 	
 	
 	def get_lastcorr(self) -> Tuple[str, int]:
@@ -253,14 +265,7 @@ class PtsuiteLintingCorrector:
 			raise PromptingSessionInProgressError()
 		
 		# Check sintattico della test-suite parziale
-		try:
-			py_compile(
-				ptsuite_code,
-				doraise=True,
-				invalidation_mode=Pyc_InvMode.TIMESTAMP
-			)
-		except PyCompileError:
-			raise SyntacticallyIncorrectPtsuiteError()
+		self._is_synt_correct(ptsuite_code)
 		
 		if not self._corr_everperf:
 			self._corr_everperf = True
@@ -338,6 +343,7 @@ class PtsuiteLintingCorrector:
 		corrtry_ptsuite: str = None
 		if self._is_linting_correct():
 			self._try_succ = True
+			corrtry_ptsuite = self._last_corrpts
 		if (not self._try_succ) and (self._times_tried <= self._max_tries):
 			try:
 				self._logger.log(
@@ -349,6 +355,7 @@ class PtsuiteLintingCorrector:
 				if resp_match is None:
 					raise WrongResponseFormatError()
 				self._last_corrpts = resp_match.group("gen_code")
+				corrtry_ptsuite = self._last_corrpts
 				
 				self._logger.log("Fine della richiesta di correzione") if self._logger is not None else None
 				
@@ -359,17 +366,19 @@ class PtsuiteLintingCorrector:
 					self._logger.log(
 						f"Test-suite parziale corretta con successo al tentativo {self._times_tried}/{self._max_tries}"
 					) if self._logger is not None else None
+					self._logger.log("La serie di tentativi di correzione è terminata con successo") if self._logger is not None else None
 					self._try_succ = True
 					self._corr_inprogr = False
 					self._lint_chker.clear_resources()
-					self._logger.log("La serie di tentativi di correzione è terminata con successo") if self._logger is not None else None
 				else:
 					# Tentativo di correzione fallito
+					self._times_tried += 1
 					self._logger.log("La test-suite parziale non è stata corretta") if self._logger is not None else None
 			except (ApiResponseError,
 			        SaturatedContextWindowError,
-			        ResponseTimedOutError):
+			        ResponseTimedOutError) as error:
 				# Richiesta al LLM di correzione fallita
+				self._logger.log(f"La test-suite parziale non è stata corretta (Errore: {str(type(error))})") if self._logger is not None else None
 				self._times_tried += 1
 		else:
 			if (self._times_tried <= self._max_tries):
@@ -382,9 +391,74 @@ class PtsuiteLintingCorrector:
 		return corrtry_ptsuite
 	
 	
+	def stop_correction(self):
+		"""
+			Termina la serie di tentativi di correzione in corso dichiarando
+			l' ultima serie di tentativi come fallita
+			
+			Raises
+			------
+				PromptingSessionNotStartedError
+					Si verifica se non è stata iniziata una serie di tentativi di correzione
+		"""
+		if not self._corr_inprogr:
+			raise PromptingSessionNotStartedError()
+		
+		self._last_corrpts = None
+		self._try_succ = False
+		self._lint_chker.clear_resources()
+		
+		self._corr_inprogr = False
+	
+	
 	##	============================================================
 	##						PRIVATE METHODS
 	##	============================================================
+	
+	
+	def _is_synt_correct(self, ptsuite_code: str):
+		"""
+			Effettua la verifica di correttezza sintattica sulla prima test-suite
+			parziale fornita
+			
+			Parameters
+			----------
+				ptsuite_code: str
+					Una stringa contenente il codice della test-suite parziale di cui
+					effettuare i tentativi di correzione
+			
+			Raises
+			------
+				SyntacticallyIncorrectPtsuiteError
+					Si verifica se il codice della test-suite parziale data è incorretto
+					sintatticamente
+		"""
+		timestamp: str = str(int(DateTime.now().timestamp() * 1000))
+		temp_fname: str = f"temp_{timestamp}.py"
+		temp_basepath: str = path_join(
+			os_tempdir(),
+			"gentests_ai",
+			"correction",
+			"synt"
+		)
+		tempfile_path: str = path_join(temp_basepath, temp_fname)
+		
+		if not os_fdexists(temp_basepath):
+			os_mkdirs(temp_basepath)
+		with open(tempfile_path, "w") as fptsuite:
+			fptsuite.write(ptsuite_code)
+			fptsuite.flush()
+		try:
+			py_compile(
+				tempfile_path,
+				doraise=True,
+				invalidation_mode=Pyc_InvMode.TIMESTAMP
+			)
+		except PyCompileError:
+			os_remove(tempfile_path)
+			raise SyntacticallyIncorrectPtsuiteError()
+		
+		os_remove(tempfile_path)
 	
 	
 	def _is_linting_correct(self) -> bool:

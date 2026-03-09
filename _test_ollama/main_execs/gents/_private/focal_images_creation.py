@@ -22,7 +22,7 @@ from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 )
 from ..._private.getting_contmanager import retrieve_contmanager
 
-from logic.utils.process_logger._private.process_logger import ProcessLogger
+from logic.utils.logger import ATemporalFormattLogger
 
 
 
@@ -38,7 +38,7 @@ def create_focal_images(
 		linttools_dir: str,
 		covtools_dir: str,
 		path_prefix: str,
-		gents_logger: ProcessLogger
+		logger: ATemporalFormattLogger
 ) -> Dict[str, DockerImage]:
 	"""
 		Crea/Ottiene le immagini che corrispondono agli ambienti focali dei progetti focali
@@ -99,7 +99,7 @@ def create_focal_images(
 			path_prefix: str
 				Una stringa rappresentante il path prefix da utilizzare negli ambienti focali prodotti
 				
-			gents_logger: ProcessLogger
+			logger: ProcessLogger
 				Un oggetto `ProcessLogger` rappresentante il logger da utilizzare per registrare gli steps
 				del processo di creazione/ottenimento delle immagini di ogni progetto focale
 				
@@ -116,8 +116,10 @@ def create_focal_images(
 					- Il parametro `tools_root` ha valore ``None`, è una stringa vuota, oppure è una path invalida
 					- Il parametro `linttools_dir` ha valore `None`, è una stringa vuota, oppure non esiste quella directory in `tools_root`
 					- Il parametro `path_prefix` è una stringa vuota, oppure è una path Linux invalida
-					- Il parametro `gents_logger` ha valore `None`
+					- Il parametro `logger` ha valore `None`
 	"""
+	log_format: str
+	
 	focal_envs: Dict[str, DockerImage] = dict()
 	
 	fenv_confgor: IFocalEnvConfigurator = V1FocalEnvConfigurator(
@@ -139,7 +141,12 @@ def create_focal_images(
 	shared_path: str
 	
 	for proj_name, proj_info in projs_config.items():
-		gents_logger.process_start(f'Progetto focale attuale: "{proj_name}" ... ')
+		log_format = logger.unset_format()
+		logger.log(f'Progetto focale attuale: "{proj_name}" ... ')
+		
+		logger.set_messages_sep(" ")
+		logger.set_format(log_format)
+		
 		full_root = proj_info["full_root"].rstrip(_PATH_SEPS)
 		
 		shared_path = path_join(full_root, shared_dirname)
@@ -150,7 +157,7 @@ def create_focal_images(
 			focal_envs[proj_name] = cont_manager.images.get(
 				f"{image_prefix}_{proj_name}"
 			)
-			gents_logger.set_endmessage("OTTENUTA!")
+			logger.log("OTTENUTA!")
 		except ImageNotFound:
 			
 			focal_root = path_join(full_root, proj_info["focal_root"].rstrip(_PATH_SEPS))
@@ -163,8 +170,8 @@ def create_focal_images(
 				tests_root
 			)
 			focal_envs[proj_name] = fenv_confgor.build_image(True)
-			gents_logger.set_endmessage("CREATA!")
-		gents_logger.process_end()
-	gents_logger.set_endmessage("OK!")
+			logger.log("CREATA!")
+			
+		logger.set_messages_sep("\n\t")
 	
 	return focal_envs

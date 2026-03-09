@@ -1,1 +1,1 @@
-from lintchkeralrused_error import LintingCheckerAlreadyUsedError
+from .lintchkeralrused_error import LintingCheckerAlreadyUsedError

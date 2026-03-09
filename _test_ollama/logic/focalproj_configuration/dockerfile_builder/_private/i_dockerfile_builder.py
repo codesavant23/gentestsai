@@ -215,7 +215,7 @@ class IDockfBuilder(ABC):
 			def_args: List[str]=None
 	):
 		"""
-			Imposta l' entrypoint (processo principale) dei containers generati sulla base del dockerfile
+			Imposta l' entrypoint (processo principale), dei containers generati, sulla base del dockerfile
 			costruito successivamente, e eventualmente anche i suoi argomenti di default.
 			La chiamata a questo metodo equivale all' aggiunta/modifica dell' istruzione `ENTRYPOINT`, e `CMD`,
 			nel dockerfile risultante.
@@ -237,8 +237,8 @@ class IDockfBuilder(ABC):
 				ValueError
 					Si verifica se:
 					
-						- E' stata fornita una stringa vuota per `entry_cmd`
-						- E' stata fornita una lista vuota per `def_args`
+						- Il parametro `entry_cmd` è una stringa vuota
+						- Il parametro `def_args` è una stringa vuota
 		"""
 		pass
 	

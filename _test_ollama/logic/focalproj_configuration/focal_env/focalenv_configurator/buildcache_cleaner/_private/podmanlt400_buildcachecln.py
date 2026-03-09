@@ -1,7 +1,10 @@
-from typing import List
 from .i_buildcache_cleaner import IBuildCacheCleaner
 
-from subprocess import run as subp_run
+from subprocess import (
+	DEVNULL,
+	run as subp_run
+)
+OS_DEVNULL = DEVNULL
 
 
 
@@ -16,20 +19,18 @@ class PodmanLt400BuildCacheCleaner(IBuildCacheCleaner):
 			Costruisce un nuovo PodmanLt40BuildCache
 		"""
 		pass
-		
+	
 	
 	def clean_buildcache(self):
-		whole_cmd: List[str] = list()
-		
-		whole_cmd.append("podman images -a")
-		whole_cmd.append("--format")
-		whole_cmd.append('"{{.ID}} {{.Tag}}"')
-		whole_cmd.append("|")
-		whole_cmd.append("awk '$2 == \"<none>\" {print $1}'")
-		whole_cmd.append("|")
-		whole_cmd.append("xargs -r podman rmi -f")
-		
-		subp_run(whole_cmd)
+		subp_run(
+			"podman images -a --format \"{{.ID}} {{.Tag}}\" | "
+			"awk '$2 == \"<none>\" {print $1}' | "
+			"xargs -r podman rmi -f",
+			shell=True,
+			check=True,
+			stdout=DEVNULL,
+			stderr=DEVNULL
+		)
 	
 	
 	##	============================================================

@@ -35,12 +35,14 @@ if __name__ == "__main__":
 		"result_relpath",
 		help="Linting result JSON file path (relative to the container path prefix)"
 	)
+
 	arg_parser.add_argument(
 		"--pyl_args",
 		help='Optional. PyLint extra arguments (without any space between each flag and its value). Must not contain "--source" and "--output-format" flags',
 		nargs=ARGP_1_PLUS, required=False,
 		default=[]
 	)
+	
 	script_args: ArgumentsList = arg_parser.parse_args()
 	
 	pyl_args: List[str] = script_args.pyl_args
@@ -50,7 +52,7 @@ if __name__ == "__main__":
 	full_root: str = os_getenv["FULL_ROOT"]
 	path_prefix: str = path_split(full_root)[0]
 	
-	ptsuite_path: str = f"{full_root}/{ptsuite_relpath}"
+	ptsuite_path: str = f"{path_prefix}/{ptsuite_relpath}"
 	result_path: str = f"{path_prefix}/{result_relpath}"
 	
 	ptsuite_checker: PartialTsuite1TimeLintingChecker = PartialTsuite1TimeLintingChecker(
@@ -59,6 +61,6 @@ if __name__ == "__main__":
 		result_path
 	)
 	
-	ptsuite_checker.check_lintically()
+	ptsuite_checker.check_lintically(script_args.pyl_args)
 	
 	ptsuite_checker.serialize_result()

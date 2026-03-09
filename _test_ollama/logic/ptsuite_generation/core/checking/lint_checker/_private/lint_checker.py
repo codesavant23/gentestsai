@@ -12,6 +12,7 @@ from shutil import rmtree as os_dremove
 from os.path import (
 	join as path_join,
 	split as path_split,
+	splitext as path_splitext,
 	relpath as path_relative
 )
 # ======================================== #
@@ -93,7 +94,7 @@ class LintingChecker:
 		
 		# Nome dello script Python che esegue il linter all' interno dell' ambiente focale
 		self._fenv_script_fname: str = fenv_script_fname
-			
+		
 		# Path (reale) del file con la test-suite parziale per la verifica di linting
 		self._ptsuite_path: str = None
 		# Path (reale) del risultato della verifica di linting effettuata
@@ -234,7 +235,7 @@ class LintingChecker:
 				ProjectNeverSetError
 					Si verifica se non è mai stato impostato un progetto focale prima di eseguire
 					questa operazione
-						
+					
 				OSError
 					Se si verificano problemi con l' apertura, o scrittura, nel file temporaneo utilizzato
 					per la verifica
@@ -250,13 +251,13 @@ class LintingChecker:
 			f"Inizio della verifica di linting ..."
 		) if self._logger is not None else None
 		
-		self._logger.log("Scrittura della test-suite parziale nella directory-volume shared ...")
+		self._logger.log("Scrittura della test-suite parziale nella directory-volume shared ...") if self._logger is not None else None
 		with open(self._ptsuite_path, "w") as fptsuite:
 			fptsuite.write(ptsuite_code)
 			fptsuite.flush()
-		self._logger.log("Scrittura eseguita")
+		self._logger.log("Scrittura eseguita") if self._logger is not None else None
 		
-				# Avvio dell' ambiente focale (container)
+		# Avvio dell' ambiente focale (container)
 		self._logger.log("Avvio dell' ambiente focale ...") if self._logger is not None else None
 		self._focal_env.start_container()
 		self._logger.log(f"Ambiente focale del progetto {self._proj_name} avviato") if self._logger is not None else None
@@ -264,8 +265,8 @@ class LintingChecker:
 		# Richiesta della verifica della correttezza (a livello di linting)
 		self._logger.log("Esecuzione della verifica di linting ...") if self._logger is not None else None
 		self._focal_env.execute(
-			f"/bin/sh -c python $CONTTOOLS_ROOT/$LINTTOOLS_DIRNAME/{self._fenv_script_fname} "
-			f"gtsai__results {self._ptsuite_relpath} {self._lint_result_relpath}"
+			f"/bin/bash -c 'python -m $LINTTOOLS_DIRNAME.{path_splitext(self._fenv_script_fname)[0]} "
+			f"{self._ptsuite_relpath} {self._lint_result_relpath}'"
 		)
 		self._logger.log("Verifica di linting eseguita") if self._logger is not None else None
 		
