@@ -442,7 +442,7 @@ if __name__ == "__main__":
 							os_mkdirs(tsuite_dirpath)
 						
 							# Calcolo delle paths relative (da utilizzare nei prompts)
-							tsuite_relpath, module_relpath  \
+							module_relpath, tsuite_relpath  \
 								= calculate_prompt_relpaths(focal_root, tsuite_dirpath, module_path)
 							
 							prompt_builders = (func_bder, meth_bder, corr_bder)

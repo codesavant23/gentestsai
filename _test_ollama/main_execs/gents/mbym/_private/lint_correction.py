@@ -45,7 +45,7 @@ def correct_lintically(
 	lint_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
 	while (not lint_corr.has_corr_terminated()) and (try_num <= max_tries):
 		error = lint_chker.check_lintically(ptsuite_code)
-		# Se si sono ci sono errori di correttezza sintattica
+		# Se si sono ci sono errori di correttezza a livello di linting
 		if len(error) > 0:
 			# Impostazione dell' errore nel prompt
 			line, column = error["except_pos"].split(";")

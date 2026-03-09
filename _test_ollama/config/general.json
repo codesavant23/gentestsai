@@ -1,10 +1,10 @@
 {
 	"default_model_params": {
 		"context_window": 131072,
-		"temperature": 0.1,
+		"temperature": 0.01,
 		"gen_seed": 0,
 		"top-k": 40,
-		"top-p": 0.9,
+		"top-p": 0.2,
 		"think": false,
 		"num_predict": -2,
 		"num_gpu": 100
