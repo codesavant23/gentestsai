@@ -2,16 +2,21 @@
 Generate tests, and necessary imports, only for the function '{@Entity_Name@}', part of the focal module whose code is provided below.
 The focal module is called "{@Module_Name@}" and belongs to a project called "{@Project_Name@}".
 
+## How to calculate import of '{@Entity_Name@}':
+* The focal module persists in the following directory: "{@Focal_Path@}".
+* The generated tests will persist in the following directory: "{@Suite_Path@}".
+
 ## Very Important:
-* Suppose that the generated code will reside in the following relative path: "{@Suite_Path@}"
-* Suppose that the focal module resides in the following relative path: "{@Focal_Path@}"
 * You must follow the response format specified below for your answer.
+* The response **MUST** contain exactly **ONE** markdown code block.
 * Do not modify any of the module's code to achieve the goal.
-* Do not generate any code except for tests and necessary imports.
+* No explanations, comments outside the code, markdown headings, or separators are allowed.
+* Do not generate anything except for tests and necessary imports.
+* If you violate **ANY** of these rules, the answer is considered **INVALID**.
 
 # Response Format:
 ```python
-<generated_code_here>
+<generated tests here>
 ```
 
 # Example:
@@ -22,29 +27,6 @@ from typing import List, Dict, Any
 
 
 def calculate_discount(price: float, age: int, is_member: bool) -> float:
-	"""
-	Calculates the discounted price based on age and loyalty program membership.
-
-	Rules:
-		- If `price` is negative, or zero, a ValueError exception is raised.
-		- If `age` is negative, or zero, a ValueError exception is raised.
-		- Children (<12 years) receive a 50% discount.
-		- Seniors (>=65 years) receive a 30% discount.
-		- Members receive an additional 10% discount on the total.
-
-	Args:
-		price: float
-			Original price of the item.
-		age: int
-			Age of the buyer.
-		is_member: bool
-			True if the buyer is a loyalty program member.
-
-	Returns:
-		float
-			Final price after discounts.
-	"""
-
 	if price <= 0:
 		raise ValueError("The price cannot be negative or zero")
 	if age <= 0:
@@ -65,31 +47,6 @@ def calculate_discount(price: float, age: int, is_member: bool) -> float:
 
 
 def calculate_cart_total(items: List[Dict[str, Any]], tax_rate: float = 0.22, shipping: float = 5.0, free_shipping_threshold: float = 50.0) -> float:
-	"""
-	Calculate a cart total, applying taxes and shipping.
-
-	Rules:
-	    - If `items` is an empty list or is None then the final cart total is 0
-	    - If any of the cart items is not valid, a ValueError exception is raised
-
-	Args:
-		items: List[Dict[str, Any]]
-			List of the cart items.
-			Each valid cart item is a dictionary with:
-			    - "price": float,
-			    - "quantity": int,
-			    - (optional) "discount": float (from 0.0 to 1.0)
-		tax_rate: float
-			VAT percentage to apply to the subtotal. (Default is 0.22)
-		shipping: float
-			Shipping cost to add.
-		free_shipping_threshold: float
-			Threshold above which shipping is free.
-
-	Returns:
-		float
-		    Final cart total.
-	"""
 	if (items is None) or (len(items) == 0):
 		return 0.0
 

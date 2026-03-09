@@ -2,16 +2,21 @@
 Generate tests, and necessary imports, only for the method '{@Entity_Name@}', part of the focal class, and focal module, whose code is provided below.
 The focal class is called "{@Class_Name@}" and belongs to the module called "{@Module_Name@}" of a project called "{@Project_Name@}".
 
+## How to calculate import of '{@Entity_Name@}':
+* The focal module persists in the following directory: "{@Focal_Path@}".
+* The generated tests will persist in the following directory: "{@Suite_Path@}".
+
 ## Very Important:
-* Suppose that the generated code will reside in the following relative path: "{@Suite_Path@}"
-* Suppose that the focal module resides in the following relative path: "{@Focal_Path@}"
 * You must follow the response format specified below for your answer.
+* The response **MUST** contain exactly **ONE** markdown code block.
 * Do not modify any of the module's code to achieve the goal.
-* Do not generate any code except for tests and necessary imports.
+* No explanations, comments outside the code, markdown headings, or separators are allowed.
+* Do not generate any text except code for tests and necessary imports.
+* If you violate **ANY** of these rules, the answer is considered **INVALID**.
 
 # Response Format:
 ```python
-<generated_code_here>
+<generated tests here>
 ```
 
 # Example:
@@ -23,17 +28,6 @@ from typing import List, Dict, Any
 
 class ShoppingCart:
 	def __init__(self, tax_rate: float = 0.22, shipping: float = 5.0, free_shipping_threshold: float = 50.0):
-		"""
-		Creates, and initializes, a new shopping cart.
-
-		Args:
-			tax_rate: float
-				VAT percentage to apply to the subtotal (Default is 0.22).
-			shipping: float
-				Shipping cost to add.
-			free_shipping_threshold: float
-				Threshold above which shipping is free.
-		"""
 		self._items: List[Dict[str, Any]] = list()
 		self._tax_rate: float = tax_rate
 		self._ship_fee: float = shipping
@@ -41,19 +35,6 @@ class ShoppingCart:
 
 
 	def add_item(self, name: str, price: float, quantity: int = 1, discount: float = 0.0):
-		"""
-		Adds a new product to the shopping cart.
-
-		Args:
-			name: str
-				Name of the product.
-			price: float
-				Unitary price of the product.
-			quantity: int
-				Product quantity (Default is 1).
-			discount: float
-				Discount percentage (Default is 0.0)
-		"""
 		if (price < 0) or (quantity <= 0) or (not (0.0 <= discount <= 1.0)):
 			raise ValueError("Invalid data for the product given")
 
@@ -66,16 +47,6 @@ class ShoppingCart:
 
 
 	def remove_item(self, name: str):
-		"""
-		Removes an existing product from the shopping cart.
-
-		Rules:
-			- If `name` contains the name of a product that doesn't exist, a ValueError exception is raised
-
-		Args:
-			name: str
-				Name of the product to remove from the shopping cart.
-		"""
 		i: int = 0
 		prod_index: int = -1
 		prod_exists: bool = False
@@ -91,13 +62,6 @@ class ShoppingCart:
 
 
 	def calculate_total(self) -> float:
-		"""
-		Calculate the final price of the entire cart.
-
-		Returns:
-			float
-				Final cart total.
-		"""
 		if (len(self._items) == 0):
 			return 0.0
 

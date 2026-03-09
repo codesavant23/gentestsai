@@ -5,14 +5,17 @@ The error encountered is described below in the section "Error Encountered".
 This is fix attempt number {@Try_Number@}.
 
 ## Very Important:
-* Suppose that the focal module resides in the following path: "{@Focal_Path@}"
-* Suppose that the test suite resides in the following path: "{@Suite_Path@}"
-* Once the code is corrected, it must be runnable without any error.
 * You must follow the response format specified below for your answer.
+* The response **MUST** contain exactly **ONE** markdown code block.
+* The focal module persists in the following directory: "{@Focal_Path@}".
+* The generated tests will persist in the following directory: "{@Suite_Path@}".
+* No explanations, comments outside the code, markdown headings, or separators are allowed.
+* Do not generate any text except code for tests and necessary imports.
+* If you violate **ANY** of these rules, the answer is considered **INVALID**.
 
 # Response Format:
 ```python
-<corrected_test_suite_code_here>
+<corrected test suite code here>
 ```
 
 # Error Encountered:
