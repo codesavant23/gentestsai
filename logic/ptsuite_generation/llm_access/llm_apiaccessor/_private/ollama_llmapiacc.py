@@ -1,6 +1,7 @@
 from typing import List, Dict, Iterator, Any
 from ._a_base_llmapiacc import _ABaseLlmApiAccessor
 
+from base64 import b64encode as b64_encode
 from ollama import (
 	Client as OllamaClient,
 	ChatResponse,
@@ -109,7 +110,7 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		
 		self._log_resp: bool = log_resp
 		self._o_addr: str = address
-		self._o_auth: str = auth
+		self._o_auth: str = b64_encode(auth.encode()).decode()
 		self._conn_tout: int = conn_timeout
 		
 		self._think_param: ILlmHyperParamId = LlmHyperParamIdFactoryResolver.resolve("ollama").create("think")
@@ -154,7 +155,7 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		try:
 			oll_client = OllamaClient(
 				host=self._o_addr,
-				headers={ 'Authorization': self._o_auth },
+				headers={ 'Authorization': f'Basic {self._o_auth}' },
 				timeout=full_timeout
 			)
 			if logger is not None:
