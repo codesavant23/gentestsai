@@ -170,6 +170,14 @@ class LintingChecker:
 		if not os_fdexists(path_join(full_root, self._shared_dir)):
 			raise ValueError()
 		
+		# Stop dell' eventuale ambiente focale precedente
+		if self._focal_env is not None:
+			self._logger.log("Stop dell' ambiente focale ...") if self._logger is not None else None
+			self._focal_env.stop_container()
+			self._logger.log(f"Ambiente focale del progetto {self._proj_name} fermato") if self._logger is not None else None
+			
+			del self._focal_env
+		
 		self._proj_name = project_name
 		self._full_root = full_root
 		
@@ -189,13 +197,17 @@ class LintingChecker:
 		# Creazione della directory-volume shared
 		self._create_shareddir()
 		
-		del self._focal_env
 		self._focal_env = FocalContainer(
 			env_image,
 			self._full_root,
 			path_prefix,
 			self._shared_dir
 		)
+		
+		# Avvio dell' ambiente focale (container)
+		self._logger.log("Avvio dell' ambiente focale ...") if self._logger is not None else None
+		self._focal_env.start_container()
+		self._logger.log(f"Ambiente focale del progetto {self._proj_name} avviato") if self._logger is not None else None
 		
 		if not self._proj_everset:
 			self._proj_everset = True
@@ -257,11 +269,6 @@ class LintingChecker:
 			fptsuite.flush()
 		self._logger.log("Scrittura eseguita") if self._logger is not None else None
 		
-		# Avvio dell' ambiente focale (container)
-		self._logger.log("Avvio dell' ambiente focale ...") if self._logger is not None else None
-		self._focal_env.start_container()
-		self._logger.log(f"Ambiente focale del progetto {self._proj_name} avviato") if self._logger is not None else None
-		
 		# Richiesta della verifica della correttezza (a livello di linting)
 		self._logger.log("Esecuzione della verifica di linting ...") if self._logger is not None else None
 		self._focal_env.execute(
@@ -278,11 +285,6 @@ class LintingChecker:
 			result = json_dec.decode(fjson.read())
 		self._logger.log("Risultato della verifica letto") if self._logger is not None else None
 		
-		# Stop dell' ambiente focale (container)
-		self._logger.log("Stop dell' ambiente focale ...") if self._logger is not None else None
-		self._focal_env.stop_container()
-		self._logger.log(f"Ambiente focale del progetto {self._proj_name} fermato") if self._logger is not None else None
-		
 		self._logger.log("Fine della verifica di linting") if self._logger is not None else None
 		return result
 	
@@ -292,6 +294,11 @@ class LintingChecker:
 			Ripulisce le risorse che sono state utilizzate dal verificatore
 			a livello di linting
 		"""
+		if self._focal_env is not None:
+			self._logger.log("Stop dell' ambiente focale ...") if self._logger is not None else None
+			self._focal_env.stop_container()
+			self._logger.log(f"Ambiente focale del progetto {self._proj_name} fermato") if self._logger is not None else None
+		
 		os_dremove(
 			path_split(self._ptsuite_path)[0], ignore_errors=False
 		)

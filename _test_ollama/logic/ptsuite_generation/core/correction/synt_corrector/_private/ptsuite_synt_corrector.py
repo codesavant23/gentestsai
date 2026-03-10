@@ -304,7 +304,7 @@ class PtsuiteSyntacticCorrector:
 		if self._is_syntact_correct():
 			self._try_succ = True
 			corrtry_ptsuite = self._last_corrpts
-		if (not self._try_succ) and (self._times_tried <= self._max_tries):
+		if not self._try_succ:
 			try:
 				self._logger.log(
 					f"Inizio della richiesta di correzione sintattica (Tentativo {self._times_tried}/{self._max_tries}) ..."
@@ -340,11 +340,13 @@ class PtsuiteSyntacticCorrector:
 				# Richiesta al LLM di correzione fallita
 				self._logger.log(f"La test-suite parziale non è stata corretta (Errore: {str(type(error))})") if self._logger is not None else None
 				self._times_tried += 1
-		else:
-			if (self._times_tried > self._max_tries):
-				# Tutti i tentativi sono stati esauriti
-				self._last_corrpts = None
+				
+			if self._times_tried > self._max_tries:
 				self._logger.log("La serie di tentativi di correzione è terminata fallendo") if self._logger is not None else None
+				self._last_corrpts = None
+				self._corr_inprogr = False
+				self._synt_chker.clear_resources()
+		else:
 			self._corr_inprogr = False
 			self._synt_chker.clear_resources()
 		
