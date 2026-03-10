@@ -73,7 +73,7 @@ class PyCompileSyntChecker(_ABaseSyntacticChecker):
 			Ripulisce le risorse che sono state utilizzate dal verificatore
 			a livello di linting
 		"""
-		os_dremove(self._TEMP_BASEPATH, ignore_errors=False)
+		os_dremove(self._TEMP_BASEPATH, ignore_errors=True)
 		self._inited = False
 	
 	

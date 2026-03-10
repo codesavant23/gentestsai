@@ -300,7 +300,7 @@ class LintingChecker:
 			self._logger.log(f"Ambiente focale del progetto {self._proj_name} fermato") if self._logger is not None else None
 		
 		os_dremove(
-			path_split(self._ptsuite_path)[0], ignore_errors=False
+			path_split(self._ptsuite_path)[0], ignore_errors=True
 		)
 		self._inited = False
 	
@@ -316,7 +316,7 @@ class LintingChecker:
 			della verifica a livello di linting
 		"""
 		shared_path: str = path_join(self._full_root, self._shared_dir)
-		os_dremove(shared_path, ignore_errors=False)
+		os_dremove(shared_path, ignore_errors=True)
 		os_mkdirs(shared_path)
 		
 		self._inited = True
