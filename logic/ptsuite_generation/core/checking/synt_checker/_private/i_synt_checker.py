@@ -41,10 +41,7 @@ class ISyntacticChecker(ABC):
 			Raises
 			------
 				ValueError
-					Si verifica se:
-					
-						- Il parametro `ptsuite_code` ha valore `None` o è una stringa vuota
-						- Il parametro `resp_timeout` ha valore minore di 1
+					Si verifica se il parametro `ptsuite_code` ha valore `None` o è una stringa vuota
 		"""
 		pass
 	

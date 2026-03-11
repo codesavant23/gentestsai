@@ -8,21 +8,29 @@ from logic.utils.logger import ATemporalFormattLogger
 
 
 def generate_ptsuite(
-		project_name: str, model: str,
+		project_name: str, cache_modname: str,
+		model: str,
+		entity: str,
 		full_prompt: str,
 		ptsuite_gen: EntityPtsuiteGenerator,
 		chat: ILlmChat,
 		max_tries: int,
 		resp_timeout: int,
 		gen_cache: IPtsuiteCacheAccessor,
-		logger: ATemporalFormattLogger
+		logger: ATemporalFormattLogger,
+		cache_entprefix: str = "",
 ) -> str:
 	ptsuite_code: str = None
 	try_num: int = 1
 	
 	while try_num < max_tries:
-		if gen_cache.does_ptsuite_exists(project_name, full_prompt, model, try_num):
-			ptsuite_code = gen_cache.get_ptsuite(project_name, full_prompt, model, try_num)
+		if gen_cache.does_ptsuite_exists(
+				project_name,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num
+		):
+			ptsuite_code = gen_cache.get_ptsuite(
+				project_name, cache_modname, f"{cache_entprefix}{entity}", model, try_num
+			)
 			logger.log("Test-suite parziale ottenuta dalla cache")
 			break
 		try_num += 1
@@ -41,7 +49,10 @@ def generate_ptsuite(
 			ptsuite_code, try_num = ptsuite_gen.get_lastgen()
 			# e memorizzato nella cache di generazione
 			logger.log("Salvataggio nella cache ... ")
-			gen_cache.register_ptsuite(project_name, full_prompt, model, try_num, ptsuite_code)
+			gen_cache.register_ptsuite(
+				project_name,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num, ptsuite_code
+			)
 			logger.log("Test-suite parziale salvata!")
 
 	return ptsuite_code

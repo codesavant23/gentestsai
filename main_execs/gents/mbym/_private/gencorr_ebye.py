@@ -28,7 +28,8 @@ from .lint_correction import correct_lintically
 
 
 def generate_correct_ebye(
-		project_name: str, model: str,
+		project_name: str, cache_modname: str,
+		model: str,
 		module_dirpath: str,
 		entities_name: List[str],
 		prompt_builders: Tuple[PromptBuilder, PromptBuilder],
@@ -77,12 +78,15 @@ def generate_correct_ebye(
 		# ===== Processo di "Generazione della test-suite parziale" =====
 		entity_gen_pbder.set_placeholder(entity_placeh, entity_name)
 		ptsuite_code = generate_ptsuite(
-			project_name, model,
+			project_name, cache_modname,
+			model,
+			entity_name,
 		    entity_gen_pbder.build_prompt(),
 			ptsuite_gen, chat,
 			max_gen_tries, resp_timeout,
 			gen_cache,
-			logger
+			logger,
+			cache_entprefix = f"{entity_prefix}{entity_promptsep}"
 		)
 		# Se la generazione non ha avuto successo
 		if ptsuite_code is None:
@@ -95,7 +99,8 @@ def generate_correct_ebye(
 		# ===== Processo di "Correzione Sintattica della test-suite parziale" =====
 		entity_corr_pbder.set_placeholder(entity_placeh, entity_name)
 		ptsuite_code = correct_syntactically(
-			project_name, model,
+			project_name, cache_modname,
+			model,
 			(entity_name, entity_placeh),
 			ptsuite_code,
 			entity_corr_pbder,
@@ -116,7 +121,8 @@ def generate_correct_ebye(
 		
 		# ===== Processo di "Correzione a livello di Linting della test-suite parziale" =====
 		ptsuite_code = correct_lintically(
-			project_name, model,
+			project_name, cache_modname,
+			model,
 			(entity_name, entity_placeh),
 			ptsuite_code,
 			entity_corr_pbder,

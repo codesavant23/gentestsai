@@ -44,9 +44,13 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 		self._conn.close()
 	
 	
-	def does_ptsuite_exists(self, proj_name: str, prompt: str, model: str, try_num: int) -> bool:
-		row: Tuple[str, str, str, str]= self._query_db(
-			proj_name, prompt, model, try_num
+	def does_ptsuite_exists(
+			self,
+			proj_name: str,
+			module_name: str, entity: str, model: str, try_num: int
+	) -> bool:
+		row: Tuple[str, str, str, str, str]= self._query_db(
+			proj_name, module_name, entity, model, try_num
 		)
 
 		return (row is not None)
@@ -59,11 +63,12 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 	def _ap__create_projspace_spec(self, proj_name: str):
 		self._cursor.execute(f"""
 			CREATE TABLE IF NOT EXISTS "{proj_name}" (
-				`prompt` TEXT NOT NULL,
+				`module_name` TEXT NOT NULL,
+				`entity` TEXT NOT NULL,
 				`model` TEXT NOT NULL,
 				`try_num` INTEGER NOT NULL,
 				`ptsuite` TEXT NOT NULL,
-				PRIMARY KEY (`prompt`, `model`, `try_num`)
+				PRIMARY KEY (`module_name`, `entity`, `model`, `try_num`)
 			)
 		""")
 		self._conn.commit()
@@ -72,22 +77,22 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 	def _ap__register_ptsuite_spec(
 			self,
 			proj_name: str,
-			prompt: str, model: str, try_num: int,
+			module_name: str, entity: str, model: str, try_num: int,
 			ptsuite_code: str
 	):
 		self._cursor.execute(f"""
-			INSERT INTO {proj_name} (prompt, model, try_num, ptsuite)
-			VALUES (?, ?, ?, ?);
+			INSERT INTO {proj_name} (module_name, entity, model, try_num, ptsuite)
+			VALUES (?, ?, ?, ?, ?);
 		""",
-		[prompt, model, try_num, ptsuite_code])
+		[module_name, entity, model, try_num, ptsuite_code])
 		self._conn.commit()
 	
 	
-	def _ap__get_ptsuite_spec(self, proj_name: str, prompt: str, model: str, try_num: int) -> str:
+	def _ap__get_ptsuite_spec(self, proj_name: str, module_name: str, entity: str, model: str, try_num: int) -> str:
 		partial_tsuite: str = self._query_db(
 			proj_name,
-			prompt, model, try_num
-		)[3]
+			module_name, entity, model, try_num
+		)[4]
 		return partial_tsuite
 	
 	
@@ -108,15 +113,17 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 	def _query_db(
 			self,
 			project_name: str,
-			prompt: str,
+			module_name: str,
+			entity: str,
 			model: str,
 			try_num: int
-	) -> Tuple[str, str, str, str]:
+	) -> Tuple[str, str, str, str, str]:
 		self._cursor.execute(f"""
 			SELECT * FROM `{project_name}`
-			WHERE `prompt` = ?
+			WHERE `module_name` = ?
+			AND `entity` = ?
 			AND `model` = ?
 			AND `try_num` = ?
-		""", [prompt, model, try_num])
+		""", [module_name, entity, model, try_num])
 
 		return self._cursor.fetchone()

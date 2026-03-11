@@ -62,7 +62,7 @@ class IPtsuiteCacheAccessor(ABC):
 	def register_ptsuite(
 			self,
 	        proj_name: str,
-			prompt: str, model: str, try_num: int,
+			module_name: str, entity: str, model: str, try_num: int,
 			ptsuite_code: str
 	):
 		"""
@@ -75,9 +75,13 @@ class IPtsuiteCacheAccessor(ABC):
 					Una stringa contenente il nome del progetto di cui registrare il tentativo
 					di produzione della test-suite parziale
 				
-				prompt: str
-					Una stringa contenente il prompt da cui risulta il tentativo di produrre
-					la test-suite parziale da registrare nella cache
+				module_name: str
+					Una stringa contenente il nome del modulo focale di cui si sta registrando
+					la test-suite parziale nella cache
+					
+				entity: str
+					Una stringa contenente il nome dell' entità di codice a cui appartiene
+					la test-suite parziale che si sta registrando nella cache
 					
 				model: str
 					Una stringa rappresentante il nome del LLM da cui è stato prodotta il tentativo
@@ -96,16 +100,16 @@ class IPtsuiteCacheAccessor(ABC):
 				ValueError
 					Si verifica se:
 					
-						- Almeno uno tra `proj_name`, `prompt`, `model` e `ptsuite_code` ha valore `None`
-						- Almeno uno tra `proj_name`, `prompt`, `model` e `ptsuite_code` sono una stringa vuota
+						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` e `ptsuite_code` ha valore `None`
+						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` e `ptsuite_code` sono una stringa vuota
 						- Il parametro `try_num` è minore di 0
 			
 				ProjectSpaceNotExistsError
 					Si verifica se lo spazio di memorizzazione di `proj_name` non esiste
 					
 				EntryAlreadyExistsError
-					Si verifica se esiste già un tentativo di produzione associato alla quaterna
-					(`proj_name`, `prompt`, `model`, `try_num`) data
+					Si verifica se esiste già un tentativo di produzione associato alla quintupla
+					(`proj_name`, `module_name`, `entity`, `model`, `try_num`) data
 		"""
 		pass
 	
@@ -114,7 +118,7 @@ class IPtsuiteCacheAccessor(ABC):
 	def does_ptsuite_exists(
 			self,
 	        proj_name: str,
-			prompt: str, model: str, try_num: int
+			module_name: str, entity: str, model: str, try_num: int,
 	) -> bool:
 		"""
 			Verifica se esiste un tentativo di produzione di una test-suite parziale
@@ -126,9 +130,13 @@ class IPtsuiteCacheAccessor(ABC):
 					Una stringa contenente il nome del progetto di cui si cerca il tentativo
 					di produzione della test-suite parziale
 				
-				prompt: str
-					Una stringa contenente il prompt da cui risulterebbe il tentativo di produrre
-					la test-suite parziale presente nella cache
+				module_name: str
+					Una stringa contenente il nome del modulo focale di cui si sta registrando
+					la test-suite parziale nella cache
+					
+				entity: str
+					Una stringa contenente il nome dell' entità di codice a cui appartiene
+					la test-suite parziale che si sta registrando nella cache
 					
 				model: str
 					Una stringa rappresentante il nome del LLM da cui sarebbe stato prodotto
@@ -150,7 +158,7 @@ class IPtsuiteCacheAccessor(ABC):
 	def get_ptsuite(
 			self,
 	        proj_name: str,
-			prompt: str, model: str, try_num: int
+			module_name: str, entity: str, model: str, try_num: int
 	) -> str:
 		"""
 			Restituisce il tentativo di produzione di una test-suite parziale, nella cache rappresentata,
@@ -162,16 +170,20 @@ class IPtsuiteCacheAccessor(ABC):
 					Una stringa contenente il nome del progetto di cui si cerca il tentativo
 					di produzione della test-suite parziale
 				
-				prompt: str
-					Una stringa contenente il prompt da cui risulta il tentativo di produrre
-					la test-suite parziale presente nella cache
+				module_name: str
+					Una stringa contenente il nome del modulo focale di cui si sta registrando
+					la test-suite parziale nella cache
+					
+				entity: str
+					Una stringa contenente il nome dell' entità di codice a cui appartiene
+					la test-suite parziale che si sta registrando nella cache
 					
 				model: str
-					Una stringa rappresentante il nome del LLM da cui è stato prodotto
+					Una stringa rappresentante il nome del LLM da cui sarebbe stato prodotto
 					il tentativo presente nella cache
 					
 				try_num: int
-					Un intero indicante il numero del tentativo di generazione a cui corrisponde
+					Un intero indicante il numero del tentativo di generazione a cui corrisponderebbe
 					la "versione" della test-suite parziale cercata
 		
 			Returns
@@ -185,8 +197,8 @@ class IPtsuiteCacheAccessor(ABC):
 				ValueError
 					Si verifica se:
 					
-						- Almeno uno tra `proj_name`, `prompt`, `model` e `ptsuite_code` ha valore `None`
-						- Almeno uno tra `proj_name`, `prompt`, `model` e `ptsuite_code` sono una stringa vuota
+						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` e `ptsuite_code` ha valore `None`
+						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` e `ptsuite_code` sono una stringa vuota
 						- Il parametro `try_num` è minore di 0
 			
 				ProjectSpaceNotExistsError
@@ -194,6 +206,6 @@ class IPtsuiteCacheAccessor(ABC):
 					
 				EntryNotExistsError
 					Si verifica se non esiste un tentativo di test-suite parziale associato
-					alla quaterna (`proj_name`, `prompt`, `model`, `try_num`) data
+					alla quaterna (`proj_name`, `module_name`, `entity`, `model`, `try_num`) data
 		"""
 		pass

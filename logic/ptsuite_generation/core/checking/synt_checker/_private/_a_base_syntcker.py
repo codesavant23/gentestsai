@@ -11,8 +11,8 @@ class _ABaseSyntacticChecker(ISyntacticChecker):
 		
 		Il tool di verifica è specificato dai discendenti di questa classe astratta
 	"""
-		
-		
+	
+	
 	def check_synt(
 			self,
 			ptsuite_code: str

@@ -289,16 +289,26 @@ class LintingChecker:
 		return result
 	
 	
-	def clear_resources(self):
+	def clear_resources(self, stop_fenv: bool=False):
 		"""
 			Ripulisce le risorse che sono state utilizzate dal verificatore
 			a livello di linting
+			
+			Parameters
+			----------
+				stop_fenv: bool
+					Opzionale. Default = `False`. Un booleano che indica se arrestare l' istanza
+					dell' ambiente focale che è stata avviata quando è stato impostato
+					il progetto focale
 		"""
-		if self._focal_env is not None:
+		if stop_fenv and (self._focal_env is not None):
 			self._logger.log("Stop dell' ambiente focale ...") if self._logger is not None else None
 			self._focal_env.stop_container()
 			self._logger.log(f"Ambiente focale del progetto {self._proj_name} fermato") if self._logger is not None else None
-		
+			
+			del self._focal_env
+			self._focal_env = None
+			
 		os_dremove(
 			path_split(self._ptsuite_path)[0], ignore_errors=True
 		)

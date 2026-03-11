@@ -13,7 +13,8 @@ from logic.utils.logger import ATemporalFormattLogger
 
 
 def correct_syntactically(
-		project_name: str, model: str,
+		project_name: str, cache_modname: str,
+		model: str,
 		entityname_comps: Tuple[str, str],
 		wrong_ptsuite_code: str,
 		entity_corr_pbder: PromptBuilder,
@@ -26,7 +27,7 @@ def correct_syntactically(
 		logger: ATemporalFormattLogger,
 		cache_entprefix: str = ""
 ):
-	entity_name, entity_placeh = entityname_comps
+	entity, entity_placeh = entityname_comps
 	name_placeh, message_placeh, trynum_placeh = error_placehs
 	synt_corr, synt_chker = syntcorr_comps
 	
@@ -34,47 +35,61 @@ def correct_syntactically(
 	full_prompt: str
 	
 	try_num: int = 1
-	llm_trynum: int = 1
+	found_tries: int = 0
+	
 	ptsuite_code: str = wrong_ptsuite_code
 	
+	# Ricerca di una test-suite parziale corretta sintatticamente nella cache
+	while try_num < max_tries:
+		if corr_cache.does_ptsuite_exists(
+				project_name,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num
+		):
+			ptsuite_code = corr_cache.get_ptsuite(
+				project_name, cache_modname, f"{cache_entprefix}{entity}", model, try_num
+			)
+			logger.log(f"Test-suite parziale trovata nella cache "
+			           f"(Tentativo di correzione: {try_num}/{max_tries})")
+			
+			error = synt_chker.check_synt(ptsuite_code)
+			if len(error) == 0:
+				logger.log(f"Test-suite parziale corretta sintatticamente ottenuta! "
+			           f"(Tentativo funzionante: {try_num}/{max_tries})")
+				return ptsuite_code
+			found_tries += 1
+		try_num += 1
+	
+	# Se non si è trovata una test-suite parziale corretta nella cache
 	is_corr_success: bool = False
+	try_num = 1
 	synt_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
-	while (not synt_corr.has_corr_terminated()) and (try_num <= max_tries):
+	while (not synt_corr.has_corr_terminated()) and (try_num <= (max_tries-found_tries)):
 		error = synt_chker.check_synt(ptsuite_code)
+		
 		# Se si sono ci sono errori di correttezza sintattica
 		if len(error) > 0:
 			# Impostazione dell' errore nel prompt
 			entity_corr_pbder.set_placeholder(name_placeh, error[0])
 			entity_corr_pbder.set_placeholder(message_placeh, error[1])
-			entity_corr_pbder.set_placeholder(trynum_placeh, str(llm_trynum))
+			entity_corr_pbder.set_placeholder(trynum_placeh, str(try_num+found_tries))
 			
-			# Se il tentativo di correzione non è mai stato effettuato
-			entity_corr_pbder.set_placeholder(entity_placeh, f"{cache_entprefix}{entity_name}")
+			# Calcolo del full prompt
 			full_prompt = entity_corr_pbder.build_prompt()
-			if not corr_cache.does_ptsuite_exists(project_name, full_prompt, model, try_num):
-				# Si re-imposta il nome dell' entità nel prompt
-				entity_corr_pbder.set_placeholder(entity_placeh, entity_name)
-				full_prompt = entity_corr_pbder.build_prompt()
-				
-				# Aggiunta della richiesta di correzione alla chat
-				chat.add_prompt(full_prompt)
-				# Esecuzione del tentativo di correzione
-				ptsuite_code = synt_corr.perform_corr_try()
-				
-				# Registrazione del tentativo nella cache di correzione
-				# (si antepone il prefisso dell' entità nella cache)
-				entity_corr_pbder.set_placeholder(entity_placeh, f"{cache_entprefix}{entity_name}")
-				full_prompt = entity_corr_pbder.build_prompt()
-				logger.log("Salvataggio nella cache ... ")
-				corr_cache.register_ptsuite(project_name, full_prompt, model, try_num, ptsuite_code)
-				logger.log("Test-suite parziale salvata!")
-				
-				# Incremento dei tentativi da parte del LLM
-				llm_trynum += 1
-			else:
-				# Recupero del tentativo di correzione dalla cache di test-suites parziali
-				ptsuite_code = corr_cache.get_ptsuite(project_name, full_prompt, model, try_num)
-				logger.log("Test-suite parziale ottenuta dalla cache!")
+			
+			# Aggiunta della richiesta di correzione alla chat
+			chat.add_prompt(full_prompt)
+			# Esecuzione del tentativo di correzione
+			ptsuite_code = synt_corr.perform_corr_try()
+			
+			# Registrazione del tentativo nella cache di correzione
+			logger.log("Salvataggio nella cache ... ")
+			corr_cache.register_ptsuite(
+				project_name,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num+found_tries,
+				ptsuite_code
+			)
+			logger.log("Test-suite parziale salvata!")
+			
 			try_num += 1
 		else:
 			# Se la serie di tentativi del correttore sintattico non è terminata

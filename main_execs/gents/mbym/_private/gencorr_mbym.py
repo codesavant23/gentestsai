@@ -4,8 +4,10 @@ from typing import Dict, Tuple, List
 from os.path import (
 	join as path_join,
 	split as path_split,
-	splitext as path_splitext
+	splitext as path_splitext,
+	relpath as path_relative
 )
+from pathlib import Path as SystemPath
 # ======================================== #
 
 from main_execs.gents.mbym._private.gencorr_ebye import generate_correct_ebye
@@ -38,7 +40,7 @@ from logic.utils.logger import ATemporalFormattLogger
 
 def generate_correct_mbym(
 		project_name: str, model: str,
-		module_path: str, tsuite_dirpath: str,
+		focal_root: str, module_path: str, tsuite_dirpath: str,
 		moddecl_extr: AMutableModuleDeclsExtractor,
 		gen_comps: Tuple[
 			EntityPtsuiteGenerator,
@@ -70,6 +72,12 @@ def generate_correct_mbym(
 	
 	genf_cache, genm_cache = gen_caches
 	corrs_cache, corrl_cache = corr_caches
+	# ===== Calcolo del `module_name` per le caches =====
+	module_pathobj: SystemPath = SystemPath(
+		path_relative(module_path.rstrip(".py"), start=focal_root)
+	)
+	module_path_parts: List[str] = list(module_pathobj.parts)
+	cache_modname: str = ".".join(module_path_parts)
 	
 	# ===== Creazione degli scrittori dei tests saltati =====
 	skipd_ftype, skipd_fnames = skipping
@@ -101,7 +109,8 @@ def generate_correct_mbym(
 	logger.log("Inizio generazione delle test-suites parziali delle funzioni ...")
 	logger.set_messages_sep("\n\t\t\t\t")
 	generate_correct_ebye(
-		project_name, model,
+		project_name, cache_modname,
+		model,
 		tsuite_dirpath,
 		func_names,
 		(func_pbder, corr_pbder),
@@ -127,7 +136,8 @@ def generate_correct_mbym(
 		logger.set_messages_sep("\n\t\t\t\t\t")
 		meth_pbder.set_placeholder(placehs["class_name"], cls.class_name())
 		generate_correct_ebye(
-			project_name, model,
+			project_name, cache_modname,
+			model,
 			tsuite_dirpath,
 			cls.method_names(),
 			(meth_pbder, corr_pbder),
@@ -140,7 +150,7 @@ def generate_correct_mbym(
 			(genm_skipw, corrm_skipw),
 			(genm_cache, corrs_cache, corrl_cache),
 			logger,
-			entityprefix_comps=(cls.class_name(), "$", ".")
+			entityprefix_comps=(cls.class_name(), ".", "$")
 		)
 		logger.set_messages_sep("\n\t\t\t\t")
 	logger.set_messages_sep("\n\t\t\t")

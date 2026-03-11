@@ -455,7 +455,7 @@ if __name__ == "__main__":
 							# Generazione della test-suite del module-file attuale
 							generate_correct_mbym(
 								project_name, llm_model,
-								module_path, tsuite_dirpath,
+								focal_root, module_path, tsuite_dirpath,
 								moddecl_extr,
 								(ptsuite_gen, platform, chat),
 								(synt_corr, lint_corr),
@@ -480,7 +480,7 @@ if __name__ == "__main__":
 							
 							# Pulizia delle risorse utilizzate dai verificatori
 							synt_chker.clear_resources()
-							lint_chker.clear_resources()
+							lint_chker.clear_resources(stop_fenv=True)
 							
 							# Pulizia della chat
 							chat.clear()

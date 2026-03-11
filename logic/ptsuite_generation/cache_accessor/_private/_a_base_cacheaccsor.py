@@ -68,25 +68,28 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	def register_ptsuite(
 			self,
 			proj_name: str,
-			prompt: str, model: str, try_num: int,
+			module_name: str, entity: str, model: str, try_num: int,
 			ptsuite_code: str
 	):
 		if ((proj_name is None) or (proj_name == "") or
-			(prompt is None) or (prompt == "") or
+			(module_name is None) or (module_name == "") or
+			(entity is None) or (entity == "") or
 			(model is None) or (model == "") or
 			(ptsuite_code is None) or (ptsuite_code == "")
 		):
+			raise ValueError()
+		if try_num < 0:
 			raise ValueError()
 		
 		if proj_name not in self._proj_spaces:
 			raise ProjectSpaceNotExistsError()
 		
-		if self.does_ptsuite_exists(proj_name, prompt, model, try_num):
+		if self.does_ptsuite_exists(proj_name, module_name, entity, model, try_num):
 			raise EntryAlreadyExistsError()
 		
 		self._ap__register_ptsuite_spec(
 			proj_name,
-			prompt, model, try_num,
+			module_name, entity, model, try_num,
 			ptsuite_code
 		)
 		
@@ -94,22 +97,25 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	def get_ptsuite(
 			self,
 			proj_name: str,
-			prompt: str, model: str, try_num: int
+			module_name: str, entity: str, model: str, try_num: int
 	) -> str:
 		if ((proj_name is None) or (proj_name == "") or
-			(prompt is None) or (prompt == "") or
+			(module_name is None) or (module_name == "") or
+			(entity is None) or (entity == "") or
 			(model is None) or (model == "")
 		):
+			raise ValueError()
+		if try_num < 0:
 			raise ValueError()
 		
 		if proj_name not in self._proj_spaces:
 			raise ProjectSpaceNotExistsError()
 		
-		if not self.does_ptsuite_exists(proj_name, prompt, model, try_num):
+		if not self.does_ptsuite_exists(proj_name, module_name, entity, model, try_num):
 			raise EntryNotExistsError()
 		
 		return self._ap__get_ptsuite_spec(
-			proj_name, prompt, model, try_num
+			proj_name, module_name, entity, model, try_num
 		)
 	
 	
@@ -248,7 +254,7 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	@abstractmethod
 	def _ap__register_ptsuite_spec(self,
 	        proj_name: str,
-			prompt: str, model: str, try_num: int,
+			module_name: str, entity: str, model: str, try_num: int,
 			ptsuite_code: str
 	):
 		"""
@@ -260,8 +266,8 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 				- Che `try_num >= 0`
 				- Che nessun parametro stringa sia `None` nè stringa vuota
 				- Che lo spazio di memorizzazione del progetto `proj_name` esista
-				- Che non esiste già un tentativo corrispondente alla quadrupla
-				  (`proj_name`, `prompt`, `model`, `try_num`)
+				- Che non esiste già un tentativo corrispondente alla quintupla
+				  (`proj_name`, `module_name`, `entity`, `model`, `try_num`)
 			
 		
 			Parameters
@@ -270,9 +276,13 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 					Una stringa contenente il nome del progetto di cui registrare il tentativo
 					di produzione della test-suite parziale
 				
-				prompt: str
-					Una stringa contenente il prompt da cui risulta il tentativo di produrre
-					la test-suite parziale da registrare nella cache
+				module_name: str
+					Una stringa contenente il nome del modulo focale di cui si sta registrando
+					la test-suite parziale nella cache
+					
+				entity: str
+					Una stringa contenente il nome dell' entità di codice a cui appartiene
+					la test-suite parziale che si sta registrando nella cache
 					
 				model: str
 					Una stringa rappresentante il nome del LLM da cui è stato prodotta il tentativo
@@ -293,7 +303,7 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	def _ap__get_ptsuite_spec(
 			self,
 	        proj_name: str,
-			prompt: str, model: str, try_num: int
+			module_name: str, entity: str, model: str, try_num: int
 	) -> str:
 		"""
 			Restituisce il tentativo di produzione di una test-suite parziale, nella cache rappresentata,
@@ -304,8 +314,8 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 				- Che `try_num >= 0`
 				- Che nessun parametro stringa sia `None` nè stringa vuota
 				- Che lo spazio di memorizzazione del progetto `proj_name` esista
-				- Che esiste un tentativo corrispondente alla quadrupla
-				  (`proj_name`, `prompt`, `model`, `try_num`)
+				- Che esiste un tentativo corrispondente alla quintupla
+				  (`proj_name`, `module_name`, `entity`, `model`, `try_num`)
 				  
 			Parameters
 			----------
@@ -313,9 +323,13 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 					Una stringa contenente il nome del progetto di cui si cerca il tentativo
 					di produzione della test-suite parziale
 				
-				prompt: str
-					Una stringa contenente il prompt da cui risulta il tentativo di produrre
-					la test-suite parziale presente nella cache
+				module_name: str
+					Una stringa contenente il nome del modulo focale di cui si sta registrando
+					la test-suite parziale nella cache
+					
+				entity: str
+					Una stringa contenente il nome dell' entità di codice a cui appartiene
+					la test-suite parziale che si sta registrando nella cache
 					
 				model: str
 					Una stringa rappresentante il nome del LLM da cui è stato prodotto
@@ -335,7 +349,11 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	
 	
 	@abstractmethod
-	def does_ptsuite_exists(self, proj_name: str, prompt: str, model: str, try_num: int) -> bool:
+	def does_ptsuite_exists(
+			self,
+	        proj_name: str,
+			module_name: str, entity: str, model: str, try_num: int
+	) -> bool:
 		pass
 		
 		

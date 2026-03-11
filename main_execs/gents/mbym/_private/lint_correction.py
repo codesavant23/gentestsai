@@ -13,7 +13,8 @@ from logic.utils.logger import ATemporalFormattLogger
 
 
 def correct_lintically(
-		project_name: str, model: str,
+		project_name: str, cache_modname: str,
+		model: str,
 		entityname_comps: Tuple[str, str],
 		wrong_ptsuite_code: str,
 		entity_corr_pbder: PromptBuilder,
@@ -26,7 +27,7 @@ def correct_lintically(
 		logger: ATemporalFormattLogger,
 		cache_entprefix: str = "",
 ):
-	entity_name, entity_placeh = entityname_comps
+	entity, entity_placeh = entityname_comps
 	name_placeh, message_placeh, trynum_placeh = error_placehs
 	lint_corr, lint_chker = lintcorr_comps
 	
@@ -38,12 +39,34 @@ def correct_lintically(
 	column: str
 	
 	try_num: int = 1
-	llm_trynum: int = 1
+	found_tries: int = 0
+	
 	ptsuite_code: str = wrong_ptsuite_code
 	
+	# Ricerca di una test-suite parziale corretta a livello di linting nella cache
+	while try_num < max_tries:
+		if corr_cache.does_ptsuite_exists(
+				project_name,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num
+		):
+			ptsuite_code = corr_cache.get_ptsuite(
+				project_name, cache_modname, f"{cache_entprefix}{entity}", model, try_num
+			)
+			logger.log(f"Test-suite parziale trovata nella cache "
+			           f"(Tentativo di correzione: {try_num}/{max_tries})")
+			
+			error = lint_chker.check_lintically(ptsuite_code)
+			if len(error) == 0:
+				logger.log(f"Test-suite parziale corretta a livello di linting ottenuta! "
+			           f"(Tentativo funzionante: {try_num}/{max_tries})")
+				return ptsuite_code
+			found_tries += 1
+		try_num += 1
+	
+	# Se non si è trovata una test-suite parziale corretta nella cache
 	is_corr_success: bool = False
 	lint_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
-	while (not lint_corr.has_corr_terminated()) and (try_num <= max_tries):
+	while (not lint_corr.has_corr_terminated()) and (try_num <= (max_tries-found_tries)):
 		error = lint_chker.check_lintically(ptsuite_code)
 		# Se si sono ci sono errori di correttezza a livello di linting
 		if len(error) > 0:
@@ -57,38 +80,25 @@ def correct_lintically(
 					column=column
 				),
 			)
-			entity_corr_pbder.set_placeholder(trynum_placeh, str(llm_trynum))
-			
-			# Se il tentativo di correzione non è mai stato effettuato
-			# (si imposta l' eventuale "cacheent_prefix", per la query della cache, dato che le caches
-			# di correzione mischiano funzioni e metodi)
-			entity_corr_pbder.set_placeholder(entity_placeh, f"{cache_entprefix}{entity_name}")
+			entity_corr_pbder.set_placeholder(trynum_placeh, str(try_num+found_tries))
+				
+			# Calcolo del full prompt
 			full_prompt = entity_corr_pbder.build_prompt()
-			if not corr_cache.does_ptsuite_exists(project_name, full_prompt, model, try_num):
-				
-				# Si re-imposta il nome dell' entità nel prompt
-				entity_corr_pbder.set_placeholder(entity_placeh, entity_name)
-				full_prompt = entity_corr_pbder.build_prompt()
-				
-				# Aggiunta della richiesta di correzione alla chat
-				chat.add_prompt(full_prompt)
-				# Esecuzione del tentativo di correzione
-				ptsuite_code = lint_corr.perform_corr_try()
-				
-				# Registrazione del tentativo nella cache di correzione
-				# (si antepone il prefisso dell' entità nella cache)
-				entity_corr_pbder.set_placeholder(entity_placeh, f"{cache_entprefix}{entity_name}")
-				full_prompt = entity_corr_pbder.build_prompt()
-				logger.log("Salvataggio nella cache ... ")
-				corr_cache.register_ptsuite(project_name, full_prompt, model, try_num, ptsuite_code)
-				logger.log("Test-suite parziale salvata!")
-				
-				# Incremento dei tentativi da parte del LLM
-				llm_trynum += 1
-			else:
-				# Recupero del tentativo di correzione dalla cache di test-suites parziali
-				ptsuite_code = corr_cache.get_ptsuite(project_name, full_prompt, model, try_num)
-				logger.log("Test-suite parziale ottenuta dalla cache")
+			
+			# Aggiunta della richiesta di correzione alla chat
+			chat.add_prompt(full_prompt)
+			# Esecuzione del tentativo di correzione
+			ptsuite_code = lint_corr.perform_corr_try()
+			
+			# Registrazione del tentativo nella cache di correzione
+			logger.log("Salvataggio nella cache ... ")
+			corr_cache.register_ptsuite(
+				project_name,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num+found_tries,
+				ptsuite_code
+			)
+			logger.log("Test-suite parziale salvata!")
+			
 			try_num += 1
 		else:
 			# Se la serie di tentativi del correttore di linting non è terminata
