@@ -1,5 +1,8 @@
 from typing import List, Dict, Tuple
 
+# ============== OS Utilities ============== #
+from os import chdir as os_cd
+# ========================================== #
 from pylint.lint import Run as PylRunner
 from json import JSONEncoder
 
@@ -13,7 +16,7 @@ from .exceptions import LintingCheckerAlreadyUsedError
 
 
 
-class PartialTsuite1TimeLintingChecker:
+class Ptsuite1TimeLintingChecker:
 	"""
 		Rappresenta un verificatore di codice a livello di linting, da utilizzarsi una sola volta, per una
 		test-suite parziale appartenente ad uno specifico progetto focale.
@@ -28,7 +31,7 @@ class PartialTsuite1TimeLintingChecker:
 			result_path: str
 	):
 		"""
-			Costruisce un nuovo PartialTsuite1TimeLintingChecker associandolo alla test-suite parziale di cui effettuare
+			Costruisce un nuovo Ptsuite1TimeLintingChecker associandolo alla test-suite parziale di cui effettuare
 			la verifica a livello di linting.
 			
 			Parameters
@@ -72,7 +75,7 @@ class PartialTsuite1TimeLintingChecker:
 			Raises
 			------
 				LintingCheckerAlreadyUsedError
-					Se questo PartialTsuite1TimeLintingChecker ha già eseguito una verifica
+					Se questo Ptsuite1TimeLintingChecker ha già eseguito una verifica
 					a livello di linting
 		"""
 		if self._object_used:
@@ -89,6 +92,7 @@ class PartialTsuite1TimeLintingChecker:
 			[self._ptsuite_path]
 		)
 		
+		os_cd(self._full_root)
 		PylRunner(
 			pyl_allargs,
 			reporter=self._pyl_reporter,

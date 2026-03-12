@@ -17,7 +17,7 @@ ARGP_0_PLUS = ZERO_OR_MORE
 ARGP_1_PLUS = ONE_OR_MORE
 # ========================================== #
 
-from . import PartialTsuite1TimeLintingChecker
+from . import Ptsuite1TimeLintingChecker
 
 
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 	ptsuite_path: str = f"{path_prefix}/{ptsuite_relpath}"
 	result_path: str = f"{path_prefix}/{result_relpath}"
 	
-	ptsuite_checker: PartialTsuite1TimeLintingChecker = PartialTsuite1TimeLintingChecker(
+	ptsuite_checker: Ptsuite1TimeLintingChecker = Ptsuite1TimeLintingChecker(
 		full_root,
 		ptsuite_path,
 		result_path
