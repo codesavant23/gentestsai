@@ -1,4 +1,9 @@
 {
 	"qwen3-32b-q4_k_m": {},
+	"qwen3-coder-30b-q4_k_m": {
+		"temperature": 0.5,
+		"top-k": 20,
+		"top-p": 0.8
+	},
 	"llama3.1-8b-q4_k_m": {}
 }

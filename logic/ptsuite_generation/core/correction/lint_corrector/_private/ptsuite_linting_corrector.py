@@ -261,6 +261,10 @@ class PtsuiteLintingCorrector:
 					Si verifica se il codice della test-suite parziale data è incorretto
 					sintatticamente
 		"""
+		if (ptsuite_code is None) or (ptsuite_code == ""):
+			raise ValueError()
+		if resp_timeout < 1:
+			raise ValueError()
 		if self._corr_inprogr:
 			raise PromptingSessionInProgressError()
 		
@@ -349,6 +353,7 @@ class PtsuiteLintingCorrector:
 				self._logger.log(
 					f"Inizio della richiesta di correzione di linting (Tentativo {self._times_tried}/{self._max_tries}) ..."
 				) if self._logger is not None else None
+				
 				response: str = self._llm_platf.prompt(self._resp_tout)
 				
 				resp_match: Match[str] = reg_search(self._resp_regex, response, RegexFlags.MULTILINE)

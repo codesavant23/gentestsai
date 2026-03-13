@@ -35,7 +35,7 @@ def correct_syntactically(
 	full_prompt: str
 	
 	try_num: int = 1
-	found_tries: int = 0
+	tries_incache: int = 0
 	
 	ptsuite_code: str = wrong_ptsuite_code
 	
@@ -56,22 +56,27 @@ def correct_syntactically(
 				logger.log(f"Test-suite parziale corretta sintatticamente ottenuta! "
 			           f"(Tentativo funzionante: {try_num}/{max_tries})")
 				return ptsuite_code
-			found_tries += 1
+			tries_incache += 1
 		try_num += 1
 	
 	# Se non si è trovata una test-suite parziale corretta nella cache
 	is_corr_success: bool = False
 	try_num = 1
 	synt_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
-	while (not synt_corr.has_corr_terminated()) and (try_num <= (max_tries-found_tries)):
+	while (
+			(not synt_corr.has_corr_terminated()) and
+	        (try_num <= (max_tries-tries_incache)) and
+			(not is_corr_success)
+	):
 		error = synt_chker.check_synt(ptsuite_code)
 		
 		# Se si sono ci sono errori di correttezza sintattica
 		if len(error) > 0:
+			
 			# Impostazione dell' errore nel prompt
 			entity_corr_pbder.set_placeholder(name_placeh, error[0])
 			entity_corr_pbder.set_placeholder(message_placeh, error[1])
-			entity_corr_pbder.set_placeholder(trynum_placeh, str(try_num+found_tries))
+			entity_corr_pbder.set_placeholder(trynum_placeh, str(try_num+tries_incache))
 			
 			# Calcolo del full prompt
 			full_prompt = entity_corr_pbder.build_prompt()
@@ -85,25 +90,28 @@ def correct_syntactically(
 			logger.log("Salvataggio nella cache ... ")
 			corr_cache.register_ptsuite(
 				project_name,
-				cache_modname, f"{cache_entprefix}{entity}", model, try_num+found_tries,
+				cache_modname, f"{cache_entprefix}{entity}", model, (try_num+tries_incache),
 				ptsuite_code
 			)
 			logger.log("Test-suite parziale salvata!")
 			
 			try_num += 1
 		else:
-			# Se la serie di tentativi del correttore sintattico non è terminata
-			# (ma la test-suite parziale è corretta sintatticamente)
-			if not synt_corr.has_corr_terminated():
-				synt_corr.stop_correction()
 			is_corr_success = True
 			break
+			
+	# Se la serie di tentativi del correttore sintattico non è terminata
+	# (perchè il max numero di tentativi sono stati in parte effettuati tramite cache)
+	if not synt_corr.has_corr_terminated():
+		synt_corr.stop_correction()
+	else:
+		# Se invece tutti i tentativi sono stati effettuati dal correttore sintattico
+		# allora si và a conoscere lo stato di successo della serie di tentativi terminata
+		is_corr_success = synt_corr.has_corr_succ()
 	
-	# Se la serie di tentativi di correzione ha avuto successo (essendo stata effettuata)
-	# o se è stata recuperata dalla cache una test-suite parziale sintatticamente corretta
+	# Se la correzione ha avuto successo
 	if is_corr_success:
-		# allora viene restituito il codice della test-suite parziale
-		# sintatticamente corretta
+		# allora viene restituito il codice della test-suite parziale corretta
 		return ptsuite_code
 	else:
 		return None

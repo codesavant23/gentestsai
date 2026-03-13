@@ -39,7 +39,7 @@ def correct_lintically(
 	column: str
 	
 	try_num: int = 1
-	found_tries: int = 0
+	tries_incache: int = 0
 	
 	ptsuite_code: str = wrong_ptsuite_code
 	
@@ -60,13 +60,18 @@ def correct_lintically(
 				logger.log(f"Test-suite parziale corretta a livello di linting ottenuta! "
 			           f"(Tentativo funzionante: {try_num}/{max_tries})")
 				return ptsuite_code
-			found_tries += 1
+			tries_incache += 1
 		try_num += 1
 	
 	# Se non si è trovata una test-suite parziale corretta nella cache
 	is_corr_success: bool = False
+	try_num = 1
 	lint_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
-	while (not lint_corr.has_corr_terminated()) and (try_num <= (max_tries-found_tries)):
+	while (
+		   (not lint_corr.has_corr_terminated()) and
+	       (try_num <= (max_tries-tries_incache)) and
+	       (not is_corr_success)
+	):
 		error = lint_chker.check_lintically(ptsuite_code)
 		# Se si sono ci sono errori di correttezza a livello di linting
 		if len(error) > 0:
@@ -80,7 +85,7 @@ def correct_lintically(
 					column=column
 				),
 			)
-			entity_corr_pbder.set_placeholder(trynum_placeh, str(try_num+found_tries))
+			entity_corr_pbder.set_placeholder(trynum_placeh, str(try_num+tries_incache))
 				
 			# Calcolo del full prompt
 			full_prompt = entity_corr_pbder.build_prompt()
@@ -94,22 +99,26 @@ def correct_lintically(
 			logger.log("Salvataggio nella cache ... ")
 			corr_cache.register_ptsuite(
 				project_name,
-				cache_modname, f"{cache_entprefix}{entity}", model, try_num+found_tries,
+				cache_modname, f"{cache_entprefix}{entity}", model, try_num+tries_incache,
 				ptsuite_code
 			)
 			logger.log("Test-suite parziale salvata!")
 			
 			try_num += 1
 		else:
-			# Se la serie di tentativi del correttore di linting non è terminata
-			# (ma la test-suite parziale è corretta a livello di linting)
-			if not lint_corr.has_corr_terminated():
-				lint_corr.stop_correction()
 			is_corr_success = True
 			break
 	
-	# Se la serie di tentativi di correzione ha avuto successo (essendo stata effettuata)
-	# o se è stata recuperata dalla cache una test-suite parziale corretta a livello di linting
+	# Se la serie di tentativi del correttore di linting non è terminata
+	# (perchè il max numero di tentativi sono stati in parte effettuati tramite cache)
+	if not lint_corr.has_corr_terminated():
+		lint_corr.stop_correction()
+	else:
+		# Se invece tutti i tentativi sono stati effettuati dal correttore di linting
+		# allora si và a conoscere lo stato di successo della serie di tentativi terminata
+		is_corr_success = lint_corr.has_corr_succ()
+	
+	# Se la correzione ha avuto successo
 	if is_corr_success:
 		# allora viene restituito il codice della test-suite parziale corretta
 		return ptsuite_code

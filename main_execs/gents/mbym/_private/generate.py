@@ -31,7 +31,7 @@ def generate_ptsuite(
 			ptsuite_code = gen_cache.get_ptsuite(
 				project_name, cache_modname, f"{cache_entprefix}{entity}", model, try_num
 			)
-			logger.log("Test-suite parziale ottenuta dalla cache")
+			logger.log("Test-suite parziale generata ottenuta dalla cache")
 			break
 		try_num += 1
 	
