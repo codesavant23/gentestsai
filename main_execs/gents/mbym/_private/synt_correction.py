@@ -40,7 +40,7 @@ def correct_syntactically(
 	ptsuite_code: str = wrong_ptsuite_code
 	
 	# Ricerca di una test-suite parziale corretta sintatticamente nella cache
-	while try_num < max_tries:
+	while try_num <= max_tries:
 		if corr_cache.does_ptsuite_exists(
 				project_name,
 				cache_modname, f"{cache_entprefix}{entity}", model, try_num
