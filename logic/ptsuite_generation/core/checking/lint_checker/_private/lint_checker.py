@@ -1,16 +1,15 @@
 from typing import Dict
 
+from io import BytesIO
+from tarfile import (
+	open as tarf_open,
+	TarInfo
+)
 # ============== Docker SDK Utilities =============== #
 from docker.models.images import Image as DockerImage
 # =================================================== #
-# ============== OS Utilities ============== #
-from os import makedirs as os_mkdirs
-from os.path import exists as os_fdexists
-from shutil import rmtree as os_dremove
-# ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
-	join as path_join,
 	split as path_split,
 	splitext as path_splitext,
 	relpath as path_relative
@@ -19,14 +18,17 @@ from os.path import (
 # ============== JSON Utilities ============== #
 from json import JSONDecoder
 # ============================================ #
-from datetime import datetime as DateTime
 
 from ......utils.logger import ATemporalFormattLogger
 from ......utils.logger.exceptions import FormatNotSetError
 
 from ......focalproj_configuration.focal_container import FocalContainer
+from ......focalproj_configuration.focal_container.exceptions import (
+	ContainerAlreadyRunningError,
+	ContainerNotRunningError
+)
 
-from ..exceptions import ProjectNeverSetError
+from ..exceptions import ProjectNotSetError
 
 
 
@@ -45,8 +47,9 @@ class LintingChecker:
 	
 	def __init__(
 			self,
+			path_prefix: str,
 			fenv_script_fname: str,
-			shared_dirname: str,
+			inputctr_dirname: str,
 	        logger: ATemporalFormattLogger = None,
 	):
 		"""
@@ -55,12 +58,16 @@ class LintingChecker:
 			
 			Parameters
 			----------
+				path_prefix: str
+					Una stringa contenente il path prefix impostato per gli ambienti focali che si
+					utilizzeranno
+			
 				fenv_script_fname: str
 					Una stringa contenente il nome dello script Python che esegue la verifica di correttezza,
 					a livello di linting, all' interno dell' ambiente focale
 			
-				shared_dirname: str
-					Una stringa rappresentante il nome della directory-volume, all' interno del path prefix dell' ambiente focale,
+				inputctr_dirname: str
+					Una stringa rappresentante il nome della directory, all' interno del path prefix dell' ambiente focale,
 					che conterrà la copia temporanea delle test-suites parziali di cui effettuare la verifica di linting.
 			
 				logger: ATemporalFormattLogger
@@ -73,14 +80,18 @@ class LintingChecker:
 				ValueError
 					Si verifica se:
 					
+						- Il parametro `path_prefix` ha valore `None`
+						- Il parametro `path_prefix` è una stringa vuota
 						- Il parametro `fenv_script_fname` ha valore `None`
 						- Il parametro `fenv_script_fname` è una stringa vuota
 						- Il parametro `shared_dirname` ha valore `None`
 						- Il parametro `shared_dirname` è una stringa vuota
 		"""
+		if(path_prefix is None) or (path_prefix == ""):
+			raise ValueError()
 		if(fenv_script_fname is None) or (fenv_script_fname == ""):
 			raise ValueError()
-		if(shared_dirname is None) or (shared_dirname == ""):
+		if(inputctr_dirname is None) or (inputctr_dirname == ""):
 			raise ValueError()
 		
 		self._focal_env: FocalContainer = None
@@ -90,17 +101,18 @@ class LintingChecker:
 		self._full_root: str = None
 		self._focal_env: FocalContainer = None
 		
-		self._shared_dir: str = shared_dirname
-		
 		# Nome dello script Python che esegue il linter all' interno dell' ambiente focale
 		self._fenv_script_fname: str = fenv_script_fname
 		
-		# Path (reale) del file con la test-suite parziale per la verifica di linting
-		self._ptsuite_path: str = None
+		# Il path prefix (o path principale) di ogni ambiente focale
+		self._path_prefix: str = path_prefix
+		# Nome della directory che conterrà le test-suites parziali di cui effettuare la verifica
+		self._input_dir: str = inputctr_dirname
+		
 		# Path (reale) del risultato della verifica di linting effettuata
 		self._lint_result_path: str = None
 		# Path (relativa) del file con la test-suite parziale per la verifica di linting
-		self._ptsuite_relpath: str = None
+		self._ptsuite_relpath: str = f"{self._input_dir}/temp_ptsuite.py"
 		# Path (relativa) del risultato della verifica di linting effettuata da un singolo tentativo
 		self._lint_result_relpath: str = None
 		
@@ -117,7 +129,7 @@ class LintingChecker:
 		self._logger.set_format(logger_frmt) if logger is not None else None
 		
 		self._inited: bool = False
-		self._proj_everset: bool = False
+		self._proj_set: bool = False
 	
 	
 	def set_focal_project(
@@ -166,10 +178,6 @@ class LintingChecker:
 		):
 			raise ValueError()
 		
-		# Verifica dell' esistenza della directory dei files shared nella F.P.R.P
-		if not os_fdexists(path_join(full_root, self._shared_dir)):
-			raise ValueError()
-		
 		# Stop dell' eventuale ambiente focale precedente
 		if self._focal_env is not None:
 			self._logger.log("Stop dell' ambiente focale ...") if self._logger is not None else None
@@ -182,35 +190,29 @@ class LintingChecker:
 		self._full_root = full_root
 		
 		# Impostazione della path che conterrà il risultato delle verifiche di linting
-		# Impostazione della path del file temporaneo che conterrà le test-suites parziali
-		actual_time: DateTime = DateTime.now()
-		self._ptsuite_path = path_join(
-			self._full_root, self._shared_dir,
-			f"temp_{str(actual_time.timestamp())}.py"
-		)
 		self._lint_result_path = f"{self._full_root}/gtsai__results/{self._RESULT_FNAME}"
 		
-		# Calcolo delle paths relative (con cui si costruiranno quelle assolute dell' ambiente focale)
-		self._ptsuite_relpath = path_relative(self._ptsuite_path, start=self._full_root)
+		# Calcolo della path relativa dei risultati (con cui si costruirà quella assoluta
+		# nell' ambiente focale)
 		self._lint_result_relpath = path_relative(self._lint_result_path, start=self._full_root)
-		
-		# Creazione della directory-volume shared
-		self._create_shareddir()
 		
 		self._focal_env = FocalContainer(
 			env_image,
 			self._full_root,
 			path_prefix,
-			self._shared_dir
 		)
+		
+		if not self._proj_set:
+			self._proj_set = True
 		
 		# Avvio dell' ambiente focale (container)
 		self._logger.log("Avvio dell' ambiente focale ...") if self._logger is not None else None
 		self._focal_env.start_container()
-		self._logger.log(f"Ambiente focale del progetto {self._proj_name} avviato") if self._logger is not None else None
 		
-		if not self._proj_everset:
-			self._proj_everset = True
+		# Creazione della directory temporanea
+		self._create_inputctr()
+
+		self._logger.log(f"Ambiente focale del progetto {self._proj_name} avviato") if self._logger is not None else None
 
 
 	def check_lintically(
@@ -244,9 +246,11 @@ class LintingChecker:
 				ValueError
 					Si verifica se il parametro `ptsuite_code` ha valore `None` o è una stringa vuota
 					
-				ProjectNeverSetError
-					Si verifica se non è mai stato impostato un progetto focale prima di eseguire
-					questa operazione
+				ProjectNotSetError
+					Si verifica se:
+						
+						- Non è mai stato impostato un progetto focale
+						- E' necessario re-impostare un progetto focale prima di eseguire di nuovo questa operazione
 					
 				OSError
 					Se si verificano problemi con l' apertura, o scrittura, nel file temporaneo utilizzato
@@ -254,19 +258,27 @@ class LintingChecker:
 		"""
 		if (ptsuite_code is None) or (ptsuite_code == ""):
 			raise ValueError()
-		if not self._proj_everset:
-			raise ProjectNeverSetError()
+		if not self._proj_set:
+			raise ProjectNotSetError()
 		if not self._inited:
-			self._create_shareddir()
+			self._create_inputctr()
 			
 		self._logger.log(
 			f"Inizio della verifica di linting ..."
 		) if self._logger is not None else None
 		
-		self._logger.log("Scrittura della test-suite parziale nella directory-volume shared ...") if self._logger is not None else None
-		with open(self._ptsuite_path, "w") as fptsuite:
-			fptsuite.write(ptsuite_code)
-			fptsuite.flush()
+		self._logger.log("Scrittura della test-suite parziale nell' ambiente focale ...") if self._logger is not None else None
+		tarfile_stream: BytesIO = BytesIO()
+		ptsuite_code_b: bytes = ptsuite_code.encode("utf-8")
+		with tarf_open(fileobj=tarfile_stream, mode="w") as tfptsuite:
+			tarfile_info: TarInfo = TarInfo(name=path_split(self._ptsuite_relpath)[1])
+			tarfile_info.size = len(ptsuite_code_b)
+			tfptsuite.addfile(tarinfo=tarfile_info, fileobj=BytesIO(ptsuite_code_b))
+		tarfile_stream.seek(0)
+		self._focal_env.put_tararchive(
+			f"{self._path_prefix}/{self._input_dir}",
+			tarfile_stream
+		)
 		self._logger.log("Scrittura eseguita") if self._logger is not None else None
 		
 		# Richiesta della verifica della correttezza (a livello di linting)
@@ -305,13 +317,11 @@ class LintingChecker:
 			self._logger.log("Stop dell' ambiente focale ...") if self._logger is not None else None
 			self._focal_env.stop_container()
 			self._logger.log(f"Ambiente focale del progetto {self._proj_name} fermato") if self._logger is not None else None
+			self._proj_set = False
 			
 			del self._focal_env
 			self._focal_env = None
-			
-		os_dremove(
-			path_split(self._ptsuite_path)[0], ignore_errors=True
-		)
+
 		self._inited = False
 	
 	
@@ -320,13 +330,21 @@ class LintingChecker:
 	##	============================================================
 
 
-	def _create_shareddir(self):
+	def _create_inputctr(self):
 		"""
-			Crea la directory temporanea per i files necessari all' esecuzione
-			della verifica a livello di linting
+			Crea la directory temporanea, internamente all' ambiente focale, per i files
+			necessari all' esecuzione della verifica a livello di linting
 		"""
-		shared_path: str = path_join(self._full_root, self._shared_dir)
-		os_dremove(shared_path, ignore_errors=True)
-		os_mkdirs(shared_path)
+		if not self._proj_set:
+			raise ProjectNotSetError()
+		
+		try:
+			self._focal_env.start_container()
+			self._focal_env.stop_container()
+			raise ContainerNotRunningError()
+		except ContainerAlreadyRunningError:
+			pass
+		
+		self._focal_env.execute(f"mkdir -p {self._path_prefix}/{self._input_dir}")
 		
 		self._inited = True

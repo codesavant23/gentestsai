@@ -1,8 +1,5 @@
 from typing import List, Dict, Tuple
 
-# ============== OS Utilities ============== #
-from os import chdir as os_cd
-# ========================================== #
 from pylint.lint import Run as PylRunner
 from json import JSONEncoder
 
@@ -92,7 +89,6 @@ class Ptsuite1TimeLintingChecker:
 			[self._ptsuite_path]
 		)
 		
-		os_cd(self._full_root)
 		PylRunner(
 			pyl_allargs,
 			reporter=self._pyl_reporter,

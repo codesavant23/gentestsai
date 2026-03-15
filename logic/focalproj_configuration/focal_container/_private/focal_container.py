@@ -1,5 +1,6 @@
 from typing import Tuple
 
+from io import BytesIO
 # ============== OS Utilities ============== #
 from os import (
 	makedirs as os_mkdirs,
@@ -53,7 +54,6 @@ class FocalContainer:
 			docker_image: DockerImage,
 			full_root: str,
 			path_prefix: str,
-			shared_dirname: str = "gtsai__shared",
 			results_dirname: str = "gtsai__results",
 			stop_timeout: int=1
 	):
@@ -74,13 +74,6 @@ class FocalContainer:
 				path_prefix: str
 					Una stringa contenente il path prefix, stabilito alla costruzione dell' immagine, che
 					rappresenta la Full Project Root Path all' interno del container docker gestito
-
-				shared_dirname: str
-					Opzionale. Default = `"gtsai__shared"`. Una stringa rappresentante il nome della directory-volume,
-					all' interno del `path_prefix`, che conterrà i files da esporre all' ambiente focale
-					successivamente  alla sua creazione.
-					Si presuppone l' esistenza di questa path nel sistema operativo che hosta il
-					gestore degli ambienti focali, all' interno di `full_root`.
 					
 				results_dirname: str
 					Opzionale. Default = `"gtsai__results"`. Una stringa rappresentante il nome della directory-volume,
@@ -98,8 +91,6 @@ class FocalContainer:
 						- Il parametro `docker_image` ha valore `None`
 						- Il parametro `full_root` ha valore `None` o è una stringa vuota
 						- Il parametro `path_prefix` ha valore `None` o è una stringa vuota
-						- Il parametro `shared_dirname` ha valore `None` o è una stringa vuota
-						- Il parametro `shared_dirname` rappresenta una path che non esiste in `full_root`
 						- Il parametro `results_dirname` ha valore `None` o è una stringa vuota
 						- Il parametro `stop_timeout` è minore di 1
 		"""
@@ -109,8 +100,6 @@ class FocalContainer:
 			(path_prefix is None) or (path_prefix == "") or
 			(stop_timeout < 1)
 		):
-			raise ValueError()
-		if not os_fdexists(path_join(full_root, shared_dirname)):
 			raise ValueError()
 		
 		self._docker: DockerClient = None
@@ -125,7 +114,6 @@ class FocalContainer:
 
 		self._path_prefix: str = path_prefix
 		
-		self._shared_dir: str = shared_dirname
 		self._results_dir: str = results_dirname
 
 		self._timeout: int = stop_timeout
@@ -154,7 +142,6 @@ class FocalContainer:
 		if self._running:
 			raise ContainerAlreadyRunningError()
 		
-		shared_path: str = path_join(self._full_root, self._shared_dir)
 		results_path: str = path_join(self._full_root, self._results_dir)
 		
 		os_dremove(results_path, ignore_errors=True)
@@ -164,18 +151,47 @@ class FocalContainer:
 			image=self._image,
 			detach=True,
 			volumes={
-				shared_path: {
-					"bind": f"{self._path_prefix}/{self._shared_dir}",
-					"mode": "rw,rshared"
-				},
 				results_path: {
 					"bind": f"{self._path_prefix}/{self._results_dir}",
-					"mode": "rw,rshared"
+					"mode": "rw"
 				}
 			}
 		)
 
 		self._running = True
+		
+		
+	def put_tararchive(self, dest_path: str, tar_stream: BytesIO):
+		"""
+			Estrae all' interno del container docker il contenuto dello stream TAR, fornito
+			come argomento, nella path specificata
+			
+			Parameters
+			----------
+				dest_path: str
+					Una stringa rappresentante la path di destinazione del contenuto
+					dello stream TAR fornito.
+					ASSUNZIONE: Si assume che `dest_path` è una path esistente all' interno
+					del container focale
+					
+				tar_stream: BytesIO
+					Un oggetto `BytesIO` rappresentante lo stream TAR di cui estrarre
+					il contenuto all' interno del container
+					
+			Raises
+			------
+				ValueError
+					Si verifica se:
+						
+						- Il parametro `dest_path` ha valore `None` o è una stringa vuota
+						- Il parametro `tar_stream` ha valore `None`
+		"""
+		if (dest_path is None) or (dest_path == ""):
+			raise ValueError()
+		if tar_stream is None:
+			raise ValueError()
+		
+		self._environ.put_archive(dest_path, tar_stream)
 
 
 	def execute(

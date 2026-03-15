@@ -75,7 +75,7 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 			(module_name is None) or (module_name == "") or
 			(entity is None) or (entity == "") or
 			(model is None) or (model == "") or
-			(ptsuite_code is None) or (ptsuite_code == "")
+			(ptsuite_code is None)
 		):
 			raise ValueError()
 		if try_num < 0:
@@ -264,7 +264,8 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 			E' garantito all' interno di questo metodo:
 				
 				- Che `try_num >= 0`
-				- Che nessun parametro stringa sia `None` nè stringa vuota
+				- Che nessun parametro stringa sia `None`
+				- Che nessun parametro stringa sia vuoto (eccetto `ptsuite_code`)
 				- Che lo spazio di memorizzazione del progetto `proj_name` esista
 				- Che non esiste già un tentativo corrispondente alla quintupla
 				  (`proj_name`, `module_name`, `entity`, `model`, `try_num`)

@@ -1,9 +1,5 @@
 from typing import Tuple, Dict, Any
 
-# ============== OS Utilities ============== #
-from os import makedirs as os_mkdirs
-from shutil import rmtree as os_dremove
-# ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
 	join as path_join,
@@ -20,6 +16,8 @@ from docker.client import DockerClient
 from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 	IFocalEnvConfigurator, V1FocalEnvConfigurator
 )
+from logic.focalproj_configuration.focal_env.focalenv_configurator.buildcache_cleaner._factory.e_contmanager import \
+	EContainerManager
 from ..._private.getting_contmanager import retrieve_contmanager
 
 from logic.utils.logger import ATemporalFormattLogger
@@ -30,7 +28,6 @@ def create_focal_images(
 		projs_config: Dict[str, Dict[str, Any]],
 		image_prefix: str, image_tag: str,
 		dockerfile_fname: str,
-		shared_dirname: str,
 		gentests_dir: str, envconfig_dir: str,
 		py_vers_fname: str,
 		deps_files: Tuple[str, str, str, str, str, str],
@@ -38,7 +35,8 @@ def create_focal_images(
 		linttools_dir: str,
 		covtools_dir: str,
 		path_prefix: str,
-		logger: ATemporalFormattLogger
+		logger: ATemporalFormattLogger,
+		pref_contman: str = None
 ) -> Dict[str, DockerImage]:
 	"""
 		Crea/Ottiene le immagini che corrispondono agli ambienti focali dei progetti focali
@@ -62,10 +60,6 @@ def create_focal_images(
 			
 			dockerfile_fname: str
 				Una stringa contenente il nome del dockerfile che verrà generato per ogni immagine di ambiente focale
-				
-			shared_dirname: str
-				Una stringa contenente il nome della directory condivisa tra ogni ambiente focale
-				e la Full Project Root Path del suo progetto focale
 				
 			image_prefix: str
 				Una stringa contenente il prefisso da utilizzare per il tag delle immagini focali create
@@ -103,6 +97,13 @@ def create_focal_images(
 				Un oggetto `ProcessLogger` rappresentante il logger da utilizzare per registrare gli steps
 				del processo di creazione/ottenimento delle immagini di ogni progetto focale
 				
+			pref_contman: str
+				Opzionale. Default = `None`. Una stringa indicante il container manager che si intende utilizzare
+				per la gestione degli ambienti focali.
+				Se viene fornito `None` (o nessun valore viene fornito) si considera scelto il principale container
+				manager installato nel sistema operativo. (vedi "Criterio di selezione del Container Manager"
+				nella documentazione completa)
+				
 		Raises
 		------
 			ValueError
@@ -122,13 +123,18 @@ def create_focal_images(
 	
 	focal_envs: Dict[str, DockerImage] = dict()
 	
+	pref_contman_e: EContainerManager = None
+	if pref_contman is not None:
+		pref_contman_e = EContainerManager[pref_contman.upper()]
+	
 	fenv_confgor: IFocalEnvConfigurator = V1FocalEnvConfigurator(
 		image_prefix,
 		gentests_dir, envconfig_dir,
 		dockerfile_fname,
 		py_vers_fname, deps_files,
 		tools_root, linttools_dir, covtools_dir,
-		path_prefix=path_prefix
+		path_prefix=path_prefix,
+		pref_contman=pref_contman_e
 	)
 	
 	fenv_confgor.set_default_pyversion(image_tag)
@@ -138,7 +144,6 @@ def create_focal_images(
 	full_root: str
 	focal_root: str
 	tests_root: str
-	shared_path: str
 	
 	for proj_name, proj_info in projs_config.items():
 		log_format = logger.unset_format()
@@ -148,10 +153,6 @@ def create_focal_images(
 		logger.set_format(log_format)
 		
 		full_root = proj_info["full_root"].rstrip(_PATH_SEPS)
-		
-		shared_path = path_join(full_root, shared_dirname)
-		os_dremove(shared_path, ignore_errors=True)
-		os_mkdirs(shared_path)
 		
 		try:
 			focal_envs[proj_name] = cont_manager.images.get(

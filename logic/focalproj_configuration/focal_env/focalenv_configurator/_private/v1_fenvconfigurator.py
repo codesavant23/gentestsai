@@ -1,6 +1,8 @@
 from typing import Tuple
 from ._a_base_fenvconfigurator import _ABaseFocalEnvConfigurator
 
+from ..buildcache_cleaner import EContainerManager
+
 
 
 class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
@@ -20,7 +22,8 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			tools_root: str,
 			linttools_dir: str,
 			covtools_dir: str,
-			path_prefix: str = None
+			path_prefix: str = None,
+			pref_contman: EContainerManager = None,
 	):
 		"""
 			Costruisce un nuovo V1FocalEnvConfigurator associandolo:
@@ -82,6 +85,13 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 					Opzionale. Default = `None`. Una stringa rappresentante l' eventuale primo path prefix
 					da utilizzare per le immagini prodotte con questo IFocalEnvConfigurator
 					
+				pref_contman: EContainerManager
+					Opzionale. Default = `None`. Un valore `EContainerManager` indicante il container manager che si
+					intende utilizzare per la gestione degli ambienti focali.
+					Se viene fornito `None` (o nessun valore viene fornito) si considera scelto il principale container
+					manager installato nel sistema operativo. (vedi "Criterio di selezione del Container Manager"
+					nella documentazione completa)
+					
 			Raises
 			------
 				ValueError
@@ -103,7 +113,7 @@ class V1FocalEnvConfigurator(_ABaseFocalEnvConfigurator):
 			py_vers_fname,
 			deps_files,
 			tools_root, linttools_dir, covtools_dir,
-			path_prefix
+			path_prefix, pref_contman
 		)
 	
 	

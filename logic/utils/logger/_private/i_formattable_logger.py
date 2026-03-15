@@ -20,7 +20,11 @@ class IFormattableLogger(ABC):
 	
 	
 	@abstractmethod
-	def log(self, message: str):
+	def log(
+			self,
+	        message: str,
+			format_: bool = True
+	):
 		"""
 			Registra un nuovo messaggio sullo stream di output fornito
 			
@@ -28,6 +32,17 @@ class IFormattableLogger(ABC):
 			----------
 				message: str
 					Una stringa contenente il messaggio da registrare sullo stream di output
+					
+				format_: bool
+					Opzionale. Default = `True`. Un booleano rappresentante la volontà di formattare
+					questo messaggio.
+					Questo parametro viene posto a `None` per utilizzi speciali (es. per stampare
+					un separatore aggiuntivo in logs visibili dall' utente)
+					
+			Raises
+			------
+				ValueError
+					Si verifica se il parametro `message` è una stringa vuota
 		"""
 		pass
 

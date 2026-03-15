@@ -56,7 +56,9 @@ def correct_lintically(
 			           f"(Tentativo di correzione: {try_num}/{max_tries})")
 			
 			error = lint_chker.check_lintically(ptsuite_code)
-			if len(error) == 0:
+			# Se la richiesta di quella test-suite parziale non aveva fallito
+			# e la test-suite parziale è corretta
+			if (len(error) == 0) and (ptsuite_code != ""):
 				logger.log(f"Test-suite parziale corretta a livello di linting ottenuta! "
 			           f"(Tentativo funzionante: {try_num}/{max_tries})")
 				return ptsuite_code
@@ -94,6 +96,11 @@ def correct_lintically(
 			chat.add_prompt(full_prompt)
 			# Esecuzione del tentativo di correzione
 			ptsuite_code = lint_corr.perform_corr_try()
+			
+			# Se c'è stato un errore legato alla richiesta al LLM
+			# allora si imposta una test-suite parziale vuota
+			if ptsuite_code is None:
+				ptsuite_code = ""
 			
 			# Registrazione del tentativo nella cache di correzione
 			logger.log("Salvataggio nella cache ... ")

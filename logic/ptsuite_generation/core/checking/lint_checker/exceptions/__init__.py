@@ -1,1 +1,1 @@
-from ._private.projneverset_error import ProjectNeverSetError
+from ._private.projnotset_error import ProjectNotSetError

@@ -300,6 +300,7 @@ class EntityPtsuiteGenerator:
 			except (ApiResponseError,
 			        SaturatedContextWindowError,
 			        ResponseTimedOutError):
+				self._last_genpts = ""
 				self._times_tried += 1
 		else:
 			self._gen_inprogr = False

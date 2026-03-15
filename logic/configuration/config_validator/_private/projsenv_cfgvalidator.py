@@ -20,6 +20,8 @@ from os.path import exists as os_fdexists
 from os.path import join as path_join
 # ======================================== #
 
+from ....focalproj_configuration.focal_env.focalenv_configurator.buildcache_cleaner import EContainerManager
+
 from ....utils.path_validator import (
 	PathValidator,
 	EPathValidationErrorType
@@ -38,7 +40,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		Rappresenta un `IConfigValidator` per il file di configurazione che elenca le informazioni relative
 		alla configurazione dell' ambiente focale per ogni progetto di i LLMs scelti genereranno i tests.
 		
-		Il file di configurazione letto sarà composto da un dizionario contenente:
+		Il file di configurazione letto sarà composto da un dizionario contenente, obbligatoriamente:
 			- "envconfig_dir" (str): Il nome dell' eventuale directory che contiene i files di configurazione per gli ambienti focali
 			- "image_tag" (str): L' immagine 'base' di docker da cui derivare ogni immagine degli ambienti focali
 			- "images_prefix" (str): Il prefisso da anteporre al tag delle immagini degli ambienti focali
@@ -52,7 +54,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 			
 				* "path_prefix" (str): La path di base che ospita la Full Project Root Path, del progetto focale, all' interno di ogni ambiente focale
 				* "lint_executer" (str): Il nome dello script che eseguirà la verifica di linting all' interno di ogni ambiente focale
-				* "shared_dir" (str): Il nome della directory, all' interno del "path_prefix", che verrà utilizzata per la condivisione dei files tra il progetto focale e il suo ambiente
+				* "inputctr_dir" (str): Il nome della directory, all' interno del "path_prefix", che verrà utilizzata per la condivisione dei files tra il progetto focale e il suo ambiente
 				
 			- "project" (Dict[str, str]): Dizionario che contiene i parametri relativi ad ogni progetto focale. Contiene:
 			
@@ -63,6 +65,10 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 				* "pre_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze non-Python del progetto focale
 				* "post_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze non-Python del progetto focale
 				* "post_pydeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo l' installazione delle dipendenze Python del progetto focale
+				
+		e può contenere opzionalmente:
+		
+			- "pref_contman" (str): Il naming dell' eventuale container manager a cui agganciare GenTestsAI per la gestione degli ambienti focali
 	"""
 	
 	_OUTER_FIELDS: Set[str] = {
@@ -81,7 +87,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	_ENVIRON_FIELDS: Set[str] = {
 		"path_prefix",
 		"lint_executer",
-		"shared_dir"
+		"inputctr_dir"
 	}
 	_1PROJ_FIELDS: Set[str] = {
 		"dockerfile",
@@ -89,6 +95,9 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 		"ext_deps_file", "python_deps_file",
 		"pre_pydeps_script", "post_pydeps_script",
 		"pre_extdeps_script", "post_extdeps_script"
+	}
+	_OPT_FIELDS: Set[str] = {
+		"pref_contman"
 	}
 	
 	_LINUXPATH_PATT: str = r"^(?P<linux_path>(/[\w.-]+/?)+)$"
@@ -148,7 +157,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:
-		return (self._OUTER_FIELDS, set())
+		return (self._OUTER_FIELDS, self._OPT_FIELDS)
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
@@ -202,7 +211,13 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
-		return
+		pref_contman: str = config_read.get("pref_contman", None)
+		
+		if pref_contman is not None:
+			try:
+				EContainerManager[pref_contman.upper()]
+			except KeyError:
+				raise InvalidConfigValueError()
 	
 	
 	def _ap__assert_purperrors(self, config_read: Dict[str, Any]):

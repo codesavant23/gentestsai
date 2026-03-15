@@ -86,7 +86,8 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			tools_root: str,
 			linttools_dir: str,
 			covtools_dir: str,
-			path_prefix: str = None
+			path_prefix: str = None,
+			pref_contman: EContainerManager = None
 	):
 		"""
 			Costruisce un nuovo _ABaseFocalEnvConfigurator associandolo:
@@ -148,6 +149,13 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					Opzionale. Default = `None`. Una stringa rappresentante l' eventuale primo path prefix
 					da utilizzare per le immagini prodotte con questo IFocalEnvConfigurator
 					
+				pref_contman: EContainerManager
+					Opzionale. Default = `None`. Un valore `EContainerManager` indicante il container manager che si
+					intende utilizzare per la gestione degli ambienti focali.
+					Se viene fornito `None` (o nessun valore viene fornito) si considera scelto il principale container
+					manager installato nel sistema operativo. (vedi "Criterio di selezione del Container Manager"
+					nella documentazione completa)
+					
 			Raises
 			------
 				ValueError
@@ -180,7 +188,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 			self._docker = DockerClient(base_url=docker_host)
 		except KeyError:
 			self._docker = docker_getclient()
-		self._cache_cner: IBuildCacheCleaner = BuildCacheCleanerFactory.obtain()
+			
+		self._cache_cner: IBuildCacheCleaner
+		if pref_contman is not None:
+			self._cache_cner = BuildCacheCleanerFactory.obtain(pref_contman)
+		else:
+			self._cache_cner = BuildCacheCleanerFactory.obtain()
 		
 		self._dockf_builder: ATransactDockfBuilder = SimpleTransactDockfBuilder()
 		self._dockf_builder.new_dockerfile()
@@ -362,8 +375,12 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		# Rimuove la Env-Config Project Root Path all' interno della Full Project Root Path dell' ambiente focale
 		self._dockf_builder.add_shellcmd(f"rm -rf {self._full_root}/{self._envconfig_dir}")
 		
-		# Aggiunta del path prefix nel PYTHONPATH per consentire l' esecuzione dei tools
-		self._dockf_builder.set_envvar("PYTHONPATH", self._path_prefix)
+		# Aggiunta del path prefix, e della Full Project Root Path, nel PYTHONPATH
+		# per consentire l' esecuzione corretta dei tools
+		self._dockf_builder.set_envvar(
+			"PYTHONPATH",
+		    f"{self._path_prefix}:{self._full_root}"
+		)
 		
 		# Configurazione delle variabili d'ambiente locali
 		self._configure_local_envvars()

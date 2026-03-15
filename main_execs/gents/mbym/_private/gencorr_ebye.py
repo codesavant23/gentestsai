@@ -61,6 +61,7 @@ def generate_correct_ebye(
 	entity_name_topr: str
 	ptsuite_code: str
 	ptsuite_fname: str
+	ptsuite_path: str
 	
 	i: int = 0
 	while i < len(entities_name):
@@ -70,6 +71,7 @@ def generate_correct_ebye(
 			f"{(entity_prefix+entity_filesep if entity_prefix != '' else '')}"
 		    f"{entity_name}"
 		)
+		logger.log(f' ', format_=False)
 		logger.log(f'Entità: ==== "{entity_name_topr}" ====')
 		
 		# Calcolo del nome della test-suite parziale
@@ -144,7 +146,8 @@ def generate_correct_ebye(
 		# Sennò se nessuno dei casi precedenti è avvenuto allora la test-suite parziale
 		# è stata generata e viene dichiarata corretta.
 		# Viene quindi scritta all' interno del suo file che la rappresenta
-		with(path_join(module_dirpath, ptsuite_fname), "w") as fptsuite:
+		ptsuite_path = path_join(module_dirpath, ptsuite_fname)
+		with open(ptsuite_path, "w") as fptsuite:
 			fptsuite.write(ptsuite_code)
 			fptsuite.flush()
 		

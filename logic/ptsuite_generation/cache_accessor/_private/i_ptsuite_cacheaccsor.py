@@ -101,7 +101,7 @@ class IPtsuiteCacheAccessor(ABC):
 					Si verifica se:
 					
 						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` e `ptsuite_code` ha valore `None`
-						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` e `ptsuite_code` sono una stringa vuota
+						- Almeno uno tra `proj_name`, `module_name`, `entity`, `model` sono una stringa vuota
 						- Il parametro `try_num` è minore di 0
 			
 				ProjectSpaceNotExistsError

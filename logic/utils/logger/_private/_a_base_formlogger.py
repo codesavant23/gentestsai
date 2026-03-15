@@ -95,7 +95,8 @@ class _ABaseFormattableLogger(IFormattableLogger):
 	
 	def log(
 			self,
-			message: str
+			message: str,
+			format_: bool=True
 	):
 		"""
 			Registra un nuovo messaggio sullo stream di output fornito, formattandolo prima della
@@ -106,8 +107,11 @@ class _ABaseFormattableLogger(IFormattableLogger):
 				message: str
 					Una stringa contenente il messaggio da registrare sullo stream di output
 		"""
+		if message is None:
+			raise ValueError()
+		
 		log_message: str = message
-		if self._format is not None:
+		if (self._format is not None) and (format_):
 			format_vars: Dict[str, str] = self._ap__format_vars()
 			format_vars["message"] = message
 			log_message = str.format_map(self._format, format_vars)

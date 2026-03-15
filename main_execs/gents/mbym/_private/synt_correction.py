@@ -52,7 +52,9 @@ def correct_syntactically(
 			           f"(Tentativo di correzione: {try_num}/{max_tries})")
 			
 			error = synt_chker.check_synt(ptsuite_code)
-			if len(error) == 0:
+			# Se la richiesta di quella test-suite parziale non aveva fallito
+			# e la test-suite parziale è corretta
+			if (len(error) == 0) and (ptsuite_code != ""):
 				logger.log(f"Test-suite parziale corretta sintatticamente ottenuta! "
 			           f"(Tentativo funzionante: {try_num}/{max_tries})")
 				return ptsuite_code
@@ -72,7 +74,6 @@ def correct_syntactically(
 		
 		# Se si sono ci sono errori di correttezza sintattica
 		if len(error) > 0:
-			
 			# Impostazione dell' errore nel prompt
 			entity_corr_pbder.set_placeholder(name_placeh, error[0])
 			entity_corr_pbder.set_placeholder(message_placeh, error[1])
@@ -85,6 +86,11 @@ def correct_syntactically(
 			chat.add_prompt(full_prompt)
 			# Esecuzione del tentativo di correzione
 			ptsuite_code = synt_corr.perform_corr_try()
+			
+			# Se c'è stato un errore legato alla richiesta al LLM
+			# allora si imposta una test-suite parziale vuota
+			if ptsuite_code is None:
+				ptsuite_code = ""
 			
 			# Registrazione del tentativo nella cache di correzione
 			logger.log("Salvataggio nella cache ... ")

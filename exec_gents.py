@@ -169,7 +169,6 @@ if __name__ == "__main__":
 		projs_config,
 		projsenv_config["images_prefix"], projsenv_config["image_tag"],
 		projenv_config["dockerfile"],
-		environ_config["shared_dir"],
 		general_config["gen_tests_dir"], projsenv_config["envconfig_dir"],
 		projenv_config["pyversion_file"],
 		(
@@ -184,7 +183,8 @@ if __name__ == "__main__":
 		tools_config["linting"],
 		tools_config["coverage"],
 		environ_config["path_prefix"],
-		console_logger
+		console_logger,
+		projsenv_config.get("pref_contman", None)
 	)
 	
 	console_logger.set_messages_sep("\n")
@@ -243,7 +243,8 @@ if __name__ == "__main__":
 	## ===== Creazione dei verificatori di correttezza delle test-suites parziali =====
 	synt_chker: ISyntacticChecker = SyntacticCheckerFactory.create(ESyntCheckerTool.PYCOMPILE)
 	lint_chker: LintingChecker = LintingChecker(
-		environ_config["lint_executer"], environ_config["shared_dir"],
+		environ_config["path_prefix"],
+		environ_config["lint_executer"], environ_config["inputctr_dir"],
 		logger=None
 	)
 	
@@ -480,12 +481,14 @@ if __name__ == "__main__":
 							
 							# Pulizia delle risorse utilizzate dai verificatori
 							synt_chker.clear_resources()
-							lint_chker.clear_resources(stop_fenv=True)
+							lint_chker.clear_resources()
 							
 							# Pulizia della chat
 							chat.clear()
-							
-			os_dremove(path_join(full_root, environ_config["shared_dir"]))
+			
+			# Pulizia delle risorse del verificatore di correttezza a livello di linting
+			# con stop dell' ambiente focale
+			lint_chker.clear_resources(stop_fenv=True)
 			
 			console_logger.set_messages_sep("\n\t\t")
 			console_logger.log(f'Generazione per il progetto "{project_name}" terminata!')
