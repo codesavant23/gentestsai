@@ -57,6 +57,7 @@ from logic.ptsuite_generation.decls_extraction.moddecls_extractor import (
 )
 
 from main_execs.gents.reading import read_fb_hyperparams
+from logic.ptsuite_generation.llm_access.llm_hyperparam.id import ILlmHyperParamId
 from logic.ptsuite_generation.llm_access.llm_hyperparam import (
 	LlmHyperParamFactoryResolver,
 	ILlmHyperParamFactory,
@@ -212,7 +213,7 @@ if __name__ == "__main__":
 	placehs["class_name"] = prompts_config["placeholders"]["class_name"]
 	
 	## ===== Lettura degli iperparametri (di fallback) =====
-	hparams: List[ILlmHyperParam] = read_fb_hyperparams(
+	hparams: Dict[ILlmHyperParamId, ILlmHyperParam] = read_fb_hyperparams(
 		platf_config["platform"],
 		general_config["default_model_params"],
 		logger
@@ -335,17 +336,14 @@ if __name__ == "__main__":
 			# Creazione dell' oggetto iperparametro
 			hparam = llmplat_hparam_f.create(hparam_name)
 			hparam.set_value(str(hparam_val))
-			try:
-				# Eventuale sostituzione dell' iperparametro di fallback con quello specifico
-				# richiesto dal LLM
-				lst_id = hparams.index(hparam)
-				hparams[lst_id] = hparam
-			except ValueError:
-				# Sennò aggiunta agli altri iperparametri
-				hparams.append(hparam)
+			
+			# Eventuale sostituzione dell' iperparametro di fallback con quello specifico
+			# richiesto dal LLM.
+			# Sennò aggiunta agli altri iperparametri
+			hparams[hparam.param_id()] = hparam
 		
 		# ===== Impostazione di ogni iperparametro nell' accessor della piattaforma =====
-		for hparam in hparams:
+		for hparam in hparams.values():
 			platform.add_hyperparam(hparam)
 				
 		# ===== Lettura degli eventuali prompt specifici del modello =====
