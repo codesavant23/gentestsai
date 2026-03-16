@@ -18,7 +18,7 @@ from logic.focalproj_configuration.focal_env.focalenv_configurator import (
 )
 from logic.focalproj_configuration.focal_env.focalenv_configurator.buildcache_cleaner._factory.e_contmanager import \
 	EContainerManager
-from ..._private.getting_contmanager import retrieve_contmanager
+from .._private.getting_contmanager import retrieve_contmanager
 
 from logic.utils.logger import ATemporalFormattLogger
 
@@ -104,10 +104,17 @@ def create_focal_images(
 				manager installato nel sistema operativo. (vedi "Criterio di selezione del Container Manager"
 				nella documentazione completa)
 				
+		Returns
+		-------
+			Dict[str, DockerImage]
+				Un dizionario di oggetti `docker.models.images.Image`, indicizzato da stringhe, contenente
+				le immagini degli ambienti focali da utilizzare per testare le capacità dei LLMs
+				
 		Raises
 		------
 			ValueError
 				Si verifica se:
+				
 					- Il parametro `dockf_builder` ha valore `None`
 					- Il parametro `gentests_dir` ha valore `None` o è una stringa vuota
 					- Il parametro `envconfig_dir` ha valore `None` o è una stringa vuota

@@ -163,12 +163,12 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		except HttpxConnectTimeoutError as httpx_tout_error:
 			gensai_exc: ApiConnectionError = ApiConnectionError()
 			gensai_exc.args = ("timeout",) + httpx_tout_error.args
-			raise gensai_exc
+			raise gensai_exc from httpx_tout_error
 		except ConnectionError as ollama_err:
 			gensai_exc: ApiConnectionError = ApiConnectionError()
 			gensai_exc.args = ("other",) + ollama_err.args
 			gensai_exc.errno = ollama_err.errno
-			raise gensai_exc
+			raise gensai_exc from ollama_err
 		
 		response_iter: Iterator[ChatResponse]
 		try:
@@ -182,7 +182,7 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		except OllamaApiResponseError as ollama_err:
 			gensai_exc: ApiResponseError = ApiResponseError()
 			gensai_exc.args = ollama_err.args
-			raise gensai_exc
+			raise gensai_exc from ollama_err
 		
 		prompt_tokens: int = -1
 		resp_tokens: int = -1
@@ -210,11 +210,11 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		except HttpxTimeoutError as httpx_tout_err:
 			gensai_exc: ResponseTimedOutError = ResponseTimedOutError()
 			gensai_exc.args = httpx_tout_err.args
-			raise gensai_exc
+			raise gensai_exc from httpx_tout_err
 		except OllamaApiResponseError as ollama_err:
 			gensai_exc: ApiResponseError = ApiResponseError()
 			gensai_exc.args = ("known",) + ollama_err.args
-			raise gensai_exc
+			raise gensai_exc from ollama_err
 		
 		if logger is not None:
 			if self._log_resp:
@@ -222,8 +222,11 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 				logger.set_messages_sep(self._logger_sep)
 			logger.log(f'Fine della risposta.')
 
-		if (prompt_tokens == -1) or (resp_tokens == -1):
-			raise ApiResponseError("unknown")
+		if ((prompt_tokens == -1) or (resp_tokens == -1) or
+			(full_response == "")):
+			gensai_exc: ApiResponseError = ApiResponseError()
+			gensai_exc.args = ("unknown",) + (str(prompt_tokens), str(resp_tokens), full_response)
+			raise gensai_exc
 
 		if (prompt_tokens + resp_tokens) >= num_ctx_param:
 			raise SaturatedContextWindowError()

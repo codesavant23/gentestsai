@@ -86,7 +86,7 @@ from logic.ptsuite_generation.core.checking.lint_checker import LintingChecker
 from logic.ptsuite_generation.core.correction.synt_corrector import PtsuiteSyntacticCorrector
 from logic.ptsuite_generation.core.correction.lint_corrector import PtsuiteLintingCorrector
 
-from main_execs.gents import create_focal_images
+from main_execs import create_focal_images
 
 from main_execs.gents.ptsuite_gen import open_ptsuite_caches
 
