@@ -19,7 +19,7 @@ class Ollama_Qwen3_32b_q4_km_LlmImpl(AOllamaLlmSpecImpl):
 
 	
 	def context_window(self) -> int:
-		return 40000
+		return 40960
 
 
 	##	============================================================

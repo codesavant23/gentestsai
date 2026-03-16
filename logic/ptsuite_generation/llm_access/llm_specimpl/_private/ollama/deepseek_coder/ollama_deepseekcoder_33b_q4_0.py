@@ -19,7 +19,7 @@ class Ollama_DeepseekCoder_33b_q4_0_LlmImpl(AOllamaLlmSpecImpl):
 	
 	
 	def context_window(self) -> int:
-		return 16000
+		return 16384
 
 
 	##	============================================================
