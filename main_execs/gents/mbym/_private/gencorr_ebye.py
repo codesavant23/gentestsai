@@ -96,6 +96,7 @@ def generate_correct_ebye(
 			ent_gen_skipw.write_skipd_test(entity_name)
 			# e si passa alla prossima entità
 			i += 1
+			chat.clear()
 			continue
 		
 		# ===== Processo di "Correzione Sintattica della test-suite parziale" =====
@@ -119,6 +120,7 @@ def generate_correct_ebye(
 			ent_corr_skipw.write_skipd_test(entity_name)
 			# e si passa alla prossima entità
 			i += 1
+			chat.clear()
 			continue
 		
 		# ===== Processo di "Correzione a livello di Linting della test-suite parziale" =====
@@ -141,6 +143,7 @@ def generate_correct_ebye(
 			ent_corr_skipw.write_skipd_test(entity_name)
 			# e si passa alla prossima entità
 			i += 1
+			chat.clear()
 			continue
 			
 		# Sennò se nessuno dei casi precedenti è avvenuto allora la test-suite parziale
@@ -152,3 +155,4 @@ def generate_correct_ebye(
 			fptsuite.flush()
 		
 		i += 1
+		chat.clear()
