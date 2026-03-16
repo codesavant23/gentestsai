@@ -130,7 +130,7 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			for hparam in hparams
 		}
 		think_param: bool = options_param.pop(self._think_param.id())
-		num_ctx_param: int = options_param.pop(self._numctx_param.id())
+		num_ctx_param: int = options_param[self._numctx_param.id()]
 		
 		full_timeout: HttpxTimeout = HttpxTimeout(
 			connect=int(self._conn_tout) / 1000.0,
