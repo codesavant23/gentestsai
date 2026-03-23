@@ -5,6 +5,7 @@ from logic.ptsuite_generation.llm_access.llm_chat import ILlmChat
 
 from logic.ptsuite_generation.core.checking.lint_checker import LintingChecker
 from logic.ptsuite_generation.core.correction.lint_corrector import PtsuiteLintingCorrector
+from logic.ptsuite_generation.core.exceptions import WrongResponseFormatError
 
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
@@ -38,13 +39,13 @@ def correct_lintically(
 	line: str
 	column: str
 	
-	try_num: int = 1
-	tries_incache: int = 0
+	try_num: int = max_tries
+	tries_incache: int
 	
 	ptsuite_code: str = wrong_ptsuite_code
 	
 	# Ricerca di una test-suite parziale corretta a livello di linting nella cache
-	while try_num <= max_tries:
+	while try_num >= 1:
 		if corr_cache.does_ptsuite_exists(
 				project_name,
 				cache_modname, f"{cache_entprefix}{entity}", model, try_num
@@ -62,9 +63,11 @@ def correct_lintically(
 				logger.log(f"Test-suite parziale corretta a livello di linting ottenuta! "
 			           f"(Tentativo funzionante: {try_num}/{max_tries})")
 				return ptsuite_code
-			tries_incache += 1
-		try_num += 1
+			else:
+				break
+		try_num -= 1
 	
+	tries_incache = max_tries - try_num
 	# Se non si è trovata una test-suite parziale corretta nella cache
 	is_corr_success: bool = False
 	try_num = 1
@@ -95,7 +98,10 @@ def correct_lintically(
 			# Aggiunta della richiesta di correzione alla chat
 			chat.add_prompt(full_prompt)
 			# Esecuzione del tentativo di correzione
-			ptsuite_code = lint_corr.perform_corr_try()
+			try:
+				ptsuite_code = lint_corr.perform_corr_try()
+			except WrongResponseFormatError:
+				ptsuite_code = None
 			
 			# Se c'è stato un errore legato alla richiesta al LLM
 			# allora si imposta una test-suite parziale vuota
@@ -114,7 +120,6 @@ def correct_lintically(
 			try_num += 1
 		else:
 			is_corr_success = True
-			break
 	
 	# Se la serie di tentativi del correttore di linting non è terminata
 	# (perchè il max numero di tentativi sono stati in parte effettuati tramite cache)

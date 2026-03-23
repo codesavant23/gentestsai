@@ -19,7 +19,7 @@ def inst_apiaccsor(
 			platform = LlmApiAccessorFactory.for_ollama(
 				platf_options["api_url"], platf_options["userpass_pair"],
 				platf_options["connect_timeout"],
-				logger, (True if logger else False)
+				logger=logger, log_resp=(True if logger is not None else False)
 			)
 		case _:
 			raise NotImplementedError("La piattaforma di inferenza richiesta non è implementata")

@@ -16,6 +16,7 @@
 	"max_gen_times": 10,
 	"max_corr_times": 10,
 	"gen_tests_dir": "gen_tests",
+	"response_format": "```python\\n?(?P<gen_code>[\\s\\S]+)\\n?```",
 	"skipped_tests": {
 		"file_format": "json",
 		"funcs_gen": "skipd_funcs_gen.json",

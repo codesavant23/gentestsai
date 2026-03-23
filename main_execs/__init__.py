@@ -1,6 +1,8 @@
 from . import gents
 from . import pdirs_hasher
+from . import projinfo_extraction
 
+from ._private.llmnames_normalizing import normalize_llmname
 from ._private.config_reading import (
 	read_gents_configfiles,
 	read_general_config, read_platform_config, read_models_config,

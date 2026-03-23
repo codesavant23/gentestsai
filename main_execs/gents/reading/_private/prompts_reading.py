@@ -11,8 +11,7 @@ from os import walk as os_walk
 from os.path import exists as os_fdexists
 # ========================================== #
 
-from main_execs.gents._private.llmnames_normalizing import normalize_llmname
-
+from main_execs._private.llmnames_normalizing import normalize_llmname
 
 
 def _invert_templnames_dict(

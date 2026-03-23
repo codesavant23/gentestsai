@@ -1,6 +1,6 @@
 from typing import Tuple, Dict
 from json import dumps as json_dump
-from projinfo_extraction import extract_projsinfo
+from main_execs.projinfo_extraction import extract_projsinfo
 
 
 def projinfo_extractor_pgm():

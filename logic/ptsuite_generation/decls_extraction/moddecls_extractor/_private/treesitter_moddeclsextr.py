@@ -79,14 +79,20 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 	
 	def extract_classes(self) -> List[IClassDeclsExtractor]:
 		mod_classes: List[IClassDeclsExtractor] = []
+		class_node: TreeNode
 		class_code: str
 		
 		for mod_stmt in self._module.named_children:
 			if mod_stmt.type == "class_definition":
-				class_code = mod_stmt.text.decode("utf-8")
-				mod_classes.append(
-					TreeSitterClassDeclsExtractor(class_code)
+				self._add_class_tolist(
+					mod_stmt, mod_classes
 				)
+			elif mod_stmt.type == "decorated_definition":
+				class_node = mod_stmt.child_by_field_name("definition")
+				if (class_node is not None) and (class_node.type == "class_definition"):
+					self._add_class_tolist(
+						mod_stmt, mod_classes
+					)
 		
 		return mod_classes
 
@@ -120,3 +126,28 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 		if node.type == "function_definition":
 			func_name = node.child_by_field_name("name").text.decode("utf-8")
 			list_.append(func_name)
+			
+			
+	@classmethod
+	def _add_class_tolist(
+			cls,
+			node: TreeNode,
+			list_: List[IClassDeclsExtractor]
+	):
+		"""
+			Crea un estrattore di codice per la classe fornita e lo aggiunge alla lista data
+			
+			Parameters
+			----------
+				node: TreeNode
+					Un oggetto `TreeNode` rappresentante la classe Python di cui creare e aggiungere
+					l' estrattore di codice alla lista data
+				
+				list_: List[str]
+					Una lista di oggetti `IClassDeclsExtractor` rappresentante la lista di estrattori
+					di codice di classe
+		"""
+		class_code: str = node.text.decode("utf-8")
+		list_.append(
+			TreeSitterClassDeclsExtractor(class_code)
+		)

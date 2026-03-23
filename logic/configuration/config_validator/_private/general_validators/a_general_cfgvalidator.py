@@ -47,6 +47,10 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 				
 			- "always_excluded" (List[str]): La lista di files, o directories, da non considerare nell' intero processo di GenTestsAI
 			
+		e può contenere opzionalmente:
+		
+			- "response_fmt" (str): Un pattern RegEx Python che identifica il formato della risposta. Deve contenere obbligatoriamente un named group chiamato "gen_code"
+			
 		La piattaforma di inferenza specifica è descritta dai discendenti di questa classe astratta
 	"""
 	
@@ -57,6 +61,9 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 		"skipped_tests",
 		"gen_tests_dir",
 		"always_excluded"
+	}
+	_OPT_FIELDS: Set[str] = {
+		"response_format"
 	}
 	_LLM_FIELDS: Set[str] = {
 		"temperature", "gen_seed",
@@ -99,7 +106,7 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 		
 		
 	def _ap__fields(self) -> Tuple[Set[str], Set[str]]:
-		return (self._ALL_FIELDS_NOPLAT, set())
+		return (self._ALL_FIELDS_NOPLAT, self._OPT_FIELDS)
 	
 	
 	def _ap__assert_mandatory(
@@ -110,13 +117,10 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 		
 		def_params: Any = config_read["default_model_params"]
 		if not isinstance(def_params, dict):
-			raise InvalidConfigValueError('Il campo "default_model_params" non è un dizionario')
+			raise InvalidConfigValueError()
 		for key in set(def_params.keys()):
 			if not isinstance(key, str):
-				raise InvalidConfigValueError(
-					'Le chiavi del campo-dizionario "default_model_params" non sono stringhe'
-				)
-			
+				raise InvalidConfigValueError()
 		self._assert_llm_params(def_params)
 		
 		max_gens: int = config_read["max_gen_times"]
@@ -161,7 +165,13 @@ class AGeneralConfigValidator(_APlatSpecConfigValidator):
 	
 	
 	def _ap__assert_optional(self, config_read: Dict[str, Any]):
-		return
+		response_fmt: str = config_read.get("response_fmt", None)
+		if response_fmt is not None:
+			if not isinstance(response_fmt, str):
+				raise InvalidConfigValueError()
+			
+			if response_fmt.find("(?P<gen_code>") == -1:
+				raise InvalidConfigValueError()
 	
 	
 	def _ap__assert_purperrors(self, config_read: Dict[str, Any]):

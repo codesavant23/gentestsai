@@ -7,6 +7,7 @@ from argparse import Namespace as ArgumentsList
 from os.path import (
 	sep as path_sep,
 	altsep as path_altsep,
+	normpath as os_normpath,
 	join as path_join,
 	split as path_split,
 	splitext as path_splitext,
@@ -42,7 +43,7 @@ from main_execs.gents.mbym import (
 )
 
 from main_execs.gents.reading import read_templprompts, read_1model_templprompts
-from main_execs.gents import normalize_llmname
+from main_execs import normalize_llmname
 
 from main_execs import read_gents_configfiles
 from logic.configuration.config_parser import (
@@ -76,9 +77,7 @@ from logic.ptsuite_generation.llm_access.llm_chat import (
 from main_execs.gents.ptsuite_gen import inst_apiaccsor
 from logic.ptsuite_generation.llm_access.llm_apiaccessor import ILlmApiAccessor
 
-from main_execs.gents.ptsuite_gen import create_eptsuite_generator
 from logic.ptsuite_generation.core.generation import EntityPtsuiteGenerator
-
 from logic.ptsuite_generation.core.checking.synt_checker import (
 	ISyntacticChecker,
 	SyntacticCheckerFactory, ESyntCheckerTool
@@ -236,9 +235,11 @@ if __name__ == "__main__":
 	logger.process_end()
 	
 	## ===== Creazione del generatore delle test-suites parziali =====
-	ptsuite_gen: EntityPtsuiteGenerator = create_eptsuite_generator(
-		platform, general_config["max_gen_times"],
-		console_logger
+	ptsuite_gen: EntityPtsuiteGenerator = EntityPtsuiteGenerator(
+		general_config["max_gen_times"],
+		platform,
+		resp_format=general_config.get("resp_format", None),
+		logger=console_logger
 	)
 	
 	## ===== Creazione dei verificatori di correttezza delle test-suites parziali =====
@@ -253,11 +254,13 @@ if __name__ == "__main__":
 	synt_corr: PtsuiteSyntacticCorrector = PtsuiteSyntacticCorrector(
 		general_config["max_corr_times"], platform,
 		synt_chker,
+		resp_format=general_config.get("resp_format", None),
 		logger=console_logger
 	)
 	lint_corr: PtsuiteLintingCorrector = PtsuiteLintingCorrector(
 		general_config["max_corr_times"], platform,
 		lint_chker,
+		resp_format=general_config.get("resp_format", None),
 		logger=console_logger
 	)
 	
@@ -311,7 +314,11 @@ if __name__ == "__main__":
 		console_logger.log(f'Inizio generazione delle test-suites per il modello "{llm_model}"')
 		console_logger.set_messages_sep("\n\t\t")
 		
-		llmmodel_cname = llm_model.replace("-", "_").upper()
+		llmmodel_cname = (llm_model
+		    .replace("-", "_")
+			.replace(".", "_")
+		    .upper()
+		)
 		curr_prompts = fback_prompts
 		
 		# ===== Conversione del nome del LLM in implementazione specifica =====
@@ -415,6 +422,7 @@ if __name__ == "__main__":
 			for curr_path, dirs, file_names in os_walk(focal_root):
 				# Se la directory non è esclusa dal codice focale
 				if curr_path not in focal_excluded:
+					curr_path = os_normpath(curr_path)
 					for file_name in file_names:
 						is_py_file = file_name.endswith(".py")
 		

@@ -387,6 +387,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		
 		# Installazione del comando `yes` (utilizzato per le installazioni silenziose)
 		self._dockf_builder.add_shellcmd("apt-get update && apt install -y coreutils"
+		                                 " && apt-get clean"
 		                                 " && rm -rf /var/lib/apt/lists/*")
 
 		# Upgrade del package manager PIP
@@ -806,6 +807,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 		for ext_dep in ext_deps:
 			self._dockf_builder.add_shellcmd_step(f"apt-get install -y {ext_dep}")
 		if os_fdexists(self._ext_deps_path):
+			self._dockf_builder.add_shellcmd_step("apt-get clean")
 			self._dockf_builder.add_shellcmd_step("rm -rf /var/lib/apt/lists/*")
 			self._dockf_builder.commit_cmds_tran()
 
@@ -839,7 +841,7 @@ class _ABaseFocalEnvConfigurator(IFocalEnvConfigurator):
 					pip_flags += f" {value}"
 					
 			self._dockf_builder.add_shellcmd_step(
-				f"yes | python -m pip install -q -q -q {pip_flags} {py_packs}"
+				f"yes | python -m pip install --no-cache-dir -q -q -q {pip_flags} {py_packs}"
 			)
 		if len(py_deps) > 0:
 			self._dockf_builder.commit_cmds_tran()

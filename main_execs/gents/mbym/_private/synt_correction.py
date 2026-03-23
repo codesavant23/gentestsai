@@ -5,6 +5,7 @@ from logic.ptsuite_generation.llm_access.llm_chat import ILlmChat
 
 from logic.ptsuite_generation.core.checking.synt_checker import ISyntacticChecker
 from logic.ptsuite_generation.core.correction.synt_corrector import PtsuiteSyntacticCorrector
+from logic.ptsuite_generation.core.exceptions import WrongResponseFormatError
 
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
@@ -34,13 +35,13 @@ def correct_syntactically(
 	error: Tuple[str, str]
 	full_prompt: str
 	
-	try_num: int = 1
-	tries_incache: int = 0
+	try_num: int = max_tries
+	tries_incache: int
 	
 	ptsuite_code: str = wrong_ptsuite_code
 	
 	# Ricerca di una test-suite parziale corretta sintatticamente nella cache
-	while try_num <= max_tries:
+	while try_num >= 1:
 		if corr_cache.does_ptsuite_exists(
 				project_name,
 				cache_modname, f"{cache_entprefix}{entity}", model, try_num
@@ -58,9 +59,11 @@ def correct_syntactically(
 				logger.log(f"Test-suite parziale corretta sintatticamente ottenuta! "
 			           f"(Tentativo funzionante: {try_num}/{max_tries})")
 				return ptsuite_code
-			tries_incache += 1
-		try_num += 1
+			else:
+				break
+		try_num -= 1
 	
+	tries_incache = max_tries - try_num
 	# Se non si è trovata una test-suite parziale corretta nella cache
 	is_corr_success: bool = False
 	try_num = 1
@@ -85,7 +88,10 @@ def correct_syntactically(
 			# Aggiunta della richiesta di correzione alla chat
 			chat.add_prompt(full_prompt)
 			# Esecuzione del tentativo di correzione
-			ptsuite_code = synt_corr.perform_corr_try()
+			try:
+				ptsuite_code = synt_corr.perform_corr_try()
+			except WrongResponseFormatError:
+				ptsuite_code = None
 			
 			# Se c'è stato un errore legato alla richiesta al LLM
 			# allora si imposta una test-suite parziale vuota
@@ -104,7 +110,6 @@ def correct_syntactically(
 			try_num += 1
 		else:
 			is_corr_success = True
-			break
 			
 	# Se la serie di tentativi del correttore sintattico non è terminata
 	# (perchè il max numero di tentativi sono stati in parte effettuati tramite cache)

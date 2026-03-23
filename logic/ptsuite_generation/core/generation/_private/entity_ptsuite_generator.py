@@ -9,6 +9,7 @@ from regex import (
 # ========================================== #
 
 from .....utils.logger import ATemporalFormattLogger
+from .....utils.logger.exceptions import FormatNotSetError
 
 from ....llm_access.llm_apiaccessor import ILlmApiAccessor
 from ....llm_access.llm_apiaccessor.exceptions import (
@@ -47,7 +48,7 @@ class EntityPtsuiteGenerator:
 			max_tries: int,
 			llm_accsor: ILlmApiAccessor,
 			logger: ATemporalFormattLogger = None,
-			response_format: str = None
+			resp_format: str = None
 	):
 		"""
 			Costruisce un nuovo EntityPtsuiteGenerator associandolo ad un `ILlmApiAccessor`
@@ -72,7 +73,7 @@ class EntityPtsuiteGenerator:
 					da utilizzare per registrare le fasi di ogni tentativo di generazione (non per registrare le fasi
 					della richiesta al LLM di ogni tentativo)
 					
-				response_format: str
+				resp_format: str
 					Opzionale. Default = `None`. Una stringa RegEx contenente il formato da utilizzare per identificare
 					il codice derivante dai tentativi di generazione effettuati.
 					E' necessario che contenga un named group chiamato "gen_code"
@@ -89,10 +90,10 @@ class EntityPtsuiteGenerator:
 			raise ValueError()
 		
 		self._resp_regex: str =	self.GENCODE_PATT
-		if response_format is not None:
-			if response_format.find("(?P<gen_code>") == -1:
+		if resp_format is not None:
+			if resp_format.find("(?P<gen_code>") == -1:
 				raise ValueError()
-			self._resp_regex = response_format
+			self._resp_regex = resp_format
 		
 		self._gen_everperf: bool = False
 		self._gen_inprogr: bool = False
@@ -230,10 +231,15 @@ class EntityPtsuiteGenerator:
 		self._try_succ = False
 		self._last_genpts = ""
 		self._resp_tout = resp_timeout
-		if self._logger is not None:
-			self._logger.log(
-				f"Inzio di una nuova serie di tentativi di generazione"
-			)
+		
+		# Setup del formato del logger
+		def_time_format: str = "( {day}-{month}-{year} | {hour}:{min}:{second} )"
+		logger_frmt: str
+		try:
+			logger_frmt = self._logger.unset_format()
+		except FormatNotSetError:
+			logger_frmt = "[EntityPtsuiteGenerator] {message} " + def_time_format
+		self._logger.set_format(logger_frmt)
 
 
 	def perform_gen_try(self):
@@ -243,6 +249,13 @@ class EntityPtsuiteGenerator:
 			
 			ASSUNZIONE: Si assume che il prompt di richiesta sia stato impostato nell' oggetto chat
 			associato all' `ILlmApiAccessor` fornito a questo EntityPtsuiteGenerator
+			
+			Returns
+			-------
+				str
+					Una stringa contenente l' ultima test-suite parziale prodotta dalla richiesta
+					di generazione effettuata in questo tentativo.
+					Se la richiesta è stata interrotta per un errore viene restituito il valore `None`
 			
 			Raises
 			------
@@ -274,19 +287,23 @@ class EntityPtsuiteGenerator:
 		if not self._gen_inprogr:
 			raise PromptingSessionNotStartedError()
 		
-		if (not self._try_succ) and (self._times_tried <= self._max_tries):
+		gentry_ptsuite: str = None
+		if not self._try_succ:
 			try:
 				self._logger.log(
-					f"Inizio del tentativo di generazione no. {self._times_tried}/{self._max_tries}"
+					f"Inizio del tentativo di generazione (Tentativo no. {self._times_tried}/{self._max_tries}) ..."
 				) if self._logger is not None else None
 					
 				response: str = self._llm_platf.prompt(self._resp_tout)
 				
 				resp_match: Match[str] = reg_search(self._resp_regex, response, RegexFlags.MULTILINE)
 				if resp_match is None:
+					self._times_tried += 1
 					raise WrongResponseFormatError()
 				
 				self._last_genpts = resp_match.group("gen_code")
+				gentry_ptsuite = self._last_genpts
+				
 				self._try_succ = True
 				self._gen_inprogr = False
 				
@@ -299,15 +316,35 @@ class EntityPtsuiteGenerator:
 					)
 			except (ApiResponseError,
 			        SaturatedContextWindowError,
-			        ResponseTimedOutError):
-				self._last_genpts = ""
+			        ResponseTimedOutError) as error:
+				self._logger.log(f"La test-suite parziale non è stata generata (Errore: {str(type(error).__name__)})") if self._logger is not None else None
 				self._times_tried += 1
-		else:
-			self._gen_inprogr = False
-			if self._logger is not None:
-				self._logger.log(
-					f"Tentativi di generazione massimi raggiunti. Test-suite parziale non generata"
-				)
+				
+			if self._times_tried > self._max_tries:
+				self._logger.log("La serie di tentativi di generazione è terminata fallendo") if self._logger is not None else None
 				self._logger.log(
 					f"Fine della serie di tentativi di generazione"
-				)
+				) if self._logger is not None else None
+				self._last_genpts = ""
+				self._gen_inprogr = False
+		
+		return gentry_ptsuite
+	
+	
+	def stop_generation(self):
+		"""
+			Termina la serie di tentativi di generazione in corso dichiarando
+			l' ultima serie di tentativi come fallita
+			
+			Raises
+			------
+				PromptingSessionNotStartedError
+					Si verifica se non è stata iniziata una serie di tentativi di generazione
+		"""
+		if not self._gen_inprogr:
+			raise PromptingSessionNotStartedError()
+		
+		self._last_genpts = ""
+		self._try_succ = False
+		
+		self._gen_inprogr = False

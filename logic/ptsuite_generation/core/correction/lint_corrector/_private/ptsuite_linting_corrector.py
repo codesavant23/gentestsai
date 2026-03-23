@@ -110,7 +110,7 @@ class PtsuiteLintingCorrector:
 						- Il parametro `max_tries` è minore di 1
 						- Il parametro `llm_accsor` ha valore `None`
 						- Il parametro `lint_checker` ha valore `None`
-						- Il parametro `response_format` viene fornito ma non contiene un named group che si chiama "gen_code"
+						- Il parametro `resp_format` viene fornito ma non contiene un named group che si chiama "gen_code"
 		"""
 		if max_tries < 1:
 			raise ValueError()
@@ -358,6 +358,7 @@ class PtsuiteLintingCorrector:
 				
 				resp_match: Match[str] = reg_search(self._resp_regex, response, RegexFlags.MULTILINE)
 				if resp_match is None:
+					self._times_tried += 1
 					raise WrongResponseFormatError()
 				self._last_corrpts = resp_match.group("gen_code")
 				corrtry_ptsuite = self._last_corrpts
@@ -383,7 +384,7 @@ class PtsuiteLintingCorrector:
 			        SaturatedContextWindowError,
 			        ResponseTimedOutError) as error:
 				# Richiesta al LLM di correzione fallita
-				self._logger.log(f"La test-suite parziale non è stata corretta (Errore: {str(type(error))})") if self._logger is not None else None
+				self._logger.log(f"La test-suite parziale non è stata corretta (Errore: {str(type(error).__name__)})") if self._logger is not None else None
 				self._times_tried += 1
 				
 			if self._times_tried > self._max_tries:

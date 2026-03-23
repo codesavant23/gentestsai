@@ -36,7 +36,7 @@ def read_arguments() -> Tuple[str, EHashingAlgorithm, int]:
 	"""
 	arg_parser: ArgumentParser = ArgumentParser(
 		description="GenTestsAI's executable for obtaining names of LLM prompt directories",
-		usage="python exec_pdirs_hasher.py [-a <hashing_algorithm>] <model_name>"
+		usage="python exec_pdirs_hasher.py [-a <hashing_algorithm>] [-c <num_chars>] <model_name>"
 	)
 	
 	arg_parser.add_argument(

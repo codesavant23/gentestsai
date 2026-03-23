@@ -64,7 +64,7 @@ def extract_projsinfo(projs_root: str) -> Dict[str,Tuple[int,int,float,float,flo
         proj_avgtcases: float = avg_proj_numtcases(tcases_bymod)
         proj_vartcases: float = var_proj_numtcases(tcases_bymod)
 
-        print("OK! Estrazione delle informazioni di '"+proj_name+"' completata")
+        print("Estrazione delle informazioni di '"+proj_name+"' completata")
 
         projs_info[proj_name] = (
             tot_modules,
