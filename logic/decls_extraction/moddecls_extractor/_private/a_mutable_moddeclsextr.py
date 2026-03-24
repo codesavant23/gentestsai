@@ -96,6 +96,11 @@ class AMutableModuleDeclsExtractor(IModuleDeclsExtractor):
 
 
 	@abstractmethod
+	def extract_funcnames(self) -> List[str]:
+		pass
+	
+	
+	@abstractmethod
 	def extract_funcs(self) -> List[str]:
 		pass
 	

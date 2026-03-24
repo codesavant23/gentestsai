@@ -37,3 +37,17 @@ class IClassDeclsExtractor(ABC):
 					della classe associata
 		"""
 		pass
+	
+	
+	@abstractmethod
+	def methods(self) -> List[str]:
+		"""
+			Estrae le definizioni dei metodi che si trovano all' interno della classe associata
+			
+			Returns
+			-------
+				List[str]
+					Una lista di stringhe contenente le definizioni dei metodi presenti
+					all' interno della classe associata
+		"""
+		pass

@@ -18,7 +18,7 @@ class LlmApiAccessorFactory:
 			address: str,
 	        auth: str,
 	        conn_timeout: int,
-	        logger: ATemporalFormattLogger | None = None,
+	        logger: ATemporalFormattLogger = None,
 	        log_resp: bool = False,
 	        logger_sep: str = "\n"
 	) -> ILlmApiAccessor:

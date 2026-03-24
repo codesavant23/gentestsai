@@ -15,7 +15,7 @@ class IModuleDeclsExtractor(ABC):
 
 
 	@abstractmethod
-	def extract_funcs(self) -> List[str]:
+	def extract_funcnames(self) -> List[str]:
 		"""
 			Estrae i nomi delle funzioni definite all' interno del module-file associato
 			
@@ -23,7 +23,21 @@ class IModuleDeclsExtractor(ABC):
 			-------
 				List[str]
 					Una lista di stringhe contenente i nomi delle funzioni definite
-					nel namespace del modulo
+					nel namespace del module-file associato
+		"""
+		pass
+	
+	
+	@abstractmethod
+	def extract_funcs(self) -> List[str]:
+		"""
+			Estrae le definizioni delle funzioni all' interno del module-file associato
+			
+			Returns
+			-------
+				List[str]
+					Una lista di stringhe contenente le definizioni delle funzioni che si
+					trovano nel namespace del module-file associato
 		"""
 		pass
 	

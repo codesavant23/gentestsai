@@ -7,14 +7,12 @@ from ollama import (
 	ChatResponse,
 	ResponseError as OllamaApiResponseError
 )
+from time import monotonic as time_monotonic
 from httpx import (
 	Timeout as HttpxTimeout,
 	TimeoutException as HttpxTimeoutError,
 	ConnectTimeout as HttpxConnectTimeoutError
 )
-
-from .....utils.logger import ATemporalFormattLogger
-from .....utils.logger.exceptions import FormatNotSetError
 
 from ...llm_api import (
 	ILlmApi,
@@ -27,6 +25,10 @@ from ...llm_hyperparam.id import (
 )
 from ...llm_hyperparam import ILlmHyperParam
 from ...llm_specimpl import ILlmSpecImpl
+
+
+from .....utils.logger import ATemporalFormattLogger
+from .....utils.logger.exceptions import FormatNotSetError
 
 from ..exceptions import (
 	ApiConnectionError,
@@ -54,8 +56,8 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			address: str,
 			auth: str,
 			conn_timeout: int,
-			logger: ATemporalFormattLogger=None,
-			log_resp: bool=False,
+			logger: ATemporalFormattLogger = None,
+			log_resp: bool = False,
 			logger_sep: str="\n",
 	):
 		"""
@@ -123,7 +125,6 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			model: ILlmSpecImpl,
 			hparams: List[ILlmHyperParam],
 			timeout: int,
-			logger: ATemporalFormattLogger=None
 	) -> str:
 		options_param: Dict[str, Any] = {
 			hparam.param_id().id(): hparam.to_effvalue()
@@ -132,34 +133,32 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 		think_param: bool = options_param.pop(self._think_param.id())
 		num_ctx_param: int = options_param[self._numctx_param.id()]
 		
-		full_timeout: HttpxTimeout = HttpxTimeout(
-			connect=int(self._conn_tout) / 1000.0,
-			read=int(timeout) / 1000.0,
-			write=None,
-			pool=None
+		conn_timeout: HttpxTimeout = HttpxTimeout(
+			None, connect=int(self._conn_tout) / 1000.0
 		)
+		resp_timeout: float = timeout / 1000.0
 
 		def_time_format: str = "( {day}-{month}-{year} | {hour}:{min}:{second} )"
 		log_format: str = None
-		if logger is not None:
+		if self._logger is not None:
 			try:
-				log_format = logger.unset_format()
-				logger.set_format(log_format)
+				log_format = self._logger.unset_format()
+				self._logger.set_format(log_format)
 			except FormatNotSetError:
-				logger.set_format("[LLM REQUEST (Ollama)] {message} " + def_time_format)
+				self._logger.set_format("[LLM REQUEST (Ollama)] {message} " + def_time_format)
 				
-			logger.set_messages_sep(self._logger_sep)
-			logger.log("Tentativo di connesione con Ollama ...")
+			self._logger.set_messages_sep(self._logger_sep)
+			self._logger.log("Tentativo di connesione con Ollama ...")
 			
 		oll_client: OllamaClient
 		try:
 			oll_client = OllamaClient(
 				host=self._o_addr,
 				headers={ 'Authorization': f'Basic {self._o_auth}' },
-				timeout=full_timeout
+				timeout=conn_timeout
 			)
-			if logger is not None:
-				logger.log("Connessione con Ollama stabilita.")
+			if self._logger is not None:
+				self._logger.log("Connessione con Ollama stabilita.")
 		except HttpxConnectTimeoutError as httpx_tout_error:
 			gensai_exc: ApiConnectionError = ApiConnectionError()
 			gensai_exc.args = ("timeout",) + httpx_tout_error.args
@@ -181,32 +180,45 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			)
 		except OllamaApiResponseError as ollama_err:
 			gensai_exc: ApiResponseError = ApiResponseError()
-			gensai_exc.args = ollama_err.args
+			gensai_exc.args = ("known",) + ollama_err.args
 			raise gensai_exc from ollama_err
 		
+		start_time: float
+		timed_out: bool = False
+		drifted: bool = False
 		prompt_tokens: int = -1
 		resp_tokens: int = -1
 		full_response: str = ""
 		try:
-			if logger is not None:
-				logger.log("Inizio della risposta ...")
-				if self._log_resp:
-					log_format = logger.unset_format()
-					logger.set_messages_sep("")
+			self._logger.log("Inizio della risposta ...") if self._logger is not None else None
+			if self._log_resp:
+				log_format = self._logger.unset_format()
+				self._logger.set_messages_sep("")
 				
+			start_time = time_monotonic()
 			for chunk in response_iter:
 				full_response += chunk['message']['content']
-				if logger is not None:
-					if self._log_resp:
-						logger.log(chunk['message']['content'])
+				if self._log_resp:
+					self._logger.log(chunk['message']['content'])
+				
+				# Check del tempo complessivo occupato dalla risposta fino ad ora
+				if ((time_monotonic() - start_time) > resp_timeout):
+					timed_out = True
+					break
+				
 				# Se è arrivato alla fine
 				if "eval_count" in chunk:
 					resp_tokens = chunk["eval_count"]
 					prompt_tokens = chunk["prompt_eval_count"]
-					if logger is not None:
-						if self._log_resp:
-							logger.log(f'{self._logger_sep}')
-						
+					if self._log_resp:
+						self._logger.log(f'{self._logger_sep}')
+							
+			if timed_out or drifted:
+				if self._log_resp:
+					self._logger.set_format(log_format)
+					self._logger.set_messages_sep(self._logger_sep)
+				if timed_out:
+					raise ResponseTimedOutError()
 		except HttpxTimeoutError as httpx_tout_err:
 			gensai_exc: ResponseTimedOutError = ResponseTimedOutError()
 			gensai_exc.args = httpx_tout_err.args
@@ -216,11 +228,10 @@ class OllamaLlmApiAccessor(_ABaseLlmApiAccessor):
 			gensai_exc.args = ("known",) + ollama_err.args
 			raise gensai_exc from ollama_err
 		
-		if logger is not None:
-			if self._log_resp:
-				logger.set_format(log_format)
-				logger.set_messages_sep(self._logger_sep)
-			logger.log(f'Fine della risposta.')
+		if self._log_resp:
+			self._logger.set_format(log_format)
+			self._logger.set_messages_sep(self._logger_sep)
+		self._logger.log(f'Fine della risposta.') if self._logger is not None else None
 
 		if ((prompt_tokens == -1) or (resp_tokens == -1) or
 			(full_response == "")):

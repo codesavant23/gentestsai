@@ -12,3 +12,4 @@ class ESpecLlmImpl(PythonEnumerator):
 	QWEN3_32B_Q4_K_M = auto(),
 	QWEN3_CODER_30B_Q4_K_M = auto(),
 	DEEPSEEK_CODER_33B_Q4_0 = auto(),
+	DEEPSEEK_CODER_6_7B_INSTRUCT_Q6_K = auto()

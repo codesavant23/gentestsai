@@ -14,8 +14,8 @@ from main_execs.gents.mbym._private.gencorr_ebye import generate_correct_ebye
 
 from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
-from logic.ptsuite_generation.decls_extraction.moddecls_extractor import AMutableModuleDeclsExtractor
-from logic.ptsuite_generation.decls_extraction.classdecls_extractor import IClassDeclsExtractor
+from logic.decls_extraction.moddecls_extractor import AMutableModuleDeclsExtractor
+from logic.decls_extraction.classdecls_extractor import IClassDeclsExtractor
 
 from logic.utils.prompt_builder import PromptBuilder
 
@@ -98,7 +98,7 @@ def generate_correct_mbym(
 	with open(module_path, "r") as fmodule:
 		module_code = fmodule.read()
 		moddecl_extr.set_module_code(module_code)
-	func_names: List[str] = moddecl_extr.extract_funcs()
+	func_names: List[str] = moddecl_extr.extract_funcnames()
 	clss: List[IClassDeclsExtractor] = moddecl_extr.extract_classes()
 	logger.log("Codice focale del modulo estratto!")
 	

@@ -53,7 +53,7 @@ from logic.configuration.config_parser import (
 
 from logic.utils.prompt_builder import PromptBuilder
 
-from logic.ptsuite_generation.decls_extraction.moddecls_extractor import (
+from logic.decls_extraction.moddecls_extractor import (
 	AMutableModuleDeclsExtractor, TreeSitterModuleDeclsExtractor
 )
 

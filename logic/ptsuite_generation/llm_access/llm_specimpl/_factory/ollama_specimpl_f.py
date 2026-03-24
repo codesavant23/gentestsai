@@ -4,7 +4,8 @@ from .. import ILlmSpecImpl
 from .....variability import ESpecLlmImpl
 from .._private.ollama.qwen3.ollama_qwen3_32b_q4_km import Ollama_Qwen3_32b_q4_km_LlmImpl
 from .._private.ollama.qwen3_coder.ollama_qwen3coder_30b_q4_km import Ollama_Qwen3Coder_30b_q4_km_LlmImpl
-from .._private.ollama.deepseek_coder.ollama_deepseekcoder_33b_q4_0 import Ollama_DeepseekCoder_33b_q4_0_LlmImpl
+from .._private.ollama.deepseek_coder.instruct.ollama_dscoder_instruct_6_7b_q6_k import Ollama_DeepseekCoder_6_7b_instruct_q6_k_LlmImpl
+from .._private.ollama.deepseek_coder.ollama_dscoder_33b_q4_0 import Ollama_DeepseekCoder_33b_q4_0_LlmImpl
 
 
 
@@ -23,6 +24,8 @@ class OllamaSpecImplFactory(ILlmSpecImplFactory):
 				return Ollama_Qwen3Coder_30b_q4_km_LlmImpl()
 			case ESpecLlmImpl.DEEPSEEK_CODER_33B_Q4_0:
 				return Ollama_DeepseekCoder_33b_q4_0_LlmImpl()
+			case ESpecLlmImpl.DEEPSEEK_CODER_6_7B_INSTRUCT_Q6_K:
+				return Ollama_DeepseekCoder_6_7b_instruct_q6_k_LlmImpl()
 			case _:
 				raise NotImplementedError()
 

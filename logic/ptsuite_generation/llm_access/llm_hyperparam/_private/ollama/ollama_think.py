@@ -33,11 +33,16 @@ class OllamaThinkHyperParam(_ABaseLlmHyperparam):
 			self,
 			value: str
 	):
-		bool(value)
+		value_str: str = value.capitalize()
+		if (value_str != "True") and (value_str != "False"):
+			raise ValueError()
 		
 		
 	def to_effvalue(self) -> Any:
-		return bool(self._p__get_str_value())
+		value_str: str = self._p__get_str_value().capitalize()
+		if value_str != "True":
+			value_str = ""
+		return bool(value_str)
 
 
 	##	============================================================

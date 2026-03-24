@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, FrozenSet
 from .. import AMutableModuleDeclsExtractor
 
 from tree_sitter import (
@@ -19,6 +19,8 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 		Rappresenta un `AMutableModuleDeclsExtractor` che è implementato tramite l'utilizzo
 		della libreria `tree-sitter` di Python
 	"""
+	
+	_FUNCS_TIPOLOGY: FrozenSet[str] = {"function_definition", "async_function_definition"}
 	
 	def __init__(
 			self,
@@ -49,7 +51,8 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 		
 		self._py_parser: Parser = Parser(Language(py_grammar()))
 		
-		self._module: TreeNode = self._py_parser.parse(module_code.encode()).root_node
+		self._module_source: bytes = module_code.encode("utf-8")
+		self._module: TreeNode = self._py_parser.parse(self._module_source).root_node
 	
 	
 	def set_module_code(self, module_code: str):
@@ -58,22 +61,15 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 		self._module = self._py_parser.parse(module_code.encode()).root_node
 	
 	
-	def extract_funcs(self) -> List[str]:
-		mod_funcs: List[str] = []
-		inner_node: TreeNode
-		
-		for mod_stmt in self._module.named_children:
-			if mod_stmt.type == "decorated_definition":
-				inner_node = mod_stmt.child_by_field_name("definition")
-				if inner_node is not None:
-					self._add_iffunc_tolist(
-						inner_node, mod_funcs
-					)
-			else:
-				self._add_iffunc_tolist(
-					mod_stmt, mod_funcs
-				)
+	def extract_funcnames(self) -> List[str]:
+		mod_funcsnames: List[str] = self._extract_functions(with_code=False)
 				
+		return mod_funcsnames
+	
+	
+	def extract_funcs(self) -> List[str]:
+		mod_funcs: List[str] = self._extract_functions(with_code=True)
+		
 		return mod_funcs
 	
 	
@@ -102,15 +98,48 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 	##	============================================================
 
 
-	@classmethod
+	def _extract_functions(self, with_code: bool) -> List[str]:
+		"""
+			Estrae le definizioni di funzioni che sono parte del module-file impostato.
+			E' possibile scegliere se estrarre il corpo della definizione o solo il nome
+			di ogni funzione trovata
+			
+			Parameters
+			----------
+				with_code: bool
+					Un booleano che indica se estrarre il codice dalla definizione
+					di ogni funzione
+		"""
+		name_only: bool = (not with_code)
+		mod_funcs: List[str] = []
+		inner_node: TreeNode
+		
+		for mod_stmt in self._module.named_children:
+			if mod_stmt.type == "decorated_definition":
+				inner_node = mod_stmt.child_by_field_name("definition")
+				if inner_node is not None:
+					self._add_iffunc_tolist(
+						inner_node, mod_funcs,
+						name_only=name_only
+					)
+			else:
+				self._add_iffunc_tolist(
+					mod_stmt, mod_funcs,
+					name_only=name_only
+				)
+				
+		return mod_funcs
+
+
 	def _add_iffunc_tolist(
-			cls,
+			self,
 			node: TreeNode,
-			list_: List[str]
+			list_: List[str],
+			name_only: bool = True
 	):
 		"""
-			Aggiunge l' attributo "name" del nodo fornito, alla lista data, se e solo se
-			il nodo fornito è una funzione.
+			Aggiunge l' attributo "name", o l' attributo "block", del nodo fornito alla lista data,
+			se e solo se il nodo fornito è una funzione.
 			
 			Parameters
 			----------
@@ -119,13 +148,21 @@ class TreeSitterModuleDeclsExtractor(AMutableModuleDeclsExtractor):
 					aggiungerne il nome alla lista data
 				
 				list_: List[str]
-					Una lista di stringhe indicante la lista in cui aggiungere il "name" del nodo
-					se esso rappresenta una funzione Python.
+					Una lista di stringhe indicante la lista in cui aggiungere la definizione
+					del nodo se esso rappresenta una funzione Python
+					
+				name_only: bool
+					Opzionale. Default = `True`. Un booleano che indica se bisogna estrarre soltanto
+					il nome della funzione. Se questo parametro è `False` verrà aggiunto alla lista
+					tutto il codice della funzione
 		"""
-		func_name: str
-		if node.type == "function_definition":
-			func_name = node.child_by_field_name("name").text.decode("utf-8")
-			list_.append(func_name)
+		needed: str
+		if node.type in self._FUNCS_TIPOLOGY:
+			if name_only:
+				needed = node.child_by_field_name("name").text.decode("utf-8")
+			else:
+				needed = self._module_source[node.start_byte:node.end_byte].decode("utf-8")
+			list_.append(needed)
 			
 			
 	@classmethod
