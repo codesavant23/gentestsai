@@ -37,7 +37,7 @@ class EntityPtsuiteGenerator:
 		Queste unità elementari rappresentano la granularità minima significativa per verifiche
 		automatiche e permettono di isolare test specifici senza coinvolgere (direttamente)
 		l’intera classe o modulo.
-			
+		
 		Attributi di Classe Pubblici:
 			- `GENCODE_PATT` (str) : Rappresenta il pattern regex, di default, da utilizzare per identificare il codice nella risposta di un tentativo di generazione
 	"""
@@ -293,7 +293,7 @@ class EntityPtsuiteGenerator:
 				self._logger.log(
 					f"Inizio del tentativo di generazione (Tentativo no. {self._times_tried}/{self._max_tries}) ..."
 				) if self._logger is not None else None
-					
+				
 				response: str = self._llm_platf.prompt(self._resp_tout)
 				
 				resp_match: Match[str] = reg_search(self._resp_regex, response, RegexFlags.MULTILINE)
@@ -334,7 +334,7 @@ class EntityPtsuiteGenerator:
 	def stop_generation(self):
 		"""
 			Termina la serie di tentativi di generazione in corso dichiarando
-			l' ultima serie di tentativi come fallita
+			l' ultima serie di tentativi come fallita per questo generatore
 			
 			Raises
 			------

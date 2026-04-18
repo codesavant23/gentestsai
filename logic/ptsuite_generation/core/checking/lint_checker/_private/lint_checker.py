@@ -10,10 +10,12 @@ from docker.models.images import Image as DockerImage
 # =================================================== #
 # ============ Path Utilities ============ #
 from os.path import (
+	join as path_join,
 	split as path_split,
 	splitext as path_splitext,
 	relpath as path_relative
 )
+from pathlib import PurePath
 # ======================================== #
 # ============== JSON Utilities ============== #
 from json import JSONDecoder
@@ -190,11 +192,17 @@ class LintingChecker:
 		self._full_root = full_root
 		
 		# Impostazione della path che conterrà il risultato delle verifiche di linting
-		self._lint_result_path = f"{self._full_root}/gtsai__results/{self._RESULT_FNAME}"
+		self._lint_result_path = path_join(
+			self._full_root,
+			"gtsai__results",
+			self._RESULT_FNAME
+		)
 		
 		# Calcolo della path relativa dei risultati (con cui si costruirà quella assoluta
 		# nell' ambiente focale)
-		self._lint_result_relpath = path_relative(self._lint_result_path, start=self._full_root)
+		self._lint_result_relpath = PurePath(
+			path_relative(self._lint_result_path, start=self._full_root)
+		).as_posix()
 		
 		self._focal_env = FocalContainer(
 			env_image,

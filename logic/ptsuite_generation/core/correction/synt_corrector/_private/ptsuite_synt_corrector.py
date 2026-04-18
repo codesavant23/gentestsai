@@ -248,11 +248,13 @@ class PtsuiteSyntacticCorrector:
 		# Setup del formato del logger
 		def_time_format: str = "( {day}-{month}-{year} | {hour}:{min}:{second} )"
 		logger_frmt: str
-		try:
-			logger_frmt = self._logger.unset_format()
-		except FormatNotSetError:
-			logger_frmt = "[LoggableSyntCorrector] {message} " + def_time_format
-		self._logger.set_format(logger_frmt)
+		
+		if self._logger is not None:
+			try:
+				logger_frmt = self._logger.unset_format()
+			except FormatNotSetError:
+				logger_frmt = "[LoggableSyntCorrector] {message} " + def_time_format
+			self._logger.set_format(logger_frmt)
 	
 	
 	def perform_corr_try(self) -> str:
@@ -357,7 +359,7 @@ class PtsuiteSyntacticCorrector:
 	def stop_correction(self):
 		"""
 			Termina la serie di tentativi di correzione in corso dichiarando
-			l' ultima serie di tentativi come fallita
+			l' ultima serie di tentativi come fallita per questo correttore
 			
 			Raises
 			------

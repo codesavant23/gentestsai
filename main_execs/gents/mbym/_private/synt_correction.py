@@ -1,4 +1,5 @@
 from typing import Tuple
+from .ptsuite_try import PtsuitePromptingTry
 
 from logic.utils.prompt_builder import PromptBuilder
 from logic.ptsuite_generation.llm_access.llm_chat import ILlmChat
@@ -35,13 +36,17 @@ def correct_syntactically(
 	error: Tuple[str, str]
 	full_prompt: str
 	
-	try_num: int = max_tries
+	try_num: int = 1
 	tries_incache: int
 	
-	ptsuite_code: str = wrong_ptsuite_code
+	ptsuite_code_valid: PtsuitePromptingTry = PtsuitePromptingTry()
+	ptsuite_code_valid.set_ptsuite(wrong_ptsuite_code)
+	ptsuite_code_valid.set_try(0)
+	
+	ptsuite_code: str
 	
 	# Ricerca di una test-suite parziale corretta sintatticamente nella cache
-	while try_num >= 1:
+	while (try_num <= max_tries):
 		if corr_cache.does_ptsuite_exists(
 				project_name,
 				cache_modname, f"{cache_entprefix}{entity}", model, try_num
@@ -52,22 +57,39 @@ def correct_syntactically(
 			logger.log(f"Test-suite parziale trovata nella cache "
 			           f"(Tentativo di correzione: {try_num}/{max_tries})")
 			
-			error = synt_chker.check_synt(ptsuite_code)
-			# Se la richiesta di quella test-suite parziale non aveva fallito
-			# e la test-suite parziale è corretta
-			if (len(error) == 0) and (ptsuite_code != ""):
-				logger.log(f"Test-suite parziale corretta sintatticamente ottenuta! "
-			           f"(Tentativo funzionante: {try_num}/{max_tries})")
-				return ptsuite_code
-			else:
-				break
-		try_num -= 1
+			if (ptsuite_code != ""):
+				error = synt_chker.check_synt(ptsuite_code)
+				# Se la richiesta di quella test-suite parziale non aveva fallito
+				# e la test-suite parziale è corretta
+				if len(error) == 0:
+					logger.log(f"Test-suite parziale corretta sintatticamente ottenuta! "
+				           f"(Tentativo funzionante: {try_num}/{max_tries})")
+					return ptsuite_code
+			
+				ptsuite_code_valid.set_ptsuite(ptsuite_code)
+				ptsuite_code_valid.set_try(try_num)
+			try_num += 1
+		else:
+			break
 	
-	tries_incache = max_tries - try_num
 	# Se non si è trovata una test-suite parziale corretta nella cache
+	
+	# Se è stata trovata almeno una test-suite parziale nella cache
+	ptsuite_code = ptsuite_code_valid.get_ptsuite()
+	if (try_num > 1) and (try_num <= max_tries):
+		resume_prompt: str = f"""
+Last partial test suite correction result:
+```python
+{ptsuite_code}
+```
+		""".strip("\n\t ")
+		chat.add_prompt(resume_prompt)
+	
+	# Si effettuano i tentativi necessari di correzione
+	tries_incache = try_num-1
 	is_corr_success: bool = False
 	try_num = 1
-	synt_corr.start_new_correction(wrong_ptsuite_code, resp_timeout)
+	synt_corr.start_new_correction(ptsuite_code, resp_timeout)
 	while (
 			(not synt_corr.has_corr_terminated()) and
 	        (try_num <= (max_tries-tries_incache)) and
@@ -110,6 +132,7 @@ def correct_syntactically(
 			try_num += 1
 		else:
 			is_corr_success = True
+			break
 			
 	# Se la serie di tentativi del correttore sintattico non è terminata
 	# (perchè il max numero di tentativi sono stati in parte effettuati tramite cache)

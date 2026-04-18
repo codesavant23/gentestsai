@@ -41,9 +41,11 @@ def generate_ptsuite(
 			
 			if ptsuite_code != "":
 				return ptsuite_code
+			else:
+				break
 		try_num -= 1
 	
-	tries_incache = max_tries - try_num
+	tries_incache = try_num
 	try_num = 1
 	ptsuite_gen.start_new_generation(resp_timeout)
 	while (
@@ -67,7 +69,7 @@ def generate_ptsuite(
 		logger.log("Salvataggio nella cache ... ")
 		gen_cache.register_ptsuite(
 			project_name,
-			cache_modname, f"{cache_entprefix}{entity}", model, try_num+tries_incache,
+			cache_modname, f"{cache_entprefix}{entity}", model, (try_num+tries_incache),
 			ptsuite_code
 		)
 		logger.log("Test-suite parziale salvata!")

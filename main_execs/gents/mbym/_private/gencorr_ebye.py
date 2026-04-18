@@ -20,7 +20,7 @@ from logic.ptsuite_generation.cache_accessor import IPtsuiteCacheAccessor
 
 from logic.utils.logger import ATemporalFormattLogger
 
-from .calculating_ptsuite_name import calculate_ptsuite_name
+from .calculating_ptsuite_name import calculate_ptsuite_fname
 from .generate import generate_ptsuite
 from .synt_correction import correct_syntactically
 from .lint_correction import correct_lintically
@@ -28,7 +28,7 @@ from .lint_correction import correct_lintically
 
 
 def generate_correct_ebye(
-		project_name: str, cache_modname: str,
+		project_name: str, dotted_modname: str,
 		model: str,
 		module_dirpath: str,
 		entities_name: List[str],
@@ -51,36 +51,41 @@ def generate_correct_ebye(
 	max_gen_tries, max_corr_tries = max_tries
 	ent_gen_skipw, ent_corr_skipw = skipd_writers
 	gen_cache, corrs_cache, corrl_cache = caches
-	entity_prefix: str = ""
+	entity_class: str = ""
 	entity_promptsep: str = ""
 	entity_filesep: str = ""
 	if len(entityprefix_comps) != 0:
-		entity_prefix, entity_promptsep, entity_filesep = entityprefix_comps
+		entity_class, entity_promptsep, entity_filesep = entityprefix_comps
 	
 	entity_name: str
+	entity_name_fq: str
 	entity_name_topr: str
 	ptsuite_code: str
 	ptsuite_fname: str
 	ptsuite_path: str
-	
+
 	i: int = 0
 	while i < len(entities_name):
 		entity_name = entities_name[i]
+		entity_name_fq = f"{dotted_modname}."
+		if entity_class != "":
+			entity_name_fq += f"{entity_class}{entity_promptsep}"
+		entity_name_fq += entity_name
 		
 		entity_name_topr = (
-			f"{(entity_prefix+entity_filesep if entity_prefix != '' else '')}"
+			f"{(entity_class+entity_filesep if entity_class != '' else '')}"
 		    f"{entity_name}"
 		)
 		logger.log(f' ', format_=False)
 		logger.log(f'Entità: ==== "{entity_name_topr}" ====')
 		
 		# Calcolo del nome della test-suite parziale
-		ptsuite_fname = calculate_ptsuite_name(entity_name, f"{entity_prefix}{entity_filesep}")
+		ptsuite_fname = calculate_ptsuite_fname(entity_name, f"{entity_class}{entity_filesep}")
 		
 		# ===== Processo di "Generazione della test-suite parziale" =====
 		entity_gen_pbder.set_placeholder(entity_placeh, entity_name)
 		ptsuite_code = generate_ptsuite(
-			project_name, cache_modname,
+			project_name, dotted_modname,
 			model,
 			entity_name,
 		    entity_gen_pbder.build_prompt(),
@@ -88,12 +93,12 @@ def generate_correct_ebye(
 			max_gen_tries, resp_timeout,
 			gen_cache,
 			logger,
-			cache_entprefix = f"{entity_prefix}{entity_promptsep}"
+			cache_entprefix = f"{entity_class}{entity_promptsep}"
 		)
 		# Se la generazione non ha avuto successo
 		if ptsuite_code is None:
 			# si dichiara saltata l' entità
-			ent_gen_skipw.write_skipd_test(entity_name)
+			ent_gen_skipw.write_skipd_test(entity_name_fq)
 			# e si passa alla prossima entità
 			i += 1
 			chat.clear()
@@ -102,7 +107,7 @@ def generate_correct_ebye(
 		# ===== Processo di "Correzione Sintattica della test-suite parziale" =====
 		entity_corr_pbder.set_placeholder(entity_placeh, entity_name)
 		ptsuite_code = correct_syntactically(
-			project_name, cache_modname,
+			project_name, dotted_modname,
 			model,
 			(entity_name, entity_placeh),
 			ptsuite_code,
@@ -112,12 +117,12 @@ def generate_correct_ebye(
 			max_corr_tries, resp_timeout,
 			corrs_cache,
 			logger,
-			cache_entprefix = f"{entity_prefix}{entity_promptsep}"
+			cache_entprefix = f"{entity_class}{entity_promptsep}"
 		)
 		# Se la correzione sintattica non ha avuto successo
 		if ptsuite_code is None:
 			# si dichiara saltata l' entità
-			ent_corr_skipw.write_skipd_test(entity_name)
+			ent_corr_skipw.write_skipd_test(entity_name_fq)
 			# e si passa alla prossima entità
 			i += 1
 			chat.clear()
@@ -125,7 +130,7 @@ def generate_correct_ebye(
 		
 		# ===== Processo di "Correzione a livello di Linting della test-suite parziale" =====
 		ptsuite_code = correct_lintically(
-			project_name, cache_modname,
+			project_name, dotted_modname,
 			model,
 			(entity_name, entity_placeh),
 			ptsuite_code,
@@ -135,12 +140,12 @@ def generate_correct_ebye(
 			max_corr_tries, resp_timeout,
 			corrl_cache,
 			logger,
-			cache_entprefix = f"{entity_prefix}{entity_promptsep}"
+			cache_entprefix = f"{entity_class}{entity_promptsep}"
 		)
 		# Se la correzione a livello di linting non ha avuto successo
 		if ptsuite_code is None:
 			# si dichiara saltata l' entità
-			ent_corr_skipw.write_skipd_test(entity_name)
+			ent_corr_skipw.write_skipd_test(entity_name_fq)
 			# e si passa alla prossima entità
 			i += 1
 			chat.clear()
@@ -150,6 +155,7 @@ def generate_correct_ebye(
 		# è stata generata e viene dichiarata corretta.
 		# Viene quindi scritta all' interno del suo file che la rappresenta
 		ptsuite_path = path_join(module_dirpath, ptsuite_fname)
+		
 		with open(ptsuite_path, "w") as fptsuite:
 			fptsuite.write(ptsuite_code)
 			fptsuite.flush()

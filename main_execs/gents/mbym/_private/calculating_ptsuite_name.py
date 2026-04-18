@@ -1,4 +1,4 @@
-def calculate_ptsuite_name(
+def calculate_ptsuite_fname(
 		entity_name: str,
 		prefix: str = "",
 ) -> str:
@@ -13,7 +13,7 @@ def calculate_ptsuite_name(
 				
 			prefix: str
 				Opzionale. Default = `""`. Una stringa contenente l' eventuale prefisso da
-				aggiungere al nome del file della test-suite parziale
+				aggiungere all' entità nel nome del file della test-suite parziale
 				
 		Returns
 		-------
