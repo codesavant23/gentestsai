@@ -9,11 +9,7 @@ from ....utils.path_validator import (
 	PathValidator
 )
 
-from ..exceptions import (
-	InvalidConfigValueError,
-	ConfigExtraFieldsError,
-	FieldDoesntExistsError
-)
+from ..exceptions import InvalidConfigValueError
 
 
 
@@ -25,19 +21,18 @@ class CalcCovConfigValidator(_ABaseConfigValidator):
 		Il file di configurazione letto è un dizionario contenente:
 		
 			- "covconfig_dir" (str): Il nome dell' eventuale directory che corrisponde alla Cov-config Project Root Path di ogni progetto focale
+			- "covrc_fname" (str): Il nome del file ".coveragerc" che verrà scritto da GenTestsAI per coverage.py
 			- "pytargs_fname" (str): Il nome dell' eventuale file JSON che contiene la lista di argomenti per `pytest`
 			- "covargs_fname" (str): Il nome dell' eventuale file JSON che contiene la lista di argomenti per `pytest`
+			- "calccov_script" (str): Il nome dello script Python che eseguirà il calcolo della coverage all' interno dell' ambiente focale
 	"""
 	
 	_REQ_FIELDS: Set[str] = {
 		"covconfig_dir",
+		"covrc_fname",
 		"pytargs_fname",
 		"covargs_fname",
-		"environ"
-	}
-	_ENVIRON_FIELDS: Set[str] = {
-		"humancov_script",
-		"llmcov_script",
+		"calccov_script"
 	}
 	
 	_SYNT_ERROR: str = 'La path specificata dal parametro "{param}" è invalida'
@@ -88,31 +83,26 @@ class CalcCovConfigValidator(_ABaseConfigValidator):
 	
 	
 	def _ap__assert_mandatory(self, config_read: Dict[str, Any]):
+		covrc_fname: str = config_read["covrc_fname"]
 		covconfig_dir: str = config_read["covconfig_dir"]
 		pytargs_fname: str = config_read["pytargs_fname"]
 		covargs_fname: str = config_read["covargs_fname"]
-		environ: Dict[str, str] = config_read["environ"]
+		calccov_script: str = config_read["calccov_script"]
 		
+		if covrc_fname == "":
+			raise InvalidConfigValueError()
+		if calccov_script == "":
+			raise InvalidConfigValueError()
 		if covconfig_dir == "":
 			raise InvalidConfigValueError()
 		if pytargs_fname == "":
 			raise InvalidConfigValueError()
 		if covargs_fname == "":
 			raise InvalidConfigValueError()
-		
-		environ_fields = set(environ.keys())
-		if environ_fields < self._ENVIRON_FIELDS:
-			raise FieldDoesntExistsError()
-		if environ_fields > self._ENVIRON_FIELDS:
-			raise ConfigExtraFieldsError()
-		
+
 		self._assert_path(
-			path_join(self._covtools_root, environ["humancov_script"]),
-			"environ.humancov_script"
-		)
-		self._assert_path(
-			path_join(self._covtools_root, environ["llmcov_script"]),
-			"environ.llmcov_script"
+			path_join(self._covtools_root, calccov_script),
+			"calccov_script"
 		)
 
 

@@ -64,6 +64,7 @@ class ProjsEnvironConfigValidator(_ABaseConfigValidator):
 				* "python_deps_file" (str): Il nome dell' eventuale file testuale (in "envconfig_dir") che contiene le dipendenze Python del progetto focale
 				* "pre_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze non-Python del progetto focale
 				* "post_extdeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo dell' installazione delle dipendenze non-Python del progetto focale
+				* "pre_pydeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire prima dell' installazione delle dipendenze Python del progetto focale
 				* "post_pydeps_script" (str): Il nome dell' eventuale script shell (in "envconfig_dir") da eseguire dopo l' installazione delle dipendenze Python del progetto focale
 				
 		e può contenere opzionalmente:

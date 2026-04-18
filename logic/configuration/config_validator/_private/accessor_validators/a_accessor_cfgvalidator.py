@@ -21,8 +21,8 @@ class AAccessorConfigValidator(_APlatSpecConfigValidator):
 		Il file di configurazione letto è un dizionario contenente:
 		
 			- "platform" (str): Il naming della piattaforma di inferenza da utilizzare
-			- "platform_options" (Dict[str, Any]): Dizionario che contiene i parametri relativi ad ogni progetto focale.
-			  Ciò che contiene è relativo alla piattaforma di inferenza ed è specificato dai discendenti
+			- "platform_options" (Dict[str, Any]): Dizionario che contiene i parametri della piattaforma di inferenza.
+			  Ciò che contiene è relativo specificatamente alla piattaforma di inferenza ed è specificato dai discendenti
 			  di questa classe astratta.
 			- "response_timeout" (int): Il timeout di attesa massimo per il ricevimento della risposta (in millisecondi)
 		
