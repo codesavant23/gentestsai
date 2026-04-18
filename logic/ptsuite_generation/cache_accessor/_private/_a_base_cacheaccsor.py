@@ -18,7 +18,7 @@ from ..exceptions import (
 
 
 
-class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
+class _ABasePtsuiteCacheAccessor(IPtsuiteCacheAccessor):
 	"""
 		Rappresenta un `IPtsuiteCacheAccessor` di base, ovvero che contiene la logica comune ad ogni `IPtsuiteCacheAccessor`
 		
@@ -28,7 +28,7 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	
 	def __init__(self, cache_path: str):
 		"""
-			Costruisce un nuovo _ABaseCacheAccessor associandolo alla
+			Costruisce un nuovo _ABasePtsuiteCacheAccessor associandolo alla
 			cache che verrà utilizzata
 			
 			Parameters
@@ -179,6 +179,7 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 		
 		if not just_created:
 			self._ap__assert_cache_type(self._cache_path)
+			self._proj_spaces = self._ap__read_project_spaces()
 	
 	
 	#	============================================================
@@ -187,15 +188,32 @@ class _ABaseCacheAccessor(IPtsuiteCacheAccessor):
 	
 	
 	@abstractmethod
+	def _ap__read_project_spaces(self) -> Set[str]:
+		"""
+			Legge gli spazi di progetto contenuti nella cache associata
+			
+			Returns
+			-------
+				Set[str]
+					Un insieme di stringhe contenente i nomi degli spazi di progetto
+					da cui è composta la cache associata
+		"""
+		pass
+	
+	
+	@abstractmethod
 	def _ap__create_new_cache(self, cache_path: str):
 		"""
-			Crea un nuovo file di cache alla path fornita
+			Crea un nuovo file di cache alla path fornita.
 			
-			Raises
-			------
-				OSError
-					Si verifica se il file non può essere creato per qualche
-					ragione alla path fornita
+			E' garantito all' interno di questo metodo che la cache associata
+			è già stata inizializzata, ed è pronta per essere utilizzata
+			
+			Parameters
+			----------
+				cache_path: str
+					Una stringa rappresentante la path della cache che deve essere
+					creata
 		"""
 		pass
 	

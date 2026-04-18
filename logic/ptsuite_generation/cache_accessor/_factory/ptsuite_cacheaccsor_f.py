@@ -1,7 +1,7 @@
 from .. import IPtsuiteCacheAccessor
 from .e_cacheaccsor_type import ECacheAccessorType
 
-from .._private._a_base_cacheaccsor import _ABaseCacheAccessor
+from .._private._a_base_cacheaccsor import _ABasePtsuiteCacheAccessor
 from .._private.sqlite3_cacheaccsor import Sqlite3CacheAccessor
 
 
@@ -52,7 +52,7 @@ class PtsuiteCacheAccessorFactory:
 					Si verifica se la path non rappresenta un file di caching compatibile
 					con la tecnologia implementativa richiesta
 		"""
-		obj: _ABaseCacheAccessor
+		obj: _ABasePtsuiteCacheAccessor
 		match tech:
 			case ECacheAccessorType.SQLITE3:
 				obj = Sqlite3CacheAccessor(cache_path)

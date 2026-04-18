@@ -7,7 +7,6 @@ from os import (
 	environ as os_getenv
 )
 from shutil import rmtree as os_dremove
-from os.path import exists as os_fdexists
 # ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (

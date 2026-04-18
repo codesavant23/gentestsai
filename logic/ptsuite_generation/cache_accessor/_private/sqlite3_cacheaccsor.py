@@ -1,5 +1,5 @@
-from typing import Tuple
-from ._a_base_cacheaccsor import _ABaseCacheAccessor
+from typing import Tuple, Set
+from ._a_base_cacheaccsor import _ABasePtsuiteCacheAccessor
 
 # =========== SQLite3 Utilities ============ #
 from sqlite3 import (
@@ -13,7 +13,7 @@ from ..exceptions import CacheFileTypeError
 
 
 
-class Sqlite3CacheAccessor(_ABaseCacheAccessor):
+class Sqlite3CacheAccessor(_ABasePtsuiteCacheAccessor):
 	"""
 		Rappresenta un `IPtsuiteCacheAccessor` che utilizza come cache
 		un database locale SQLite3
@@ -58,6 +58,15 @@ class Sqlite3CacheAccessor(_ABaseCacheAccessor):
 	
 	def _ap__create_new_cache(self, cache_path: str):
 		open(cache_path, "w").close()
+	
+	
+	def _ap__read_project_spaces(self) -> Set[str]:
+		self._cursor.execute(f"""
+			SELECT name FROM sqlite_master
+			WHERE type='table';
+		""")
+		tables: Set[str] = {row[0] for row in self._cursor.fetchall()}
+		return tables
 	
 	
 	def _ap__create_projspace_spec(self, proj_name: str):

@@ -26,8 +26,8 @@ class ISkipWriter(ABC):
 			Parameters
 			----------
 				entity_name: str
-					Una stringa contenente il nome dell' entità di codice autonoma (funzione o metodo)
-					la cui generazione o correzione non è andata a buon fine
+					Una stringa contenente il nome fully-qualified dell' entità di codice autonoma
+					(funzione o metodo) la cui generazione o correzione non è andata a buon fine
 					
 			Raises
 			------

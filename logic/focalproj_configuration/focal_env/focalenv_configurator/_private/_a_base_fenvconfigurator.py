@@ -36,12 +36,16 @@ from pathlib import (
 from shutil import (
 	copytree as os_dcopy
 )
+_PATH_SEPS: str = f"{sep}{altsep if altsep is not None else ''}"
 # ======================================== #
 # ============== JSON Utilities ============== #
 from json import JSONDecoder
 # ============================================ #
 
-from ....dockerfile_builder import (ATransactDockfBuilder, SimpleTransactDockfBuilder)
+from ....dockerfile_builder import (
+	ATransactDockfBuilder,
+	SimpleTransactDockfBuilder
+)
 from ..buildcache_cleaner import (
 	IBuildCacheCleaner,
 	BuildCacheCleanerFactory, EContainerManager
@@ -51,9 +55,6 @@ from ....exceptions import (
 	FocalProjectNotSetError,
 	DefaultPythonVersionNotSetError
 )
-
-
-_PATH_SEPS: str = f"{sep}{altsep if altsep is not None else ''}"
 
 
 
