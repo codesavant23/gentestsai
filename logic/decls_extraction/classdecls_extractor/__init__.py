@@ -1,2 +1,4 @@
 from ._private.i_classdecls_extractor import IClassDeclsExtractor
 from ._private.treesitter_clsdeclsextr import TreeSitterClassDeclsExtractor
+
+from ._factory.classdecls_extr_f import ClassDeclsExtractorFactory

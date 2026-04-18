@@ -33,8 +33,14 @@ class TreeSitterClassDeclsExtractor(IClassDeclsExtractor):
 			Raises
 			------
 				ValueError
-					Si verifica se il codice fornito non è una definizione di una classe Python
+					Si verifica se :
+						
+						- Il parametro `class_code` ha valore `None`
+						- Il parametro `class_code` è una stringa vuota
+						- Il codice fornito non è una definizione di una classe Python
 		"""
+		if (class_code is None) or (class_code == ""):
+			raise ValueError()
 		
 		py_parser: Parser = Parser(Language(py_grammar()))
 		

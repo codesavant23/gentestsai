@@ -47,9 +47,6 @@ class AMutableModuleDeclsExtractor(IModuleDeclsExtractor):
 			------
 				ValueError
 					Si verifica se il parametro `module_code` ha valore `None` o è una stringa vuota
-				
-				IncorrectModuleCodeError
-					Si verifica se il codice del modulo contiene errori da un punto di vista sintattico
 		"""
 		if (module_code is None) or (module_code == ""):
 			raise ValueError()

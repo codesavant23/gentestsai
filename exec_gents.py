@@ -53,8 +53,10 @@ from logic.configuration.config_parser import (
 
 from logic.utils.prompt_builder import PromptBuilder
 
+from logic.decls_extraction import ECodeParserTool
 from logic.decls_extraction.moddecls_extractor import (
-	AMutableModuleDeclsExtractor, TreeSitterModuleDeclsExtractor
+	AMutableModuleDeclsExtractor,
+	MutableModuleDeclsExtractorFactory
 )
 
 from main_execs.gents.reading import read_fb_hyperparams
@@ -297,7 +299,10 @@ if __name__ == "__main__":
 	tests_root: str
 	gentests_root: str
 	focal_excluded: List[str]
-	moddecl_extr: AMutableModuleDeclsExtractor = TreeSitterModuleDeclsExtractor("pass")
+	moddecl_extr: AMutableModuleDeclsExtractor = MutableModuleDeclsExtractorFactory().create(
+		ECodeParserTool.TREE_SITTER,
+		"pass"
+	)
 	
 	is_py_file: bool
 	file_path: str
@@ -385,14 +390,14 @@ if __name__ == "__main__":
 			full_root = project_info["full_root"].rstrip(_PATH_SEPS)
 			# Ottenimento della Focal Project Root Path
 			focal_root = project_info["focal_root"].rstrip(_PATH_SEPS)
-			focal_root = path_join(full_root, focal_root)
+			focal_root = os_normpath(path_join(full_root, focal_root))
 			# Ottenimento della Tests Project Root Path
 			tests_root = project_info["tests_root"].rstrip(_PATH_SEPS)
-			tests_root = path_join(full_root, tests_root)
+			tests_root = os_normpath(path_join(full_root, tests_root))
 			# Ottenimento della lista di paths/files esclusi dal codice focale
 			focal_excluded = project_info.get("focal_excluded", [])
 			for i, focal_excl in enumerate(focal_excluded):
-				focal_excluded[i] = path_join(focal_root, focal_excl)
+				focal_excluded[i] = os_normpath(path_join(focal_root, focal_excl))
 			
 			# Impostazione dell' immagine dell' ambiente focale nel verificatore di linting
 			lint_chker.set_focal_project(
@@ -423,6 +428,7 @@ if __name__ == "__main__":
 				# Se la directory non è esclusa dal codice focale
 				if curr_path not in focal_excluded:
 					curr_path = os_normpath(curr_path)
+					
 					for file_name in file_names:
 						is_py_file = file_name.endswith(".py")
 		

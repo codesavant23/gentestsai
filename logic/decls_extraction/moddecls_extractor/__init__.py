@@ -1,4 +1,8 @@
 from . import exceptions
 from ._private.i_moddecls_extractor import IModuleDeclsExtractor
 from ._private.a_mutable_moddeclsextr import AMutableModuleDeclsExtractor
-from ._private.treesitter_moddeclsextr import TreeSitterModuleDeclsExtractor
+
+from ._factory.moddecls_extr_f_r import ModuleDeclsExtractorFactoryResolver
+from ._factory.e_moddeclsextr_chars import EModuleDeclsExtractorChars
+from ._factory.i_moddecls_extr_f import IModuleDeclsExtractorFactory
+from ._factory.mutable_moddeclsextr_f import MutableModuleDeclsExtractorFactory
