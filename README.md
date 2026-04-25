@@ -3,33 +3,33 @@
 </div>
 
 [![Paper Backed](https://img.shields.io/badge/paper--backed-8A2BE2)](https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/thesis_ita.pdf)
+![ReadMe](https://img.shields.io/badge/README.md-finished-%2320b706)
 ![Python](https://img.shields.io/badge/python-3.10%2B-35b2e3)
-![ReadMe](https://img.shields.io/badge/README.md-almost--finished-%23d86807)
-![Docs](https://img.shields.io/badge/docs-WIP-red)
+![Docs](https://img.shields.io/badge/docs-uploaded--WIP-d37207)
 
 # What is GenTestsAI?
 
 **GenTestsAI** is a sophisticated framework, rooted on the integrated SOLID-Designed library **GenTestsAILib**, for the automated generation of Python unit tests that uses Large Language Models (LLMs).<br/>
 
-It orchestrates a complete pipeline that includes test generation, iterative syntactic and linting correction that is performed within isolated containerized environments called [**focal environments**](###%20General).
-Optionally it provides also basic test coverage analysis (at statement level and [entity](###%20General)-level)
+It orchestrates a complete pipeline that includes test generation, iterative syntactic and linting correction that is performed within isolated containerized environments called [**focal environments**](#framework-specific-terminology).
+Optionally it provides also basic test coverage analysis (at statement level and [entity](#framework-specific-terminology)-level)
 
 ## Software artifacts Key Features
 
 ### GenTestsAI
 *   **Comprehensive Configuration**: Offers deep customization through JSON configuration files for projects, models, prompts, LLM hyperparameters, and environment settings.
-*   **LLM-Powered Test Generation and Correction**: Leverages the power of LLMs to automatically create unit tests for Python [autonomous entities](###%20General).
+*   **LLM-Powered Test Generation and Correction**: Leverages the power of LLMs to automatically create unit tests for Python [autonomous entities](#framework-specific-terminology).
 *   **Iterative Correction Loop**: Automatically subjects generated code to a rigorous two-phase correction process:
     1.  **Syntactic Correction**: Uses [`py_compile`](https://docs.python.org/3/library/py_compile.html) to check for syntax errors and subsequently prompts the selected LLM for fixes.
-    2.  **Linting Correction**: Uses [`pylint`](https://www.pylint.org/) within a dedicated container environment ([focal environment](###%20General)) to identify and correct linting issues.
+    2.  **Linting Correction**: Uses [`pylint`](https://www.pylint.org/) within a dedicated container environment ([focal environment](#framework-specific-terminology)) to identify and correct linting issues.
 *   **Usage of focal environments**: Linting (static analysis) correctness check is performed in an isolated environment (that relies on containers) which grants security, scalability, portability and isolation of the host operating system.
-*   **Intelligent Caching**: Relies on a [partial test suite](###%20General) caching system to store the results of generation and correction attempts, avoiding redundant API calls and speeding up subsequent runs that resumes an execution of the framework.
+*   **Intelligent Caching**: Relies on a [partial test suite](#framework-specific-terminology) caching system to store the results of generation and correction attempts, avoiding redundant API calls and speeding up subsequent runs that resumes an execution of the framework.
 *   **Coverage Analysis**: Provides tools to calculate and evaluate the statement coverage of both human-written and AI-generated test suites using [`coverage.py`](https://github.com/coveragepy/coveragepy).
 *   **Customizable Prompting**: Allows users to define their own prompt templates to guide the LLM's test generation and correction behavior for different models or tasks.
 
 ### GenTestsAILib
 *   **Extreme Modularity & Extensibility**: Built with a SOLID-driven architecture, the library enables highly composable and interchangeable logical units across the entire GenTestsAI framework. Every layer — from inference platform backends and LLM specific implementations to configuration schemas, hyperparameters, and software groups installed in focal environments — is designed to be almost independently extendable, easily replaceable, and consistently maintainable, allowing seamless customization and evolution without heavily impacting existing components.
-  A complete list of customizable/extendable layers of the architecture can be found in the official documentation (<font color="#22bc06">coming very soon, Lord permitting</font>. For now check the [associated paper](##%20Associated%20Paper) (Italian language) in Chapter 10.3)
+  A complete list of customizable/extendable layers of the architecture can be found in the official documentation (<font color="#22bc06">coming very soon, Lord permitting</font>. For now check the [associated paper](#associated-paper) (Italian language) in Chapter 10.3)
 *   **Containerized Environments**: Builds and manages isolated Docker-compatible containers for each focal project, ensuring that dependency and environment conflicts are eliminated during linting checks.
 
 # Project Structure
@@ -56,7 +56,7 @@ The repository is organized to separate the integrated library (GenTestsAILib), 
 
 # How It Works
 
-The framework GenTestsAI operates through a series of orchestrated steps managed by its [main executable script `exec_gents.py`](##%20Main%20Scripts):
+The framework GenTestsAI operates through a series of orchestrated steps managed by its [main executable script `exec_gents.py`](#main-scripts):
 
 1.  **Configuration Loading**: The system starts by reading configuration files, of the specified type and format, from the selected directory (default: `/config`). These files define the focal projects, the specific LLMs implementations to use, the inference platform details (e.g., Ollama API endpoint, if Ollama is chosen), template prompts to use for the tasks and general operational parameters.
 2.  **Focal Environment Obtaining/Creation**: For each focal project selected, `exec_gents.py` builds, or obtains if already exists, a dedicated container image. This environment is configured with the project's specific Python version and dependencies (both Python and system-level) as defined in the configuration file for focal environments parameters (default: `projs_environ.json`), creating an isolated and consistent testing environment.
@@ -69,7 +69,7 @@ The framework GenTestsAI operates through a series of orchestrated steps managed
     * This process repeats until the code is both syntactically correct and passes linting, or until a maximum number of attempts, of each of the 2 processes, is reached.
     * In case of success the partial test suite is syntactically and lintically correct and it is written into a directory representing its module-file test suite.
 
-Every generation and correction attempt's outcome is stored in caches of the technology specified (configured in the [caches settings file](#Configuration%20Files)). 
+Every generation and correction attempt's outcome is stored in caches of the technology specified (configured in the [caches settings file](#configuration-files)). 
 This allows the system to quickly retrieve previously generated correct code without re-running the entire loop.
 
  Optionally, after generating the partial test suites `exec_calc_coverage.py` can be run to execute **coverage calculation**. The script obtains the same focal environments, or creates them from scratch, to execute test suites of each focal project, both human and AI-generated (for each LLM) against the focal code and measures statement coverage with `coverage.py`. GenTestsAI provides also the **possibility to aggregate the statement coverage**, resulting from coverage.py, **into autonomous entity coverage** (which measures the percentage covered of a focal autonomous entity).
@@ -84,7 +84,7 @@ Here's a list of the configuration files used by GenTestsAI, and a glimpse descr
 * **<u>Platform settings file</u>**: Specifies the LLM inference platform, the response timeout and the specific platform settings to use. For example, when using Ollama this includes the IP:Port of the device that hosts platform, authentication credentials, and connection timeouts.
 * **<u>General settings file</u>**: Defines global settings, such as default hyperparameters for all models, maximum generation/correction attempts, and files/directories excluded from the generation process globally (for each focal project).
 * **<u>Selected models settings file</u>**: Lists the specific LLMs implementations to generate and correct test cases. Here, you can override default hyperparameters for each model (e.g., `context_window`, `temperature`, `top-k`, etc.).
-*   **<u>Selected focal projects file</u>**: Defines the focal Python projects for test generation, including their [Focal Root](###%20Paths%20and%20Directories) and [Tests Root](###%20Paths%20and%20Directories) paths. Optionally specific files or directories can be listed in order to exclude them from the generation.
+*   **<u>Selected focal projects file</u>**: Defines the focal Python projects for test generation, including their [Focal Root](#paths-and-directories) and [Tests Root](#paths-and-directories) paths. Optionally specific files or directories can be listed in order to exclude them from the generation.
 *   **<u>Focal environments settings file</u>**: Defines parameters to configure focal environments for each project, including the base Docker image tag, paths to the environment tools, and scripts to run during the build process to pre-configure associated project dependencies.
 *  **<u>Prompts settings file</u>**: Specifies prompt templates filenames for different tasks (functional, methodal, correctional), their base path,, and placeholder delimiters that composes templates.
 *   **<u>Caches settings file</u>**: Defines the technology of caching system (e.g., `sqlite3`) and the location of the cache files to use/create.
@@ -94,28 +94,32 @@ Here's a list of the configuration files used by GenTestsAI, and a glimpse descr
 
 Before running any scripts, ensure the configuration files, of the type and format selected, are in a selected config directory (here referred as `<cfg_root_path>`), and properly configured to match your projects, models, and local environment paths.
 
-**Generate Test Suites**:<br/>
-   Execute the main generation script. It will read your configuration and begin the process for all defined projects and models.
+### **Generate Test Suites**:<br/>
+Execute the main generation script. It will read your configuration and begin the process for all defined projects and models.
+Parameter semantics and explanation can be found in the [documentation](https://codesavant23.github.io/gentestsai/)
 
    ```bash
-    python exec_gents.py [-P <parser_tool>] [-p <inf_platform>] 
-	    [-c <cfg_root_path>]
+    python exec_gents.py [-P <parser_tool>] [-p <inf_platform>]
+		[-c <cfg_root_path>]
 		[--config-type <file_type> [<config_names>]]
    ```
 
-**(Optional) Calculate Test Coverage**:<br/>
-    Optionally, after generation is complete, run the coverage script to analyze the generated tests.
+### **(Optional) Calculate Test Coverage**:<br/>
+Optionally, after generation is complete, run the coverage script to analyze the generated tests.
+Parameter semantics and explanation can be found in the [documentation](https://codesavant23.github.io/gentestsai/)
 
    ```bash
-   python exec_calc_coverage.py
+	python exec_calc_coverage.py [-p <inf_platform>]
+		[-c <cfg_root_path>]
+		[--config-type <file_type> [<config_names>]]
    ```
 
-**Setting specific model prompts**:<br/>
-	 If you want to have specific prompts for one or more particular models, then you will need to hash the name of those models into digest of a desidered length.
-	 <font color="#e80808">**IMPORTANT: Make sure the number of characters use of the digest match the one set into the [General settings file](#Configuration%20Files)**</font>
+### **Setting specific model prompts**:<br/>
+If you want to have specific prompts for one or more particular models, then you will need to hash the name of those models into digest of a desidered length. 
+<font color="#e80808">**IMPORTANT: Make sure the number of characters use of the digest match the one set into the [General settings file](#configuration-files)**</font>
 
    ```bash
-   python exec_pdirs_hasher.py
+	python exec_pdirs_hasher.py [-a <hashing_algorithm>] [-c <num_chars>] <model_name>
    ```
 
 # Appendix
