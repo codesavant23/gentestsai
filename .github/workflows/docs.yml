@@ -29,6 +29,7 @@ jobs:
 
       - name: Generate documentation
         run: |
+          cd ${{ github.workspace }}
           python docs/generate_docs.py
 
       - name: Deploy with MkDocs
