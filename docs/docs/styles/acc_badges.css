@@ -1,0 +1,67 @@
+/* Contenitore badges */
+.acc-specs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin: -1rem 0 1.5rem 0;
+	align-items: center;
+}
+
+/* Stile base badge */
+.acc-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.1rem 0.35rem;
+	border-radius: 999px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	line-height: 1.4;
+	border: 1px solid transparent;
+	white-space: nowrap;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+	letter-spacing: 0.02em;
+}
+
+/* public */
+.acc-public {
+	color: #1a7f37;
+	background-color: #dafbe1;
+	border-color: #aceebb;
+}
+
+/* private */
+.acc-private {
+	color: #cf222e;
+	background-color: #ffebe9;
+	border-color: #ffcecb;
+}
+
+/* package */
+.acc-package {
+	color: #8250df;
+	background-color: #fbefff;
+	border-color: #e9d8fd;
+}
+
+/* abstract */
+.acc-abstract {
+	color: #0969da;
+	font-style: italic;
+	background-color: #ddf4ff;
+	border-color: #b6e3ff;
+}
+
+/* protected */
+.acc-protected {
+	color: #CD6700;
+	background-color: #fff8c5;
+	border-color: #e9a546;
+}
+
+/* final */
+.acc-final {
+	color: #232323;
+	background-color: #c6c6c6;
+	border-color: #5c5c5c;
+}

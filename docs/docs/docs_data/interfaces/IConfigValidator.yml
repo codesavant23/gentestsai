@@ -1,0 +1,16 @@
+elem_type: Interface
+name:
+    name:   IConfigValidator
+    fq:     configuration.config_validator.IConfigValidator
+
+contract: |
+    Represents a validator for GenTestsAI configuration files for a specific purpose, which validable files are illustrated by a string-indexed Python dictionary (with varied values).
+    
+ext_points:
+    - The purpose of the validated configuration files is specified by descendants of this interface.
+
+
+methods:
+    - name: validate_sem
+      sign: "(self)"
+      page: ../methods/IConfigValidator/validate_sem.md

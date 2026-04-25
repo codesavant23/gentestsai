@@ -1,0 +1,59 @@
+entity_type: Method
+name: read_config
+signature: "(self, cfgfile_path: str) -> Dict[str, Any]"
+acc_specs:
+    - abstract
+    - public
+def_in:
+    name: IConfigParser
+    page: ../../interfaces/IConfigParser.md
+
+
+contract: |
+    Parses the configuration file at the specified path, checking:
+
+    - If the extension is the one required by the type, if applicable
+    - If the contents are valid for the type specified by the descendants its interface
+    - If the configuration file can be represented as a Python dictionary
+
+    It then reads the configuration file, returning it as a Python dictionary of any-type values.
+
+
+# Optional "parameters"
+# Optional "parameters.<x>.default"
+parameters:
+    - name: cfgfile_path
+      type: str
+      descr: |
+        A string containing the path to the configuration file to be parsed.
+
+
+# Optional "return"
+return:
+    type: Dict[str, Any]
+    descr: |
+        An any-type string-indexed dictionary, representing the read configuration file.
+
+
+# Optional "exceptions"
+exceptions:
+
+    - type: ValueError
+      cases:
+        - The provided configuration file path is set to `None`
+        - The provided configuration file path is an empty string
+
+    - type: InvalidConfigFilepathError
+      cases:
+        - The provided configuration file path is syntactically invalid.
+        - There is no file at the provided path.
+        - The configuration file cannot be opened.
+
+    - type: WrongConfigFileTypeError
+      cases:
+        - The associated configuration file is not a file of the type specified by the descendants of this interface (extension).
+        - The contents of the file are invalid for the type specified by the descendants of this interface.
+
+    - type: WrongConfigFileFormatError
+      cases:
+        - The configuration file is not representable as a Python dictionary

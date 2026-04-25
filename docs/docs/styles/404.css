@@ -1,0 +1,26 @@
+.error-404 {
+    text-align: center;
+}
+
+.error-404 .md-button {
+	display: inline-block;
+	margin-top: 1rem;
+}
+
+.error-404__img {
+	width: 100%;
+	height: auto;
+	margin: 0;
+	display: none;
+	border-radius: 21px; /* leggermente meno del wrapper */
+}
+
+/* Light mode */
+[data-md-color-scheme="default"] .error-404__img--light {
+	display: block;
+}
+
+/* Dark mode */
+[data-md-color-scheme="slate"] .error-404__img--dark {
+	display: block;
+}

@@ -1,0 +1,57 @@
+# {{ elem_type }} `{{ name.name }}`
+
+{{ contract }}
+
+{% if elem_type == "Interface" or elem_type == "Abstract class" %}
+!!! ext-points "Extension Points"
+	{% for extp in ext_points %}
+	- {{ extp }}
+	{% endfor %}
+{% endif %}
+
+!!! abstract "Details"
+	- **Fully-qualified Name**: `{{ name.fq }}`
+	
+	{% if base_elems %}
+    - **Inherits from:**
+		{% for base in base_elems %}
+		- [`{{ base.name }}`]({{ base.page }})
+		{% endfor %}
+	{% endif %}
+	
+	{% if decorators %}
+	- **Decorators:**
+		{% for dec in decorators %}
+		- `@{{ dec }}`
+		{% endfor %}
+	{% endif %}
+
+
+{% if attributes %}
+## Public attributes
+
+{% for att in attributes %}
+- `{{ att.name }}` (`att.type`):<br/>
+	<div class="tabbed-text">
+		{{ att.descr }}
+		{% if att.default %}
+		<br/>**Default:** `{{ att.default }}`
+		{% endif %}
+	</div>
+{% endfor %}
+{% endif %}
+	
+{% if methods|length > 0 %}
+## Public methods
+{% for meth in methods %}
+- [**{{ meth.name }}**]({{ meth.page }}) {% if meth.sign %}`{{ meth.sign }}`{% endif %}
+{% endfor %}
+{% endif %}
+
+
+{% if pro_methods|length > 0 %}
+## Protected methods
+{% for meth in pro_methods %}
+- [**{{ meth.name }}**]({{ meth.page }}) {% if meth.sign %}`{{ meth.sign }}`{% endif %}
+{% endfor %}
+{% endif %}

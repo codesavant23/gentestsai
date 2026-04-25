@@ -1,0 +1,37 @@
+entity_type: Method
+name: _ap__assert_platspec
+signature: "(config_dict: Dict[str, Any]) -> Dict[str, Any]"
+acc_specs: 
+    - abstract
+    - protected
+def_in:
+    name: _APlatSpecConfigValidator
+    exposed: AAccessorConfigValidator
+    page: ../../absclasses/AAccessorConfigValidator.md
+
+
+contract: |
+    Checks the validity of the values ​​of the inference platform fields
+    specified by descendants of this abstract class.
+
+    If validation is successful, this operation should be equivalent to a no-op.
+
+
+grants:
+    - "That all mandatory fields, not specific to the inference platform,
+    exist and are semantically correct."
+    - "That optional fields, which do exist but are not specific to the inference platform, are semantically correct."
+
+
+parameters:
+    - name: config_dict
+      type: Dict[str, Any]
+      descr: |
+          An any-type, string-indexed dictionary representing the read configuration file
+
+
+# Optional "exceptions"
+exceptions:
+    - type: ValueError
+      cases:
+        - The semantics of one or more fields are correct but a specific platform error exists, declared by the descendants of this its class.

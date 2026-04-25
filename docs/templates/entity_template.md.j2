@@ -1,0 +1,78 @@
+# {{ entity_type }} `{{ name }}`
+
+<div class="acc-specs">
+	{% for acc_spec in acc_specs %}
+	<span class="acc-badge acc-{{ acc_spec }}">{{ acc_spec }}</span>
+	{% endfor %}
+</div>
+
+{{ contract }}
+
+!!! abstract "Details"
+    - **Defined into:** {% if def_in.exposed is not defined %}[{{ def_in.name }}]{% else %}{{ def_in.name }}{% endif %}{% if def_in.exposed is not defined %}({{ def_in.page }}){% endif %}
+	{% if def_in.exposed %}
+	- **Exposed by:** [{{ def_in.exposed }}]({{ def_in.page }})
+	{% endif %}
+	
+	{% if decorators %}
+	- **Decorators:**
+		{% for dec in decorators %}
+		- `@{{ dec }}`
+		{% endfor %}
+	{% endif %}
+	
+## Signature
+```python
+	def {{ name }}{{ signature }}
+```
+
+{% if grants %}
+## Guarantees
+
+When this entity is called it is already guaranteed:
+{% for grant in grants %}
+- {{ grant }}
+{% endfor %}
+{% endif %}
+
+
+{% if parameters %}
+---
+## Parameters
+{% for param in parameters %}
+- `{{ param.name }}` (`{{ param.type }}`):
+	<div class="tabbed-text">
+	{% if param.default %}
+	**Default:** `{{ param.default }}`<br/>
+	{% endif %}
+	{{ param.descr }}
+	</div>
+{% endfor %}
+{% endif %}
+
+
+{% if parameters is not defined %}
+---
+
+{% endif %}
+## Return Type
+{% if return %}
+_`{{ return.type }}`_
+<div class="tabbed-text">
+	{{ return.descr }}
+</div>
+{% else %}
+This entity doesn't return any value
+{% endif %}
+---
+
+{% if exceptions %}
+## Exceptions
+!!! warning "Raised Exceptions"
+	{% for except in exceptions %}	
+	- **{{ except.type }}**, happens if:
+		{% for except_case in except.cases %}
+		- {{ except_case }}
+		{% endfor %}
+	{% endfor %}
+{% endif %}

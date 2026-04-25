@@ -1,0 +1,19 @@
+elem_type: Interface
+name:
+    name:   IConfigParser
+    fq:     configuration.config_parser.IConfigParser
+
+contract: |
+    Represents a parser of GenTestsAI configuration files written in a specific type and format.
+    
+    The category of configuration files that can be read by each IConfigParser are configuration files that can be represented as a Python dictionary (with any-type values) indexed by strings.
+    
+ext_points:
+    - The type of the configuration file read (e.g. JSON, XML, etc.).
+
+
+# Optional "methods.<x>.sign"
+methods:
+    - name: read_config
+      sign: "(self, cfgfile_path: str) -> Dict[str, Any]"
+      page: ../methods/IConfigParser/read_config.md
