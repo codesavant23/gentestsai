@@ -32,7 +32,7 @@ def read_arguments(
 	"""
 	arg_parser: ArgumentParser = ArgumentParser(
 		description="GenTestsAI's executable for calculating coverage of test-suites",
-		usage="python exec_gents.py [-p <inf_platform>] [-c <cfg_root_path>] [--config-type <file_type> [<config_names>]]"
+		usage="python exec_calc_coverage.py [-p <inf_platform>] [-c <cfg_root_path>] [--config-type <file_type> [<config_names>]]"
 	)
 	
 	arg_parser.add_argument(
