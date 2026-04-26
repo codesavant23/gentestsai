@@ -1,32 +1,24 @@
+from typing import Any
+
 # ============== OS Utilities ============== #
 from os import (
 	walk as os_walk,
-	replace as os_rename,
-	makedirs as os_mkdirs,
-	remove as os_remove,
-	environ as os_getenv
+	makedirs as os_mkdirs
 )
 from os.path import (
-	exists as os_fdexists,
-	isfile as os_isfile,
-	isdir as os_isdir
+	exists as os_fdexists
 )
-from shutil import rmtree as os_dremove
-from tempfile import gettempdir as os_tempdir
 # ========================================== #
 # ============ Path Utilities ============ #
 from os.path import (
 	sep as path_sep,
 	altsep as path_altsep,
 	join as path_join,
-	split as path_split,
 	splitext as path_split_ext,
-	dirname as path_getdir,
-	commonpath as path_intersect,
 	normpath as path_normalize,
-	abspath as path_absolute,
 	relpath as path_relative
 )
+from pathlib import Path as SystemPath
 _PATH_SEPS: str = f"{path_sep}{path_altsep if path_altsep is not None else ''}"
 # ======================================== #
 
@@ -82,7 +74,11 @@ def create_docs(
 
 
 if __name__ == "__main__":
-	env: JinjaEnvironment = JinjaEnvironment(loader=FileSystemLoader("./templates"))
+	script_path: str = str(SystemPath(__file__).parent)
+	
+	env: JinjaEnvironment = JinjaEnvironment(loader=FileSystemLoader(
+		path_join(script_path, "templates")
+	))
 	element_templ: JinjaTemplate = env.get_template("element_template.md.j2")
 	entity_templ: JinjaTemplate = env.get_template("entity_template.md.j2")
 
@@ -92,8 +88,8 @@ if __name__ == "__main__":
 	funcs_dirname: str = "functions"
 	meths_dirname: str = "methods"
 	
-	output_root: str = "./docs/out"
-	data_root: str = "./docs/docs_data"
+	output_root: str = path_join(script_path, "docs", "out")
+	data_root: str = path_join(script_path, "docs", "docs_data")
 	data_intf_root: str = path_join(data_root, intf_dirname)
 	data_abs_root: str = path_join(data_root, absclss_dirname)
 	data_clss_root: str = path_join(data_root, clss_dirname)
