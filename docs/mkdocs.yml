@@ -1,5 +1,6 @@
 site_name: Documentation
 site_description: GenTestsAI's Documentation
+site_url: https://codesavant23.github.io/gentestsai/
 site_author: Filippo Mecozzi (codesavant23)
 
 theme:
