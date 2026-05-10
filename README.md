@@ -4,6 +4,7 @@
 
 [![Paper Backed](https://img.shields.io/badge/paper--backed-8A2BE2)](https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/thesis_ita.pdf)
 ![ReadMe](https://img.shields.io/badge/README.md-finished-%2320b706)
+[![License](https://img.shields.io/badge/license-Custom--SA-%231b25e5)](https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/thesis_ita.pdf)
 ![Python](https://img.shields.io/badge/python-3.10%2B-35b2e3)
 [![Docs](https://img.shields.io/badge/docs-uploaded--WIP-d37207)](https://codesavant23.github.io/gentestsai)
 
