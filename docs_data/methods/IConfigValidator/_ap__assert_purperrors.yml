@@ -1,0 +1,35 @@
+entity_type: Method
+name: _ap__assert_purperrors
+signature: "(config_dict: Dict[str, Any]) -> Dict[str, Any]"
+acc_specs: 
+    - abstract
+    - protected
+def_in:
+    name: _ABaseConfigValidator
+    exposed: AAccessorConfigValidator
+    page: ../../absclasses/AAccessorConfigValidator.md
+
+
+contract: |
+    Checks for errors related to the specified purpose from descendants of each IConfigValidator.
+
+    If validation is successful, this operation should be equivalent to a no-op.
+
+grants:
+    - That all required fields exist and are semantically correct.
+    - That optional fields, which do exist, are semantically correct.
+
+# Optional "parameters"
+# Optional "parameters.<x>.default"
+parameters:
+    - name: config_read
+      type: Dict[str, Any]
+      descr: |
+        An any-type, string-indexed dictionary representing the read configuration file
+
+
+# Optional "exceptions"
+exceptions:
+    - type: InvalidConfigValueError
+      cases:
+        - The semantics of one or more fields are correct but a specific error exists, declared by the descendants of its abstract class.

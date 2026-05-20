@@ -1,0 +1,27 @@
+entity_type: Method
+name: validate_sem
+signature: "(self)"
+acc_specs: 
+    - public
+def_in:
+    name: IConfigValidator
+    page: ../../interfaces/IConfigValidator.md
+
+
+contract: |
+    Perform semantic validation of the associated Python dictionary representing a configuration file
+
+
+# Optional "exceptions"
+exceptions:
+    - type: FieldDoesntExistsError
+      cases:
+        - The represented configuration file has one or more missing mandatory fields.
+    - type: ConfigExtraFieldsError
+      cases:
+        - The configuration file contains fields not intended for the purpose specified by the descendant of IConfigValidator that implements this method.
+    - type: InvalidConfigValueError
+      cases:
+        - The semantics of one or more required fields are incorrect
+        - The semantics of one or more optional fields are incorrect
+        - The semantics of one or more fields are correct, but a specific error exists declared by descendants of IConfigValidator that implements this method

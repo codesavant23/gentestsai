@@ -1,0 +1,52 @@
+elem_type: Interface/Class/Abstract class
+name:
+    name:   Class1
+    fq:     com.package.Class1
+
+contract: |
+    This is Class1 Contract
+    on multiple
+    lines
+    
+
+# Mandatory only if elem_type == "Interface" or "Abstract class"
+ext_points:
+    - test1
+
+
+# Optional "base_elems"
+base_elems:
+    - Base1
+    - Base2
+    - Base3
+
+# Optional "decorators"
+decorators:
+    - Dec1noAT
+    - Dec2noAT
+    - Dec3noAT
+
+
+# Optional "attributes"
+# Optional "attributes.<x>.default"
+attributes:
+    - name: att1
+      type: str
+      descr: |
+          Multiline attribute1
+          description
+      default: "\"caracaio\""
+      
+    - name: att2
+      type: float
+      descr: |
+          Multiline attribute2
+          description
+      default: 0.4
+
+
+# Optional "methods.<x>.sign"
+methods:
+    - name: py_parse
+      sign: "(config_path: str) -> Dict[str, Any]"
+      page: something.md

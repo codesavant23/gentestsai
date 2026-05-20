@@ -1,0 +1,41 @@
+elem_type: Abstract class
+name:
+    name:  AAccessorConfigValidator
+    fq:    configuration.config_validator.AAccessorConfigValidator
+
+contract: |
+    Represents an IConfigValidator for the inference platform configuration file to be used.
+
+    The configuration file read is a dictionary containing:
+
+    * _platform_ (`str`): The name of the inference platform to be used.
+    * _platform\_options_ (`Dict[str, Any]`): Dictionary containing the inference platform parameters. The contents are related to the inference platform and are specified by the descendants of this abstract class.
+    * _response\_timeout_ (`int`): The maximum response timeout (in milliseconds).
+    
+
+# Mandatory only if elem_type == "Interface" or "Abstract class"
+ext_points:
+    - The specific inference platform is described by the descendants of this abstract class.
+
+
+# Optional "base_elems"
+base_elems:
+    - name: IConfigValidator
+      page: ../interfaces/IConfigValidator.md
+
+
+methods:
+    - name: \_\_init\_\_
+      sign: "(config_dict: Dict[str, Any]) -> Dict[str, Any]"
+      page: ../methods/IConfigValidator/AAccessorConfigValidator_con.md
+      
+
+# Optional "pro_methods.<x>.sign"
+pro_methods:
+    - name: \_ap\_\_assert_purperrors
+      sign: "(config_dict: Dict[str, Any]) -> Dict[str, Any]"
+      page: ../methods/IConfigValidator/_ap__assert_purperrors.md
+      
+    - name: \_ap\_\_assert_platspec
+      sign: "(config_dict: Dict[str, Any]) -> Dict[str, Any]"
+      page: ../methods/IConfigValidator/_ap__assert_platspec.md

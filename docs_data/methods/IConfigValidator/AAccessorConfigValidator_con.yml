@@ -1,0 +1,29 @@
+entity_type: Method
+name: __init__
+signature: 
+acc_specs: 
+    - public
+def_in:
+    name: AAccessorConfigValidator
+    page: ../../absclasses/AAccessorConfigValidator.md
+
+
+contract: |
+    Builds a new AAccessorConfigValidator by providing it with the Python configuration dictionary that will be associated with this validator.
+
+
+# Optional "parameters"
+# Optional "parameters.<x>.default"
+parameters:
+    - name: config_dict
+      type: Dict[str, Any]
+      descr: |
+          An any-type, string-indexed dictionary representing the read configuration file
+
+
+# Optional "exceptions"
+exceptions:
+    - type: ValueError
+      cases:
+        - The provided dictionary has the value `None`
+        - The provided dictionary is empty
