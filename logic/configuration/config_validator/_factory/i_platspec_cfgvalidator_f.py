@@ -1,11 +1,12 @@
 from typing import Dict, Any
+from abc import ABC, abstractmethod
 from logic.configuration.config_validator import IConfigValidator
 
 from logic.variability import EImplementedPlatform
 
 
 
-class IPlatSpecCfgValidatorFactory:
+class IPlatSpecCfgValidatorFactory(ABC):
 	"""
 		Rappresenta una factory per ogni `IConfigValidator` che rappresenta
 		un file di configurazione legato ad una specifica piattaforma di inferenza
@@ -14,6 +15,7 @@ class IPlatSpecCfgValidatorFactory:
 	"""
 	
 	
+	@abstractmethod
 	def create(
 			self,
 			config_platf: EImplementedPlatform,

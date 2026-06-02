@@ -11,7 +11,6 @@ ARGP_1_PLUS = ONE_OR_MORE
 ARGP_POS_OPT = "?"
 # ========================================== #
 # ============== OS Utilities ============== #
-from os.path import exists as os_fdexists
 from sys import stdout as os_stdout
 # ========================================== #
 # ============ Path Utilities ============ #
@@ -25,7 +24,6 @@ from os.path import (
 from pathlib import PosixPath
 # ======================================== #
 # ============== Docker SDK Utilities =============== #
-from docker import DockerClient
 from docker.models.images import Image as DockerImage
 # =================================================== #
 
@@ -46,7 +44,7 @@ from main_execs import (
 )
 from main_execs.calc_cov import (
 	read_arguments,
-	write_file_intofenv, write_dir_intofenv,
+	write_dir_intofenv,
 	write_covrc
 )
 
