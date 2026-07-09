@@ -1,11 +1,11 @@
-from logic.utils.logger import ATemporalFormattLogger
+from c23_logger import ATemporalFormattLogger
 
 
 
 class ProcessLogger:
 	"""
-		Rappresenta un oggetto che utilizza un `ATemporalFormattLogger` per loggare
-		l' inizio e la fine di un processo
+		Represents an object that uses an `ATemporalFormattLogger` to log
+        the start and end of a process
 	"""
 	
 	def __init__(
@@ -15,20 +15,19 @@ class ProcessLogger:
 			end_mess: str="OK!"
 	):
 		"""
-			Costruisce un nuovo ProcessLogger
-			
-			Parameters
-			----------
-				logger: ATemporalFormattLogger
-					Un oggetto `ATemporalFormattLogger` rappresentante il logger da
-					utilizzare per registrare l' inizio e la fine dei processi.
+			Creates a new ProcessLogger
+            
+            Parameters
+            ----------
+                logger: ATemporalFormattLogger
+                    An `ATemporalFormattLogger` object representing the logger to be used to record the start and end of processes.
 					
 				mess_sep: str
-					Una stringa contenente il separatore dei messaggi da utilizzare
-					
-				end_mess: str
-					Opzionale. Default = `"OK!"`. Una stringa rappresentante il messaggio
-					con cui concludere la buona riuscita di una serie di steps
+                    A string containing the message separator to use
+                    
+                end_mess: str
+                    Optional. Default = `"OK!"`. A string representing the message
+                    to conclude a successful series of steps
 		"""
 		self._logger = logger
 		self._mess_sep: str = mess_sep

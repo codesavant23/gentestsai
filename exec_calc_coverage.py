@@ -27,29 +27,29 @@ from pathlib import PosixPath
 from docker.models.images import Image as DockerImage
 # =================================================== #
 
-from logic.variability import EImplementedPlatform
-from logic.configuration.config_parser import (
+from llm_access.variability import EImplementedPlatform
+from config_io.config_parser import (
 	IConfigParser,
 	ConfigParserFactory, EParserFiletype
 )
 
-from logic.focalproj_configuration.focal_container import FocalContainer
+from gtsai_lib.focalproj_configuration.focal_container import FocalContainer
 
-from logic.calc_coverage import CoverageRcWriter
+from gtsai_lib.calc_coverage import CoverageRcWriter
 
-from main_execs import (
+from logic import (
 	read_general_config, read_projs_config, read_projsenv_config, read_models_config, read_calccov_config,
 	normalize_llmname,
 	create_focal_images
 )
-from main_execs.calc_cov import (
+from logic.calc_cov import (
 	read_arguments,
 	write_dir_intofenv,
 	write_covrc
 )
 
-from logic.utils.logger import (
-	ATemporalFormattLogger, ConsoleTemporalFormattLogger
+from c23_logger import (
+	ATemporalFormattLogger, ConsoleTempFormattLogger
 )
 from logic.utils.process_logger import ProcessLogger
 
@@ -64,7 +64,7 @@ def calculate_coverage():
 	
 	covrc_writer: CoverageRcWriter = CoverageRcWriter()
 	
-	console_logger: ATemporalFormattLogger = ConsoleTemporalFormattLogger(os_stdout)
+	console_logger: ATemporalFormattLogger = ConsoleTempFormattLogger(os_stdout)
 	console_logger.set_messages_sep("\n")
 	console_logger.set_format(LOG_FORMAT)
 	logger: ProcessLogger = ProcessLogger(console_logger, "\n")

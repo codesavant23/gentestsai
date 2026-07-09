@@ -1,6 +1,6 @@
 class TemplateNotSetError(Exception):
 	"""
-		Rappresenta un' eccezione (non-exiting) che si verifica quando viene eseguita
-		un' operazione senza aver impostato alcun template prompt prima di essa
+		Represents a (non-exiting) exception that occurs when an operation is executed
+        without having set a prompt template beforehand
 	"""
 	pass

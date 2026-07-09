@@ -1,4 +1,4 @@
-from main_execs.pdirs_hasher import hash_modelname
+from logic.pdirs_hasher import hash_modelname
 
 
 

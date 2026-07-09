@@ -33,67 +33,69 @@ from shutil import rmtree as os_dremove
 from docker.models.images import Image as DockerImage
 # =================================================== #
 
-from logic.variability import EImplementedPlatform, ESpecLlmImpl
-from logic.variability.combinatorial import EPlatformCombo
+from llm_access.variability import EImplementedPlatform, ESpecLlmImpl
+from llm_access.variability.combinatorial import EPlatformCombo
 
-from main_execs.gents import read_arguments
-from main_execs.gents.mbym import (
+from logic.gents import read_arguments
+from logic.gents.mbym import (
 	calculate_prompt_relpaths,
 	generate_correct_mbym
 )
 
-from main_execs.gents.reading import read_templprompts, read_1model_templprompts
-from main_execs import normalize_llmname
-
-from main_execs import read_gents_configfiles
-from logic.configuration.config_parser import (
+from logic.gents.reading import (
+	read_templprompts, read_1model_templprompts
+)
+from logic import (
+	normalize_llmname,
+	read_gents_configfiles
+)
+from config_io.config_parser import (
 	IConfigParser,
 	ConfigParserFactory, EParserFiletype
 )
 
 from logic.utils.prompt_builder import PromptBuilder
 
-from logic.decls_extraction import ECodeParserTool
-from logic.decls_extraction.moddecls_extractor import (
+from decls_extraction import ECodeParserTool
+from decls_extraction.moddecls_extractor import (
 	AMutableModuleDeclsExtractor,
 	MutableModuleDeclsExtractorFactory
 )
 
-from main_execs.gents.reading import read_fb_hyperparams
-from logic.ptsuite_generation.llm_access.llm_hyperparam.id import ILlmHyperParamId
-from logic.ptsuite_generation.llm_access.llm_hyperparam import (
+from logic.gents.reading import read_fb_hyperparams
+from llm_access.llm_hyperparam.id import ILlmHyperParamId
+from llm_access.llm_hyperparam import (
 	LlmHyperParamFactoryResolver,
 	ILlmHyperParamFactory,
 	ILlmHyperParam
 )
 
-from logic.ptsuite_generation.llm_access.llm_specimpl import (
+from llm_access.llm_specimpl import (
 	ILlmSpecImpl,
 	ILlmSpecImplFactory, LlmSpecImplFactoryResolver
 )
 
-from logic.ptsuite_generation.llm_access.llm_chat import (
+from llm_access.llm_chat import (
 	ILlmChat, LlmChatFactory, ELlmChatApis
 )
 
-from main_execs.gents.ptsuite_gen import inst_apiaccsor
-from logic.ptsuite_generation.llm_access.llm_apiaccessor import ILlmApiAccessor
+from logic.gents.ptsuite_gen import inst_apiaccsor
+from llm_access.llm_apiaccessor import ILlmApiAccessor
 
-from logic.ptsuite_generation.core.generation import EntityPtsuiteGenerator
-from logic.ptsuite_generation.core.checking.synt_checker import (
+from gtsai_lib.ptsuite_generation.core.generation import EntityPtsuiteGenerator
+from gtsai_lib.ptsuite_generation.core.checking.synt_checker import (
 	ISyntacticChecker,
 	SyntacticCheckerFactory, ESyntCheckerTool
 )
-from logic.ptsuite_generation.core.checking.lint_checker import LintingChecker
-from logic.ptsuite_generation.core.correction.synt_corrector import PtsuiteSyntacticCorrector
-from logic.ptsuite_generation.core.correction.lint_corrector import PtsuiteLintingCorrector
+from gtsai_lib.ptsuite_generation.core.checking.lint_checker import LintingChecker
+from gtsai_lib.ptsuite_generation.core.correction.synt_corrector import PtsuiteSyntacticCorrector
+from gtsai_lib.ptsuite_generation.core.correction.lint_corrector import PtsuiteLintingCorrector
 
-from main_execs import create_focal_images
+from logic import create_focal_images
+from logic.gents.ptsuite_gen import open_ptsuite_caches
 
-from main_execs.gents.ptsuite_gen import open_ptsuite_caches
-
-from logic.utils.logger import (
-	ATemporalFormattLogger, ConsoleTemporalFormattLogger
+from c23_logger import (
+	ATemporalFormattLogger, ConsoleTempFormattLogger
 )
 from logic.utils.process_logger import ProcessLogger
 
@@ -111,7 +113,7 @@ if __name__ == "__main__":
 	## =================================================
 	
 	## ===== Creazione del logger da utilizzare per la generazione delle test-suites =====
-	console_logger: ATemporalFormattLogger = ConsoleTemporalFormattLogger(os_stdout)
+	console_logger: ATemporalFormattLogger = ConsoleTempFormattLogger(os_stdout)
 	console_logger.set_messages_sep("\n")
 	console_logger.set_format(LOG_FORMAT)
 	logger: ProcessLogger = ProcessLogger(console_logger, "\n")

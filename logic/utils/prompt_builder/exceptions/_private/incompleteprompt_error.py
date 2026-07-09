@@ -1,7 +1,7 @@
 class IncompletePromptError(Exception):
     """
-        Rappresenta un' eccezione (non-exiting) che si verifica se si richiede di eseguire
-        un' operazione che necessita di un full prompt ma il prompt utilizzato contiene
-        ancora dei placeholders
+        Represents a (non-exiting) exception that occurs if you attempt to
+        perform an operation that requires a full prompt, but the prompt
+        used still contains placeholders
     """
     pass

@@ -1,5 +1,8 @@
 <div align="center">
 	<img src="https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/logo/gtsai_github_socialcard.png" width="650"/>
+    <p style="position: relative; bottom: 70px; font-style: italic;">
+        A SOLID Python framework to automatically generate Python unit-tests
+    </p>
 </div>
 
 [![Paper Backed](https://img.shields.io/badge/paper--backed-8A2BE2)](https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/thesis_ita.pdf)
@@ -10,14 +13,15 @@
 
 # What is GenTestsAI?
 
-**GenTestsAI** is a sophisticated framework, rooted on the integrated SOLID-Designed library **GenTestsAILib**, for the automated generation of Python unit tests that uses Large Language Models (LLMs).<br/>
+**GenTestsAI** is a sophisticated framework, rooted on the SOLID-Designed library [**GenTestsAILib**](https://github.com/codesavant23/gentestsai-lib), for the automated generation of Python unit tests that uses Large Language Models (LLMs).<br/>
 
 It orchestrates a complete pipeline that includes test generation, iterative syntactic and linting correction that is performed within isolated containerized environments called [**focal environments**](#framework-specific-terminology).
-Optionally it provides also basic test coverage analysis (at statement level and [entity](#framework-specific-terminology)-level)
+Optionally it provides also basic test coverage analysis (at statement level and [entity](#general)-level).
+
+**You can find project documentation [here]()**
 
 ## Software artifacts Key Features
 
-### GenTestsAI
 *   **Comprehensive Configuration**: Offers deep customization through JSON configuration files for projects, models, prompts, LLM hyperparameters, and environment settings.
 *   **LLM-Powered Test Generation and Correction**: Leverages the power of LLMs to automatically create unit tests for Python [autonomous entities](#framework-specific-terminology).
 *   **Iterative Correction Loop**: Automatically subjects generated code to a rigorous two-phase correction process:
@@ -28,25 +32,20 @@ Optionally it provides also basic test coverage analysis (at statement level and
 *   **Coverage Analysis**: Provides tools to calculate and evaluate the statement coverage of both human-written and AI-generated test suites using [`coverage.py`](https://github.com/coveragepy/coveragepy).
 *   **Customizable Prompting**: Allows users to define their own prompt templates to guide the LLM's test generation and correction behavior for different models or tasks.
 
-### GenTestsAILib
-*   **Extreme Modularity & Extensibility**: Built with a SOLID-driven architecture, the library enables highly composable and interchangeable logical units across the entire GenTestsAI framework. Every layer — from inference platform backends and LLM specific implementations to configuration schemas, hyperparameters, and software groups installed in focal environments — is designed to be almost independently extendable, easily replaceable, and consistently maintainable, allowing seamless customization and evolution without heavily impacting existing components.
-  A complete list of customizable/extendable layers of the architecture can be found in the official documentation (<font color="#22bc06">coming very soon, Lord permitting</font>. For now check the [associated paper](#associated-paper) (Italian language) in Chapter 10.3)
-*   **Containerized Environments**: Builds and manages isolated Docker-compatible containers for each focal project, ensuring that dependency and environment conflicts are eliminated during linting checks.
-
 # Project Structure
 
 The repository is organized to separate the integrated library (GenTestsAILib), framework main executable scripts, which are functionally decomposed, tools used into each focal environment and configuration files.
 
-| Path                    | Description                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `exec_*.py`             | Top-level executable scripts that serve as the main user-facing entry points for the framework's functionalities.   |
-| `/logic`                | Contains the GenTestsAILib library, organized into macro-components, which provides LLM access, test generation, and more. |
-| `/main_execs`           | Encapsulates the high-level framework orchestration logic (used by the `exec_*.py` scripts).                     |
-| `/config`               | Holds all user-configurable files for projects, models, prompts, inference platform settings, etc.               |
-| `/prompts`              | Contains template prompts in `.txt` files used to instruct the LLMs for generation and correction tasks.         |
-| `/docker`               | Includes tools and resources, for linting and coverage calculation, that are deployed into the focal environments.  |
-| `/caches`               | Default directory for storing partial test suite caches.                                                         |
-| `/assets`               | Resources related to the software artifacts, used for this README.md file and documentation                    |
+| Path        | Description                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------|
+| `exec_*.py` | Top-level executable scripts that serve as the main user-facing entry points for the framework's functionalities.  |
+| `/logic`    | Contains the high-level framework orchestration logic (used by the `exec_*.py` scripts).                           |
+| `/config`   | Holds all user-configurable files for projects, models, prompts, inference platform settings, etc.                 |
+| `/prompts`  | Contains template prompts in `.txt` files used to instruct the LLMs for generation and correction tasks.           |
+| `/docker`   | Includes tools and resources, for linting and coverage calculation, that are deployed into the focal environments. |
+| `/caches`   | Default directory for storing partial test suite caches.                                                           |
+| `/assets`   | Resources related to the software artifacts, used for this README.md file and documentation                        |
+| `/docs`     | Documentation of the project hosted on GitHub Pages                                                                |
 
 ## Main Scripts
 
@@ -79,7 +78,7 @@ Here you can find the [GenTestsAI Workflow Diagram](https://raw.githubuserconten
 
 # Configuration Files
 
-GenTestsAI is highly configurable via "Dict-Like" configuration files located in a specific directory (default: `/config`) which type and format can vary.
+GenTestsAI is highly configurable via "Dict-Like" configuration files located in a specific directory (default: `/config`) which type can vary as selected by the framework's user.
 
 Here's a list of the configuration files used by GenTestsAI, and a glimpse description of each one:
 * **<u>Platform settings file</u>**: Specifies the LLM inference platform, the response timeout and the specific platform settings to use. For example, when using Ollama this includes the IP:Port of the device that hosts platform, authentication credentials, and connection timeouts.
@@ -87,7 +86,7 @@ Here's a list of the configuration files used by GenTestsAI, and a glimpse descr
 * **<u>Selected models settings file</u>**: Lists the specific LLMs implementations to generate and correct test cases. Here, you can override default hyperparameters for each model (e.g., `context_window`, `temperature`, `top-k`, etc.).
 *   **<u>Selected focal projects file</u>**: Defines the focal Python projects for test generation, including their [Focal Root](#paths-and-directories) and [Tests Root](#paths-and-directories) paths. Optionally specific files or directories can be listed in order to exclude them from the generation.
 *   **<u>Focal environments settings file</u>**: Defines parameters to configure focal environments for each project, including the base Docker image tag, paths to the environment tools, and scripts to run during the build process to pre-configure associated project dependencies.
-*  **<u>Prompts settings file</u>**: Specifies prompt templates filenames for different tasks (functional, methodal, correctional), their base path,, and placeholder delimiters that composes templates.
+*   **<u>Prompts settings file</u>**: Specifies prompt templates filenames for different tasks (functional, methodal, correctional), their base path,, and placeholder delimiters that composes templates.
 *   **<u>Caches settings file</u>**: Defines the technology of caching system (e.g., `sqlite3`) and the location of the cache files to use/create.
 *   **<u>Coverage calculation settings file</u>**: Configures parameters for the coverage calculation focal environment tool, such as the name of the `.coveragerc` file to be generated.
 

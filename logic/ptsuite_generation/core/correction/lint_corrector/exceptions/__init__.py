@@ -1,1 +1,0 @@
-from ._private.syntincorrptsuite_error import SyntacticallyIncorrectPtsuiteError

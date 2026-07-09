@@ -16,18 +16,17 @@ from ..exceptions import (
 
 class PromptBuilder:
 	"""
-		Rappresenta un oggetto in grado di costruire un full prompt dato un template di cui
-		sostituirne i placeholders.
+		Represents an object capable of constructing a full prompt given a template in which to replace the placeholders.
 
-		I placeholders accettati da questo costruttore di full prompts sono identificati con il wrapping
-		del nome del placeholder da due delimitatori: uno iniziale al nome e uno finale.
+		The placeholders accepted by this full prompt builder are identified by enclosing the placeholder name
+		between two delimiters: one at the beginning of the name and one at the end.
 
-		Per default quest' oggetto usa i seguenti delimitatori:
-			- Iniziale: `{@`
-			- Finale: `@}`
+		By default, this object uses the following delimiters:
+            - Start: `{@`
+            - End: `@}`
 
-		es.	Placeholder nel template con i delimitatori di default:
-		Place_Holder1	----identificato-con---->	{@Place_Holder1@}
+        e.g.    Placeholder in the template with the default delimiters:
+        Place_Holder1    ----identified-by---->    {@Place_Holder1@}
 	"""
 
 	def __init__(
@@ -37,22 +36,22 @@ class PromptBuilder:
 			end_del: str="@}"
 	):
 		"""
-			Costruisce un nuovo PromptBuilder legandolo ad un particolare template prompt
+			Creates a new PromptBuilder by binding it to a specific prompt template
 
-			Parameters
-			----------
+            Parameters
+            ----------
 				template_prompt: str
-					Opzionale. Default = `None`. Una stringa contenente il template prompt su cui basarsi.
-					Se il template prompt non viene fornito ora è necessario fornirlo in seguito,
-					tramite il metodo `.`
+                    Optional. Default = `None`. A string containing the prompt template to use as a basis.
+                    If the prompt template is not provided now, it must be provided later,
+                    using the `.` method
 
-				init_del: str
-					Opzionale. Default = `{@`. Una stringa contenente il delimitatore iniziale per riconoscere
-					i placeholders nel template
+                init_del: str
+					Optional. Default = `{@`. A string containing the opening delimiter to recognize
+                    placeholders in the template
 
-				end_del: str
-					Opzionale. Default = `{@`. Una stringa contenente il delimitatore finale per riconoscere
-					i placeholders nel template
+                end_del: str
+                    Optional. Default = `{@`. A string containing the closing delimiter to recognize
+                    placeholders in the template
 		"""
 		self._idel: str = init_del
 		self._edel: str = end_del
@@ -65,16 +64,16 @@ class PromptBuilder:
 
 	def set_template_prompt(self, template_prompt: str):
 		"""
-			Imposta un nuovo template prompt di cui creare il full prompt,
-			disassociando quello eventualmente impostato in precedenza
+			Set a new prompt template to create the full prompt from,
+            unlinking any previously set template
 			
-			Raises
-			------
-				ValueError
-					Si verifica se:
-					
-						- Il parametro `template_prompt` ha valore `None`
-						- Il parametro `template_prompt` è una stringa vuota
+			Raises:
+            ------
+                ValueError
+                    Occurs if:
+                    
+                        - The `template_prompt` parameter is `None`
+                        - The `template_prompt` parameter is an empty string
 		"""
 		if (template_prompt is None) or (template_prompt == ""):
 			raise ValueError()
@@ -93,23 +92,22 @@ class PromptBuilder:
 			placeh_name: str
 	) -> bool:
 		"""
-			Verifica se esiste il placeholder con nome fornito, nel template associato, e può essere utilizzato
+			Checks whether the placeholder with the specified name exists in the associated template and can be used
 
-			Parameters
-			----------
-				placeh_name: str
-					Una stringa contenente il nome del placeholder di cui verificare l'esistenza
+            Parameters
+            ----------
+                placeh_name: str
+                    A string containing the name of the placeholder to check for existence
 
-			Returns
+            Returns
 			-------
-				bool
-					Un booleano che indica se il placeholder, con nome `placeh_name`, esiste
-					
-			Raises
-			------
-				TemplateNotSetError
-					Si verifica se non è stato ancora impostato alcun template prompt
-				
+                bool
+                    A boolean indicating whether the placeholder named `placeh_name` exists
+                    
+            Raises
+            ------
+                TemplateNotSetError
+                    Occurs if no prompt template has been set yet
 		"""
 		if self._templ is None:
 			raise TemplateNotSetError()
@@ -122,12 +120,12 @@ class PromptBuilder:
 	
 	def unset_placeholders(self):
 		"""
-			Elimina il valore impostato per ogni placeholder
-			
-			Raises
-			------
-				TemplateNotSetError
-					Si verifica se non è stato ancora impostato alcun template prompt
+			Removes the value set for each placeholder
+            
+            Raises
+            ------
+                TemplateNotSetError
+                    Occurs if no prompt template has been set yet
 		"""
 		if self._templ is None:
 			raise TemplateNotSetError()
@@ -142,23 +140,23 @@ class PromptBuilder:
 			value: str
 	):
 		"""
-			Sostituisce il placeholder indicato, nel template prompt associato a questo PromptBuilder, con il valore scelto
+			Replaces the specified placeholder in the prompt template associated with this PromptBuilder with the chosen value
 
-			Parameters
-			----------
+            Parameters
+            ----------
 				name: str
-					Una stringa che identifica il nome del placeholder da sostituire
+                    A string identifying the name of the placeholder to be replaced
 
-				value: str
-					Una stringa che identifica il valore con cui sostituire il placeholder indicato
+                value: str
+                    A string identifying the value with which to replace the specified placeholder
 
 			Raises
-			------
-				TemplateNotSetError
-					Si verifica se non è stato ancora impostato alcun template prompt
-					
-				InvalidPlaceholderError
-					Se il placeholder con nome `name` non esiste nel template prompt a cui è associato questo prompt builder
+            ------
+                TemplateNotSetError
+                    Occurs if no prompt template has been set yet
+                    
+                InvalidPlaceholderError
+                    If the placeholder named `name` does not exist in the prompt template associated with this prompt builder
 		"""
 		if self._templ is None:
 			raise TemplateNotSetError()
@@ -170,22 +168,22 @@ class PromptBuilder:
 
 	def build_prompt(self) -> str:
 		"""
-			Costruisce il full prompt risultante dalle sostituzioni scelte nel template.
-			E' richiesto che tutti i placeholders siano stati sostituiti prima di chiamare quest' operazione
+			Constructs the full prompt resulting from the substitutions made in the template.
+            All placeholders must be replaced before calling this operation.
 
-			Returns
-			-------
-				str
-					Una stringa contenente il full prompt derivante dalle sostituzioni del template prompt
+            Returns
+            -------
+                str
+                    A string containing the full prompt resulting from the substitutions in the prompt template
 
 			Raises
-			------
-				TemplateNotSetError
-					Si verifica se non è stato ancora impostato alcun template prompt
-			
-				IncompletePrompt
-					Se si esegue quest' operazione senza aver sostituito prima tutti i placeholders
-					nel template prompt
+            ------
+                TemplateNotSetError
+                    Occurs if no prompt template has been set yet
+            
+                IncompletePrompt
+                    If this operation is performed without first replacing all placeholders
+                    in the prompt template
 		"""
 		if self._templ is None:
 			raise TemplateNotSetError()

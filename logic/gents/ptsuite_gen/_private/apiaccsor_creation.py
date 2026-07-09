@@ -1,0 +1,27 @@
+from typing import Dict, Any
+
+from llm_access.llm_apiaccessor import (
+	ILlmApiAccessor, LlmApiAccessorFactory
+)
+
+from c23_logger import ATemporalFormattLogger
+
+
+
+def inst_apiaccsor(
+		platform_name: str,
+		platf_options: Dict[str, Any],
+		logger: ATemporalFormattLogger = None,
+) -> ILlmApiAccessor:
+	platform: ILlmApiAccessor = None
+	match platform_name:
+		case "ollama":
+			platform = LlmApiAccessorFactory.for_ollama(
+				platf_options["api_url"], platf_options["userpass_pair"],
+				platf_options["connect_timeout"],
+				logger=logger, log_resp=(True if logger is not None else False)
+			)
+		case _:
+			raise NotImplementedError("La piattaforma di inferenza richiesta non è implementata")
+	
+	return platform
