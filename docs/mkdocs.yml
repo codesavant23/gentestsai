@@ -57,118 +57,124 @@ theme:
 
 nav:
   - Home: index.md
+  - Common concepts:
+    - Glossary: common/glossary.md
+    - Projects conventions: common/proj_convs.md
+    - Focal environments: common/focal_envs.md
+  - GenTestsAI:
+    - Introduction to GenTestsAI: gtsai/intro.md
   - GenTestsAILib:
-    - Introduction: gtsai_lib/intro.md
-    - Architecture Overview: gtsai_lib/arch.md
+    - Introduction to GenTestsAILib: gtsai_lib/intro.md
+    - Architecture overview: gtsai_lib/arch.md
     - Logical units variability: gtsai_lib/logical_units.md
     - Hierarchies (by scope):
       - Focal Environments:
         - Container Description File building:
-          - IDockfBuilder: markdown/gtsai_lib/interfaces/IDockfBuilder.md
-          - _ABaseDockfBuilder: markdown/gtsai_lib/absclasses/_ABaseDockfBuilder.md
-          - ATransactDockfBuilder: markdown/gtsai_lib/absclasses/ATransactDockfBuilder.md
-          - SimpleTransactDockfBuilder: markdown/gtsai_lib/classes/SimpleTransactDockfBuilder.md
+          - IDockfBuilder: hiers/gtsai_lib/interfaces/IDockfBuilder.md
+          - _ABaseDockfBuilder: hiers/gtsai_lib/absclasses/_ABaseDockfBuilder.md
+          - ATransactDockfBuilder: hiers/gtsai_lib/absclasses/ATransactDockfBuilder.md
+          - SimpleTransactDockfBuilder: hiers/gtsai_lib/classes/SimpleTransactDockfBuilder.md
           - Exceptions:
-            - TransactionNotStartedError: markdown/gtsai_lib/classes/TransactionNotStartedError.md
-            - TransactionStartedError: markdown/gtsai_lib/classes/TransactionStartedError.md
+            - TransactionNotStartedError: hiers/gtsai_lib/classes/TransactionNotStartedError.md
+            - TransactionStartedError: hiers/gtsai_lib/classes/TransactionStartedError.md
 
         - Configuring Focal Environments:
-          - IFocalEnvConfigurator: markdown/gtsai_lib/interfaces/IFocalEnvConfigurator.md
-          - _ABaseFocalEnvConfigurator: markdown/gtsai_lib/absclasses/_ABaseFocalEnvConfigurator.md
-          - V1FocalEnvConfigurator: markdown/gtsai_lib/classes/V1FocalEnvConfigurator.md
+          - IFocalEnvConfigurator: hiers/gtsai_lib/interfaces/IFocalEnvConfigurator.md
+          - _ABaseFocalEnvConfigurator: hiers/gtsai_lib/absclasses/_ABaseFocalEnvConfigurator.md
+          - V1FocalEnvConfigurator: hiers/gtsai_lib/classes/V1FocalEnvConfigurator.md
           - Building cache cleaning:
-            - IBuildCacheCleaner: markdown/gtsai_lib/interfaces/IBuildCacheCleaner.md
-            - DockerBuildCacheCleaner: markdown/gtsai_lib/classes/DockerBuildCacheCleaner.md
-            - PodmanGe400BuildCacheCleaner: markdown/gtsai_lib/classes/PodmanGe400BuildCacheCleaner.md
-            - PodmanLt400BuildCacheCleaner: markdown/gtsai_lib/classes/PodmanLt400BuildCacheCleaner.md
-            - BuildCacheCleanerFactory: markdown/gtsai_lib/classes/BuildCacheCleanerFactory.md
-            - EContainerManager: markdown/gtsai_lib/enums/EContainerManager.md
+            - IBuildCacheCleaner: hiers/gtsai_lib/interfaces/IBuildCacheCleaner.md
+            - DockerBuildCacheCleaner: hiers/gtsai_lib/classes/DockerBuildCacheCleaner.md
+            - PodmanGe400BuildCacheCleaner: hiers/gtsai_lib/classes/PodmanGe400BuildCacheCleaner.md
+            - PodmanLt400BuildCacheCleaner: hiers/gtsai_lib/classes/PodmanLt400BuildCacheCleaner.md
+            - BuildCacheCleanerFactory: hiers/gtsai_lib/classes/BuildCacheCleanerFactory.md
+            - EContainerManager: hiers/gtsai_lib/enums/EContainerManager.md
           - Exceptions:
-            - BaseImageNotSetError: markdown/gtsai_lib/classes/BaseImageNotSetError.md
-            - DefaultPythonVersionNotSetError: markdown/gtsai_lib/classes/DefaultPythonVersionNotSetError.md
+            - BaseImageNotSetError: hiers/gtsai_lib/classes/BaseImageNotSetError.md
+            - DefaultPythonVersionNotSetError: hiers/gtsai_lib/classes/DefaultPythonVersionNotSetError.md
 
         - Focal Containers:
-          - FocalContainer: markdown/gtsai_lib/classes/FocalContainer.md
+          - FocalContainer: hiers/gtsai_lib/classes/FocalContainer.md
           - Exceptions:
-            - CommandNeverExecutedError: markdown/gtsai_lib/classes/CommandNeverExecutedError.md
-            - ContainerAlreadyRunningError: markdown/gtsai_lib/classes/ContainerAlreadyRunningError.md
-            - ContainerNotRunningError: markdown/gtsai_lib/classes/ContainerNotRunningError.md
+            - CommandNeverExecutedError: hiers/gtsai_lib/classes/CommandNeverExecutedError.md
+            - ContainerAlreadyRunningError: hiers/gtsai_lib/classes/ContainerAlreadyRunningError.md
+            - ContainerNotRunningError: hiers/gtsai_lib/classes/ContainerNotRunningError.md
 
       - Partial Test Suites:
         - Syntactic code check:
-          - ISyntacticChecker: markdown/gtsai_lib/interfaces/ISyntacticChecker.md
-          - _ABaseSyntacticChecker: markdown/gtsai_lib/absclasses/_ABaseSyntacticChecker.md
-          - PyCompileSyntChecker: markdown/gtsai_lib/classes/PyCompileSyntChecker.md
-          - SyntacticCheckerFactory: markdown/gtsai_lib/classes/SyntacticCheckerFactory.md
-          - ESyntCheckerTool: markdown/gtsai_lib/enums/ESyntCheckerTool.md
+          - ISyntacticChecker: hiers/gtsai_lib/interfaces/ISyntacticChecker.md
+          - _ABaseSyntacticChecker: hiers/gtsai_lib/absclasses/_ABaseSyntacticChecker.md
+          - PyCompileSyntChecker: hiers/gtsai_lib/classes/PyCompileSyntChecker.md
+          - SyntacticCheckerFactory: hiers/gtsai_lib/classes/SyntacticCheckerFactory.md
+          - ESyntCheckerTool: hiers/gtsai_lib/enums/ESyntCheckerTool.md
         - Linting code check:
-          - LintingChecker: markdown/gtsai_lib/classes/LintingChecker.md
+          - LintingChecker: hiers/gtsai_lib/classes/LintingChecker.md
 
         - Generation:
-          - EntityPtsuiteGenerator: markdown/gtsai_lib/classes/EntityPtsuiteGenerator.md
+          - EntityPtsuiteGenerator: hiers/gtsai_lib/classes/EntityPtsuiteGenerator.md
 
         - Syntactic correction:
-          - PtsuiteLintingCorrector: markdown/gtsai_lib/classes/PtsuiteLintingCorrector.md
+          - PtsuiteLintingCorrector: hiers/gtsai_lib/classes/PtsuiteLintingCorrector.md
           - Exceptions:
-            - SourceMaterializationError: markdown/gtsai_lib/classes/SourceMaterializationError.md
-            - SyntacticCheckError: markdown/gtsai_lib/classes/SyntacticCheckError.md
+            - SourceMaterializationError: hiers/gtsai_lib/classes/SourceMaterializationError.md
+            - SyntacticCheckError: hiers/gtsai_lib/classes/SyntacticCheckError.md
         - Linting correction:
-          - PtsuiteSyntacticCorrector: markdown/gtsai_lib/classes/PtsuiteSyntacticCorrector.md
+          - PtsuiteSyntacticCorrector: hiers/gtsai_lib/classes/PtsuiteSyntacticCorrector.md
           - Exceptions:
-            - SyntacticallyIncorrectPtsuiteError: markdown/gtsai_lib/classes/SyntacticallyIncorrectPtsuiteError.md
+            - SyntacticallyIncorrectPtsuiteError: hiers/gtsai_lib/classes/SyntacticallyIncorrectPtsuiteError.md
 
         - Exceptions:
-          - PromptingSessionNotStartedError: markdown/gtsai_lib/classes/PromptingSessionNotStartedError.md
-          - PromptingSessionInProgressError: markdown/gtsai_lib/classes/PromptingSessionInProgressError.md
-          - PromptingSessionNeverPerformedError: markdown/gtsai_lib/classes/PromptingSessionNeverPerformedError.md
-          - WrongResponseFormatError: markdown/gtsai_lib/classes/WrongResponseFormatError.md
+          - PromptingSessionNotStartedError: hiers/gtsai_lib/classes/PromptingSessionNotStartedError.md
+          - PromptingSessionInProgressError: hiers/gtsai_lib/classes/PromptingSessionInProgressError.md
+          - PromptingSessionNeverPerformedError: hiers/gtsai_lib/classes/PromptingSessionNeverPerformedError.md
+          - WrongResponseFormatError: hiers/gtsai_lib/classes/WrongResponseFormatError.md
 
         - Caching:
-          - IPtsuiteCacheAccessor: markdown/gtsai_lib/interfaces/IPtsuiteCacheAccessor.md
-          - _ABasePtsuiteCacheAccessor: markdown/gtsai_lib/absclasses/_ABasePtsuiteCacheAccessor.md
-          - Sqlite3CacheAccessor: markdown/gtsai_lib/classes/Sqlite3CacheAccessor.md
-          - PtsuiteCacheAccessorFactory: markdown/gtsai_lib/classes/PtsuiteCacheAccessorFactory.md
-          - ECacheAccessorType: markdown/gtsai_lib/enums/ECacheAccessorType.md
+          - IPtsuiteCacheAccessor: hiers/gtsai_lib/interfaces/IPtsuiteCacheAccessor.md
+          - _ABasePtsuiteCacheAccessor: hiers/gtsai_lib/absclasses/_ABasePtsuiteCacheAccessor.md
+          - Sqlite3CacheAccessor: hiers/gtsai_lib/classes/Sqlite3CacheAccessor.md
+          - PtsuiteCacheAccessorFactory: hiers/gtsai_lib/classes/PtsuiteCacheAccessorFactory.md
+          - ECacheAccessorType: hiers/gtsai_lib/enums/ECacheAccessorType.md
           - Exceptions:
-            - CacheFileTypeError: markdown/gtsai_lib/classes/CacheFileTypeError.md
-            - EntryAlreadyExistsError: markdown/gtsai_lib/classes/EntryAlreadyExistsError.md
-            - EntryNotExistsError: markdown/gtsai_lib/classes/EntryNotExistsError.md
-            - ProjectSpaceNotExistsError: markdown/gtsai_lib/classes/ProjectSpaceNotExistsError.md
-            - ProjectSpaceReservationError: markdown/gtsai_lib/classes/ProjectSpaceReservationError.md
+            - CacheFileTypeError: hiers/gtsai_lib/classes/CacheFileTypeError.md
+            - EntryAlreadyExistsError: hiers/gtsai_lib/classes/EntryAlreadyExistsError.md
+            - EntryNotExistsError: hiers/gtsai_lib/classes/EntryNotExistsError.md
+            - ProjectSpaceNotExistsError: hiers/gtsai_lib/classes/ProjectSpaceNotExistsError.md
+            - ProjectSpaceReservationError: hiers/gtsai_lib/classes/ProjectSpaceReservationError.md
 
         - Skipped Autonomous Entities:
-          - ISkipWriter: markdown/gtsai_lib/interfaces/ISkipWriter.md
-          - _ABaseSkipWriter: markdown/gtsai_lib/absclasses/_ABaseSkipWriter.md
-          - JsonListSkipWriter: markdown/gtsai_lib/classes/JsonListSkipWriter.md
-          - SkipWriterFactory: markdown/gtsai_lib/classes/SkipWriterFactory.md
-          - ESkippedTestsFtypeFormat: markdown/gtsai_lib/enums/ESkippedTestsFtypeFormat.md
+          - ISkipWriter: hiers/gtsai_lib/interfaces/ISkipWriter.md
+          - _ABaseSkipWriter: hiers/gtsai_lib/absclasses/_ABaseSkipWriter.md
+          - JsonListSkipWriter: hiers/gtsai_lib/classes/JsonListSkipWriter.md
+          - SkipWriterFactory: hiers/gtsai_lib/classes/SkipWriterFactory.md
+          - ESkippedTestsFtypeFormat: hiers/gtsai_lib/enums/ESkippedTestsFtypeFormat.md
           - Exceptions:
-            - InvalidSkippedTestsFileError: markdown/gtsai_lib/classes/InvalidSkippedTestsFileError.md
+            - InvalidSkippedTestsFileError: hiers/gtsai_lib/classes/InvalidSkippedTestsFileError.md
 
       - Specific Code Metrics calculation:
-        - ECoverageReportType: markdown/gtsai_lib/enums/ECoverageReportType.md
+        - ECoverageReportType: hiers/gtsai_lib/enums/ECoverageReportType.md
         - Entity-by-Entity coverage aggregation:
-          - ICoveragePyEbyeAggregator: markdown/gtsai_lib/interfaces/ICoveragePyEbyeAggregator.md
-          - _ABaseCoverageEbyeAggregator: markdown/gtsai_lib/absclasses/_ABaseCoverageEbyeAggregator.md
-          - JsonCoverageEbyeAggregator: markdown/gtsai_lib/classes/JsonCoverageEbyeAggregator.md
-          - CoveragePyEbyeAggregatorFactory: markdown/gtsai_lib/classes/CoveragePyEbyeAggregatorFactory.md
+          - ICoveragePyEbyeAggregator: hiers/gtsai_lib/interfaces/ICoveragePyEbyeAggregator.md
+          - _ABaseCoverageEbyeAggregator: hiers/gtsai_lib/absclasses/_ABaseCoverageEbyeAggregator.md
+          - JsonCoverageEbyeAggregator: hiers/gtsai_lib/classes/JsonCoverageEbyeAggregator.md
+          - CoveragePyEbyeAggregatorFactory: hiers/gtsai_lib/classes/CoveragePyEbyeAggregatorFactory.md
           - Exceptions:
-            - WrongReportTypeError: markdown/gtsai_lib/classes/WrongReportTypeError.md
+            - WrongReportTypeError: hiers/gtsai_lib/classes/WrongReportTypeError.md
         - Configuring coverage.py:
-          - CoverageRcWriter: markdown/gtsai_lib/classes/CoverageRcWriter.md
+          - CoverageRcWriter: hiers/gtsai_lib/classes/CoverageRcWriter.md
           - Exceptions:
-            - DataFileNotSetError: markdown/gtsai_lib/classes/DataFileNotSetError.md
-            - ReportTypeNotSetError: markdown/gtsai_lib/classes/ReportTypeNotSetError.md
+            - DataFileNotSetError: hiers/gtsai_lib/classes/DataFileNotSetError.md
+            - ReportTypeNotSetError: hiers/gtsai_lib/classes/ReportTypeNotSetError.md
 
       - Utilities:
-        - PromptBuilder: markdown/gtsai_lib/classes/PromptBuilder.md
+        - PromptBuilder: hiers/gtsai_lib/classes/PromptBuilder.md
         - Exceptions:
-          - IncompletePromptError: markdown/gtsai_lib/classes/IncompletePromptError.md
-          - InvalidPlaceholderError: markdown/gtsai_lib/classes/InvalidPlaceholderError.md
-          - TemplateNotSetError: markdown/gtsai_lib/classes/TemplateNotSetError.md
+          - IncompletePromptError: hiers/gtsai_lib/classes/IncompletePromptError.md
+          - InvalidPlaceholderError: hiers/gtsai_lib/classes/InvalidPlaceholderError.md
+          - TemplateNotSetError: hiers/gtsai_lib/classes/TemplateNotSetError.md
 
       - Exceptions:
-        - FocalProjectNotSetError: markdown/gtsai_lib/classes/FocalProjectNotSetError.md
+        - FocalProjectNotSetError: hiers/gtsai_lib/classes/FocalProjectNotSetError.md
 
 
 docs_dir: docs
@@ -180,6 +186,7 @@ plugins:
       lang: en
   - minify:
       minify_html: true
+  - glightbox
 
 
 markdown_extensions:
@@ -194,6 +201,8 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.superfences
   - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
 
 
 copyright: Copyright &copy; 2026 - 2026 Filippo Mecozzi (codesavant23)
@@ -206,11 +215,17 @@ extra:
     - icon: fontawesome/brands/github 
       link: https://github.com/codesavant23
   
-
 extra_css:
   - styles/palette.css
   - styles/text.css
   - styles/elements.css
   - styles/admons.css
+  - styles/ref_highlight.css
   - styles/acc_badges.css
   - styles/404.css
+  - https://unpkg.com/katex@0/dist/katex.min.css
+  
+extra_javascript:
+  - js/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js

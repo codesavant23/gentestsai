@@ -1,25 +1,25 @@
 # Welcome to GenTestsAI & GenTestsAILb Documentation
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Welcome! This is the documentation website for [`GenTestsAI`](https://github.com/codesavant23/gentestsai/) and [`GenTestsAILb`](https://github.com/codesavant23/gentestsai-lib) projects.
 
-## Commands
+Pick a page below or use the website tabs above to pick something related to GenTestsAI or GenTestsAILb
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+---
 
-## Project layout
+# Site Index 
 
-```
-mkdocs.yml    # The configuration file.
-docs/
-	index.md  # The documentation homepage.
-	...       # Other markdown pages, images and other files.
-```
-		 
+## Common concepts
+
+- Read about [project conventions](common/proj_convs.md) used in both projects
+
+
+## GenTestsAI
+
+- Read an [introduction to GenTestsAI](gtsai/intro.md)
+
 		
-```python
-def func1() -> int:
-	return 1+1
-```
+## GenTestsAILib
+
+- Read an [introduction to GenTestsAILib](gtsai_lib/intro.md)
+- Read about [library architecture](gtsai_lib/coming_soon.md)
+- Read about [library logical units](gtsai_lib/coming_soon.md)

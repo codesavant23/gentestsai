@@ -1,5 +1,5 @@
 # Class `JsonListSkipWriter`
-This represents an `ISkipWriter` capable of writing to a JSON file.
+Represents an `ISkipWriter` capable of writing to a JSON file.
 
 The JSON file format is as follows:
 
