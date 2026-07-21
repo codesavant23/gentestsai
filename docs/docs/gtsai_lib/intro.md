@@ -5,8 +5,7 @@
 
 **GenTestsAILib** is a Python software library designed to support automated test case generation for Python code within LLM-based workflows.
 
-Originally developed as the foundational layer of the GenTestsAI framework, it provides a set of modular and decoupled components that enable the construction of 
-flexible and maintainable test generation workflows. While developed tightly with the GenTestsAI framework, the library has been intentionally designed to be *fully* reusable beyond its original context.
+Originally developed as the foundational layer of the GenTestsAI framework, it provides a set of modular and decoupled components that enable the construction of flexible and maintainable test generation workflows. While developed tightly with the GenTestsAI framework, the library has been intentionally designed to be *fully* reusable beyond its original context.
 
 ## Architecture
 The design of GenTestsAILib is based on [**SOLID principles**](https://en.wikipedia.org/wiki/SOLID), which guided the decomposition of the test generation processes into well-defined conceptual elements. 
