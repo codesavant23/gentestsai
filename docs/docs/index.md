@@ -11,13 +11,14 @@ Pick a page below or use the website tabs above to pick something related to Gen
 ## Common concepts
 
 - Read about [project conventions](common/proj_convs.md) used in both projects
+- Read about [focal environments](common/focal_envs.md)
 
 
 ## GenTestsAI
 
 - Read an [introduction to GenTestsAI](gtsai/intro.md)
 
-		
+
 ## GenTestsAILib
 
 - Read an [introduction to GenTestsAILib](gtsai_lib/intro.md)
