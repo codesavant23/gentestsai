@@ -38,7 +38,7 @@
 - <span id="gentests-root">**Gen-tests Project Root Path** (also referred to as "Gen-tests Root"): Root path of a focal project intended to contain exclusively test cases automatically generated via Large Language Models.
 - <span id="envconfig-root">**Env-config Project Root Path** (also referred to as "Env-config Root"): Root path of a focal project containing the files required to configure its specific focal environment.
 - <span id="covconfig-root">**Cov-config Project Root Path** (also referred to as "Cov-config Root"): Root path of a focal project containing the files required to configure the tools for calculating coverage and other focal code quality metrics.
-- <span id="full-root">**Full Project Root Path** (also referred to as "Full Root"): Root path of a focal project that includes the entire contents of the project involved in an automatic test case generation process and a test evaluation process. Specifically, it contains:
+- <span id="full-root">**Full Project Root Path** (also referred to as "Full Root"): Root path of a focal project that includes the entire contents of the project involved in an automatic test case generation process and a test evaluation process. Specifically, it contains:</span>
 	- as subdirectories at the first level:
 		- the Gen-tests Project Root Path
         - the Env-config Project Root Path
@@ -46,4 +46,3 @@
     - as subdirectories at arbitrary nesting levels:
         - the Focal Project Root Path
         - the Tests Project Root Path
-    </span>

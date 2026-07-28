@@ -1,6 +1,6 @@
 One of the core concepts introduced by **GenTestsAILib** (and subsequently GenTestsAI) is the **Focal Environment**.
 
-A Focal Environment is an isolated, pre-configured software environment dedicated **to a single [focal project](glossary.md#focal-project)**.
+A Focal Environment is an isolated, pre-configured software environment dedicated **to a single [focal project](../glossary#focal-project)**.
 Its purpose is to provide a specific project environment of deterministic and reproducible execution for all operations that require interacting with the project, such as static analysis and coverage computation.
 
 In GenTestsAILib, Focal Environments are implemented as **Docker-compatible containers**.
@@ -63,7 +63,7 @@ Its name is user-defined.
 
 #### 🗂️ `project/`
 
-This directory contains everything related to the focal project. It corresponds to the project's [**full root**](glossary.md#full-root) inside the Focal Environment.
+This directory contains everything related to the focal project. It corresponds to the project's [**full root**](../glossary#full-root) inside the Focal Environment.
 
 ##### `<cov-config root>/`
 

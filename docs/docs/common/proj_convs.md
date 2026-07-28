@@ -8,11 +8,11 @@ In particular, they are used to:
 - Enforce a consistent structural order of both codebases;
 - Clearly distinguish the public API from internal implementation details. 
 
-These conventions also helps restrict the visibility of [code elements](/gentestsai/common/glossary/#code-element) within software components or packages, **promoting encapsulation** and reducing unintended dependencies to internal implementation details.
+These conventions also helps restrict the visibility of [code elements](../glossary#code-element) within software components or packages, **promoting encapsulation** and reducing unintended dependencies to internal implementation details.
 
 ## Files conventions
 
-- Every [module-file](/gentestsai/common/glossary/#module-file) contains **exactly 1 abstraction/class/enumerator**
+- Every [module-file](../glossary#module-file) contains **exactly 1 abstraction/class/enumerator**
 
 ### Access specifiers
 
@@ -24,7 +24,7 @@ These conventions also helps restrict the visibility of [code elements](/gentest
 - A file that **start with `i_`** indicates that an **<font color="#cd13ca">interface definition</font>** resides in that file
 - A file that **start with `a_`** indicates that an **<font color="#1358d7">abstract class definition</font>** resides in that file
 - A file that **start with `e_`** indicates that an **<font color="#30ae1a">enumerator definition</font>** resides in that file
-- Every other module-file, that is **<u>not</u> in a [functional decomposition](/gentestsai/common/glossary/#func-decomp-dir) package** contains a **<font color="#c7bd05">class definition</font>**
+- Every other module-file, that is **<u>not</u> in a [functional decomposition](../glossary#func-decomp-dir) package** contains a **<font color="#c7bd05">class definition</font>**
 
 ## Packages and sub-packages conventions
 
@@ -40,17 +40,17 @@ These conventions also helps restrict the visibility of [code elements](/gentest
 - Each <font color="#d75900">_hierarchy package_</font> **contains a `_private` folder** which hides hierarchy implementation files 
 - Each <font color="#d75900">_hierarchy package_</font> **can contain a `exceptions` sub-package** which exposes hierarchy-specific exceptions
 - Each <font color="#d75900">_hierarchy package_</font> **<u>can</u> contain a `_factory` folder** if the hierarchy provides a factory (or hierarchy of factories) that instatiates its objects. The `_factory` folder is used to hide factory implementation files
-- The [code elements](/gentestsai/common/glossary/#code-element) of both `_private` and `_factory` folders that should be public are **<u>explicitly exposed</u> by the package containing those folders**
+- The [code elements](../glossary#code-element) of both `_private` and `_factory` folders that should be public are **<u>explicitly exposed</u> by the package containing those folders**
 
 ### Specific projects packages type
 
-- The [functional decomposition](/gentestsai/common/glossary/#func-decomp-dir) package is called `logic`
+- The [functional decomposition](../glossary#func-decomp-dir) package is called `logic`
 
 ## Abstractions, classes and enumerators conventions
 
 ### Access specifiers
 
-- Every [code element](/gentestsai/common/glossary/#code-element) whose name **starts with a `_`** is considered to be **<u>public within its parent-package</u>**, **and** by its **<u>extenders</u>**.
+- Every [code element](../glossary#code-element) whose name **starts with a `_`** is considered to be **<u>public within its parent-package</u>**, **and** by its **<u>extenders</u>**.
 
 ### Relating to content description
 

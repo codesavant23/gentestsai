@@ -14,14 +14,16 @@ In contrast to common practices in dynamic languages such as Python — where su
 Each component is responsible for a specific concern, exposing clear **interfaces** and relying on **stable concrete classes**. Here **contracts** for the use of code elements (classes and methods) play a **fundamental role**. This approach promotes high cohesion and low coupling, resulting in a system that is easier to extend, maintain, and evolve over time. 
 
 ### Historical architecture (alpha release a.k.a. thesis release)
-The library was organized into a set of modular components, each addressing a distinct aspect of the overall system. These include modules such as `configuration`, `ptsuite_generation`, `focalproj_configuration`, `decls_extraction`, `calc_coverage`, and `utils`. Each module encapsulates a specific macro-responsibility within the broader test generation domain, **contributing to a composable** and **extensible architecture**.
+The library was organized into a set of modular components, each addressing a distinct aspect of the overall system.
 
 A high-level overview of these components and their weak relationships is provided in the architectural diagram below.
 
 <div>
-	<img src="/gentestsai/assets/arch_diagram__old.png" />
+	<img src="/gentestsai/assets/archs/hist/arch_diagram__old.png" />
 	<p class="figure-descr">Figure: Architectural components diagram of GenTestsAILib (historical alpha release)</p>
 </div>
+
+If you're interested, you can see details on [historical architecture](../hist_arch) of the library
 
 ### Actual library architecture
 After a refactoring concerning the entire library structure, some of its components has been fully decoupled becaming independant, and GenTestsAILib architecture has been simplified.
@@ -29,7 +31,7 @@ After a refactoring concerning the entire library structure, some of its compone
 Below you can find the updated architectural diagram that also shows, differently from the previous one, the stable classes part of the library API.
 
 <div>
-	<img src="/gentestsai/assets/arch_diagram.png" />
+	<img src="/gentestsai/assets/archs/arch_diagram.png" />
 	<p class="figure-descr">Figure: Architectural components diagram of GenTestsAILib (v1.1.2)</p>
 </div>
 

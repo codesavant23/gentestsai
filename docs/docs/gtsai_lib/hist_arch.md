@@ -1,7 +1,15 @@
-# Architectural Overview
+# Historical architecture
 
 GenTestsAILib is structured as a set of high-level components, each responsible for one or more well-defined interrelated concerns, within the hypotized automated test generation domains. The architecture reflects a deliberate separation of responsibilities, where each macro-component encapsulates a specific aspect of the system while interacting with others through clear interfaces and/or stable classes. This organization enables independent evolution of components and supports the construction of flexible test generation workflows.
+These components are `configuration`, `ptsuite_generation`, `focalproj_configuration`, `decls_extraction`, `calc_coverage`, and `utils`. 
+Each of them encapsulates a specific macro-responsibility within the broader test generation domain, **contributing to a composable** and **extensible architecture**.
 
+An architectural diagram is provided below.
+
+<div>
+	<img src="/gentestsai/assets/archs/hist/arch_diagram__old.png" />
+	<p class="figure-descr">Figure: Architectural components diagram of GenTestsAILib (historical alpha release)</p>
+</div>
 
 ## Configuration
 
@@ -25,7 +33,7 @@ Together, these sub-components enable the construction of iterative processes in
 A detailed component diagram is provided below.
 
 <div>
-	<img src="/assets/ptsuite_generation_diagram.png" />
+	<img src="/gentestsai/assets/archs/hist/ptsuite_generation_diagram.png" />
 	<p class="figure-descr">Figure: "ptsuite_generation" component diagram</p>
 </div>
 
@@ -45,7 +53,7 @@ This component abstracts the complexity of focal environments setup and executio
 A detailed component diagram is provided below.
 
 <div>
-	<img src="/assets/focalproj_cfgor_diagram.png" />
+	<img src="/gentestsai/assets/archs/hist/focalproj_cfgor_diagram.png" />
 	<p class="figure-descr">Figure: "focalproj_configuration" component diagram</p>
 </div>
 
