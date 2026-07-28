@@ -24,7 +24,9 @@ This isolation is particularly important for the **semantic correction** phase p
 
 ## Focal Environment Images
 
-Every Focal Environment is created from a dedicated container image. The image is built specifically for a given focal project while following a common structure understood by GenTestsAILib.
+Every Focal Environment is created from a dedicated container image. Each image is built specifically for a given focal project while following a common structure understood by GenTestsAILib.
+
+So every [container build description](../glossary#cbd) file used is built specifically for each focal project.
 
 ### Pre-installed Software
 

@@ -11,6 +11,12 @@
 - <span id="code-element">**Code Element**: Interface/abstract class/enumerator/class, generic term for all of them</span>
 
 
+## Containers terminology
+
+- <span id="container-engine">**Container Engine**: A container engine is software that creates, runs, and manages software containers by packaging application code and dependencies into isolated environments (e.g. Docker)</span>
+- <span id="cbd">**Container Build Description**: Text-file (or recipe) that lists the steps, base code, and settings needed to build/create a software container image. Each Container Build Description file is specific of a particular container engine (e.g. "Dockerfile"s are the type of Container Build Description files used by Docker)</span>
+
+
 ## Projects specific terminology/concepts
 
 ### General

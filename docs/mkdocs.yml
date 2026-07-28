@@ -60,7 +60,7 @@ nav:
   - Common concepts:
     - Glossary: common/glossary.md
     - Projects conventions: common/proj_convs.md
-    - Focal environments: common/focal_envs.md
+    - Focal Environments: common/focal_envs.md
   - GenTestsAI:
     - Introduction to GenTestsAI: gtsai/intro.md
   - GenTestsAILib:
