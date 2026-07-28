@@ -117,7 +117,7 @@ A Focal Environment image is only a template.
 
 Whenever GenTestsAILib needs to execute analyses, it creates, or uses, a **Focal Environment instance** from the corresponding image.
 
-The library provides the `FocalContainer` class to create, manage and destroy these container instances.
+The library provides the [`FocalContainer`](../../hiers/gtsai_lib/classes/FocalContainer) class to create, manage and destroy these container instances.
 
 Each instance is configured specifically for its focal project while preserving the standardized structure described above.
 
