@@ -114,12 +114,12 @@ nav:
           - EntityPtsuiteGenerator: hiers/gtsai_lib/classes/EntityPtsuiteGenerator.md
 
         - Syntactic correction:
-          - PtsuiteLintingCorrector: hiers/gtsai_lib/classes/PtsuiteLintingCorrector.md
+          - PtsuiteSyntacticCorrector: hiers/gtsai_lib/classes/PtsuiteSyntacticCorrector.md
           - Exceptions:
             - SourceMaterializationError: hiers/gtsai_lib/classes/SourceMaterializationError.md
             - SyntacticCheckError: hiers/gtsai_lib/classes/SyntacticCheckError.md
         - Linting correction:
-          - PtsuiteSyntacticCorrector: hiers/gtsai_lib/classes/PtsuiteSyntacticCorrector.md
+          - PtsuiteLintingCorrector: hiers/gtsai_lib/classes/PtsuiteLintingCorrector.md
           - Exceptions:
             - SyntacticallyIncorrectPtsuiteError: hiers/gtsai_lib/classes/SyntacticallyIncorrectPtsuiteError.md
 
