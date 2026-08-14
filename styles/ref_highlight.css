@@ -1,0 +1,25 @@
+/* Seleziona qualsiasi elemento che sia la destinazione di un anchor */
+:target {
+    animation: target-highlight 2.5s ease-out;
+}
+
+@keyframes target-highlight {
+    0% {
+        background-color: rgba(255, 235, 59, 0.5); /* Giallo evidenziatore */
+        box-shadow: 0 0 0 4px rgba(255, 235, 59, 0.5); /* Alone esterno */
+    }
+    70% {
+        background-color: rgba(255, 235, 59, 0.2);
+        box-shadow: 0 0 0 4px rgba(255, 235, 59, 0.1);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 4px transparent;
+    }
+}
+
+/* Aggiunta di padding agli span inline per rendere il background visibile anche su elementi che non vanno a capo */
+span:target {
+    padding: 2px 4px;
+    border-radius: 4px;
+}

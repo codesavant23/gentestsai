@@ -1,0 +1,143 @@
+/* ================ Footer =============== */
+
+/* Posizionamento */
+.md-copyright p {
+	margin: 0;
+}
+.md-copyright {
+	display: block;
+}
+.custom-footer {
+	display: flex;
+	text-align: left;
+	align-items: center; 	/* allinea verticalmente */
+	gap: 0.3rem;         	/* spazio tra p e a */
+}
+.custom-footer a {
+	color: #0695D6 !important;
+	text-decoration: underline;
+	white-space: nowrap;
+}
+
+.custom-footer {
+	font-size: 1.1em;
+}
+
+
+/* Colore testo del footer custom */
+
+/* (LIGHT) */
+[data-md-color-scheme="default"] .custom-footer {
+	color: grey;
+}
+
+/* (DARK) */
+[data-md-color-scheme="slate"] .custom-footer {
+	color: white;
+}
+
+
+/* Nome di Gesù */
+
+[data-md-color-scheme="default"] {
+	--layer1-color: #fff;
+	--layer2-color: #06A3E1;
+	--layer3-color: #fff;
+}
+[data-md-color-scheme="slate"] {
+	--layer1-color: #fff;
+	--layer2-color: #00ffff;
+	--layer3-color: #fff;
+}
+
+.lord-name {
+	color: white;
+	text-shadow: 
+		0 0 5px var(--layer1-color),
+		0 0 10px var(--layer2-color),
+		0 0 15px var(--layer3-color);
+}
+
+/* ======================================= */
+
+
+
+/* =========== GenTestsAI Logo =========== */
+
+/* Dimensioni Badge del logo */
+.md-header__button.md-logo,
+.md-nav__button.md-logo {
+	border-radius: 30px;
+	padding: 0px 8px;
+}
+
+
+/* Posizione + Dimensioni Logo */
+.md-header__button.md-logo > img,
+.md-nav__button.md-logo > img {
+	height: 40px;
+	width: auto;
+	display: block;
+	border-radius: 30px;
+	padding: 0;
+}
+
+
+/* Stile Badge del logo (LIGHT) */
+[data-md-color-scheme="default"] .md-header__button.md-logo {
+	background: rgba(229, 233, 255, 0.80);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.50);
+}
+
+
+/* Stile Badge del logo (DARK) */
+[data-md-color-scheme="slate"] .md-header__button.md-logo {
+	/*background: rgba(255, 255, 255, 0.08);*/
+	background: rgba(15, 23, 42, 0.32);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.20);
+}
+
+/* ======================================= */
+
+
+
+
+/* Pulsanti */
+.md-button {
+	background-color: var(--md-primary-fg-color);
+	color: white;
+	border-radius: 6px;
+}
+
+.md-button:hover {
+	background-color: var(--md-primary-fg-color--dark);
+}
+
+/* Links */
+a:hover {
+	opacity: 0.85;
+}
+
+/* Code blocks */
+pre code {
+	border-radius: 8px;
+}
+
+/* Admonitions */
+.md-typeset .admonition.note {
+	border-left: 4px solid #38BDF8;
+}
+
+.md-typeset .admonition.warning {
+	border-left: 4px solid #F59E0B;
+}
+
+.md-typeset .admonition.tip {
+	border-left: 4px solid #22C55E;
+}
