@@ -38,13 +38,13 @@ These conventions also helps restrict the visibility of [code elements](../gloss
 
 - Every public package containing a **class hierarchy** will be called <font color="#d75900">_**hierarchy package**_</font>
 - Each <font color="#d75900">_hierarchy package_</font> **contains a `_private` folder** which hides hierarchy implementation files 
-- Each <font color="#d75900">_hierarchy package_</font> **can contain a `exceptions` sub-package** which exposes hierarchy-specific exceptions
+- Each <font color="#d75900">_hierarchy package_</font> **<u>can</su> contain a `exceptions` sub-package** which exposes hierarchy-specific exceptions
 - Each <font color="#d75900">_hierarchy package_</font> **<u>can</u> contain a `_factory` folder** if the hierarchy provides a factory (or hierarchy of factories) that instatiates its objects. The `_factory` folder is used to hide factory implementation files
 - The [code elements](../glossary#code-element) of both `_private` and `_factory` folders that should be public are **<u>explicitly exposed</u> by the package containing those folders**
 
 ### Specific projects packages type
 
-- The [functional decomposition](../glossary#func-decomp-dir) package is called `logic`
+- The [functional decomposition package](../glossary#func-decomp-dir) is called `logic`
 
 ## Abstractions, classes and enumerators conventions
 
@@ -63,6 +63,6 @@ These conventions also helps restrict the visibility of [code elements](../gloss
 
 #### Relating to specific semantic meaning
 
-- Every code element that **ends with `Error`** represents an **exception**
+- Every [code element](../glossary#code-element) that **ends with `Error`** represents an **exception**
 - Every code element that **ends with `Factory`** represents a **factory** of objects
 - Every code element that **ends with `FactoryResolver`** represents a **factory of factories** (used to completely abstract an implementation of an [Abstract Factory Pattern](https://en.wikipedia.org/wiki/Abstract_factory_pattern))

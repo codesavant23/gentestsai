@@ -5,7 +5,7 @@
 
 **GenTestsAI** is a Python framework that automatically generates test cases, of a provided Python codebase, leveraging LLM-based workflows.
 
-This framework has been developed using the library **[GenTestsAILib](gtsai_lib/intro.md) as its foundational layer** which implements basic generation workflows composed by the framework GenTestsAI.
+This framework has been developed using the library **[GenTestsAILib](gtsai_lib/intro/) as its foundational layer** which implements basic generation workflows composed by the framework GenTestsAI.
 
 ## Generative implemented workflow
 
