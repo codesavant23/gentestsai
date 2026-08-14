@@ -12,26 +12,26 @@
 ![Static Badge](https://img.shields.io/badge/%20-%231C1C1C) 
 ![ReadMe](https://img.shields.io/badge/README.md-finished-%2320b706)
 [![Docs](https://img.shields.io/badge/docs-uploaded-%2320b706)](https://codesavant23.github.io/gentestsai)
-[![Docs](https://img.shields.io/badge/docs-60%25-%23E38112)](https://codesavant23.github.io/gentestsai)
+[![Docs](https://img.shields.io/badge/docs-90%25-%23E38112)](https://codesavant23.github.io/gentestsai)
 
 # What is GenTestsAI?
 
 **GenTestsAI** is a sophisticated framework, rooted on the SOLID-Designed library [**GenTestsAILib**](https://github.com/codesavant23/gentestsai-lib), for the automated generation of Python unit tests that uses Large Language Models (LLMs).<br/>
 
-It orchestrates a complete pipeline that includes test generation, iterative syntactic and linting correction that is performed within isolated containerized environments called [**focal environments**](#framework-specific-terminology).
-Optionally it provides also basic test coverage analysis (at statement level and [entity](#general)-level).
+It orchestrates a complete pipeline that includes test generation, iterative syntactic and linting correction that is performed within isolated containerized environments called [**focal environments**](https://codesavant23.github.io/gentestsai/common/glossary#focal-env).
+Optionally it provides also basic test coverage analysis (at statement level and [entity](https://codesavant23.github.io/gentestsai/common/glossary#entity)-level).
 
-**You can find project documentation [here]()**
+**You can find project documentation [here](https://codesavant23.github.io/gentestsai/)**
 
 ## Software artifacts Key Features
 
 *   **Comprehensive Configuration**: Offers deep customization through JSON configuration files for projects, models, prompts, LLM hyperparameters, and environment settings.
-*   **LLM-Powered Test Generation and Correction**: Leverages the power of LLMs to automatically create unit tests for Python [autonomous entities](#framework-specific-terminology).
+*   **LLM-Powered Test Generation and Correction**: Leverages the power of LLMs to automatically create unit tests for Python [autonomous entities](https://codesavant23.github.io/gentestsai/common/glossary#entity).
 *   **Iterative Correction Loop**: Automatically subjects generated code to a rigorous two-phase correction process:
     1.  **Syntactic Correction**: Uses [`py_compile`](https://docs.python.org/3/library/py_compile.html) to check for syntax errors and subsequently prompts the selected LLM for fixes.
-    2.  **Linting Correction**: Uses [`pylint`](https://www.pylint.org/) within a dedicated container environment ([focal environment](#framework-specific-terminology)) to identify and correct linting issues.
+    2.  **Linting Correction**: Uses [`pylint`](https://www.pylint.org/) within a dedicated container environment ([focal environment](https://codesavant23.github.io/gentestsai/common/glossary#focal-env)) to identify and correct linting issues.
 *   **Usage of focal environments**: Linting (static analysis) correctness check is performed in an isolated environment (that relies on containers) which grants security, scalability, portability and isolation of the host operating system.
-*   **Intelligent Caching**: Relies on a [partial test suite](#framework-specific-terminology) caching system to store the results of generation and correction attempts, avoiding redundant API calls and speeding up subsequent runs that resumes an execution of the framework.
+*   **Intelligent Caching**: Relies on a [partial test suite](https://codesavant23.github.io/gentestsai/common/glossary#ptsuite) caching system to store the results of generation and correction attempts, avoiding redundant API calls and speeding up subsequent runs that resumes an execution of the framework.
 *   **Coverage Analysis**: Provides tools to calculate and evaluate the statement coverage of both human-written and AI-generated test suites using [`coverage.py`](https://github.com/coveragepy/coveragepy).
 *   **Customizable Prompting**: Allows users to define their own prompt templates to guide the LLM's test generation and correction behavior for different models or tasks.
 
@@ -77,7 +77,7 @@ This allows the system to quickly retrieve previously generated correct code wit
 
  Optionally, after generating the partial test suites `exec_calc_coverage.py` can be run to execute **coverage calculation**. The script obtains the same focal environments, or creates them from scratch, to execute test suites of each focal project, both human and AI-generated (for each LLM) against the focal code and measures statement coverage with `coverage.py`. GenTestsAI provides also the **possibility to aggregate the statement coverage**, resulting from coverage.py, **into autonomous entity coverage** (which measures the percentage covered of a focal autonomous entity).
 
-Here you can find the [GenTestsAI Workflow Diagram](https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/generic_workflow_diagram_big_EN.png) which explains visually the steps described above (for a single focal project, and a single LLM)
+Here you can find the [GenTestsAI Workflow Diagram](https://codesavant23.github.io/gentestsai/gtsai/intro/#generative-implemented-workflow) which explains visually the steps described above (for a single focal project, and a single LLM)
 
 # Configuration Files
 
@@ -87,7 +87,7 @@ Here's a list of the configuration files used by GenTestsAI, and a glimpse descr
 * **<u>Platform settings file</u>**: Specifies the LLM inference platform, the response timeout and the specific platform settings to use. For example, when using Ollama this includes the IP:Port of the device that hosts platform, authentication credentials, and connection timeouts.
 * **<u>General settings file</u>**: Defines global settings, such as default hyperparameters for all models, maximum generation/correction attempts, and files/directories excluded from the generation process globally (for each focal project).
 * **<u>Selected models settings file</u>**: Lists the specific LLMs implementations to generate and correct test cases. Here, you can override default hyperparameters for each model (e.g., `context_window`, `temperature`, `top-k`, etc.).
-*   **<u>Selected focal projects file</u>**: Defines the focal Python projects for test generation, including their [Focal Root](#paths-and-directories) and [Tests Root](#paths-and-directories) paths. Optionally specific files or directories can be listed in order to exclude them from the generation.
+*   **<u>Selected focal projects file</u>**: Defines the focal Python projects for test generation, including their [Focal Root](https://codesavant23.github.io/gentestsai/common/glossary#full-root) and [Tests Root](https://codesavant23.github.io/gentestsai/common/glossary#tests-root) paths. Optionally specific files or directories can be listed in order to exclude them from the generation.
 *   **<u>Focal environments settings file</u>**: Defines parameters to configure focal environments for each project, including the base Docker image tag, paths to the environment tools, and scripts to run during the build process to pre-configure associated project dependencies.
 *   **<u>Prompts settings file</u>**: Specifies prompt templates filenames for different tasks (functional, methodal, correctional), their base path,, and placeholder delimiters that composes templates.
 *   **<u>Caches settings file</u>**: Defines the technology of caching system (e.g., `sqlite3`) and the location of the cache files to use/create.
@@ -128,44 +128,3 @@ If you want to have specific prompts for one or more particular models, then you
 # Appendix
 ## Associated Paper
 Here you can find the [Bachelor's Thesis](https://raw.githubusercontent.com/codesavant23/gentestsai/main/assets/thesis_ita.pdf) (Italian language) in which GenTestsAI, and most of all GenTestsAILib, are presented formally.
-
-## (Custom) Python Terminology
-- **<u>Module-file</u>**: A Python module consisting of only a single file, with the extension `.py`, different from an `__init__.py` file.
-
-- **<u>Code Package (or Module-package)</u>**: A Python module consisting of multiple files with the .py extension, generally identified by the name of the folder containing them, which must contain an `__init__.py` file that specifies the visibility of elements in the various "submodules" that comprise it (be they module-files or other module-packages).
-
-- **<u>Python Module</u>**: A module-file or a module-package of Python code
-
-## Framework specific Terminology
-
-### General
-- **<u>Focal Environment (of a focal project $X$):</u>**<br/> An isolated and pre-configured software environment aimed at hosting the focal project $X$, including the set of dependencies necessary for the execution, verification (static analysis/linting) and calculation of quality metrics of its source code, built according to one or more use cases among those listed.
-<br/>
-
-- **<u>Autonomous (Code) Entity:</u>**<br/> The smallest algorithmic unit of code whose semantics can be formalized in a contract (a function, or a class method).
-<br/>
-
-- **<u>Partial Test Suite of a Python module</u>**<br/> An organized and structured set of multiple test cases designed to verify the functionality, correctness, and reliability of a single autonomous code entity, of the focal Python module-file it concerns.
-<br/>
-
-- **<u>(Whole) Test Suite of a Python module</u>**<br/> An organized and structured set of multiple test cases, or partial test suites, designed to verify the functioning, correctness, and reliability of **each** autonomous code entity of the focal Python module it concerns.
-
-### Paths and Directories
-- **<u>Directory:</u>**  A folder in the o.s. file system.
-- **<u>Path (of a directory $D$):</u>** An ordered sequence of directories that identifies the location of directory $D$ within the file system tree. A path can be expressed in absolute form (making the identification unique) or relative.
-- **<u>Root Path (of an element $P$):</u>** A path identifying a directory $R$, ​​where $R$ represents the root directory containing all directories and files associated with element $P$.
-<br/>
-
-- **<u>Focal Project Root Path (also referred to as "Focal Root"):</u>** Root path of a focal project containing the source code (focal code) for which tests will be automatically generated. This directory may also include files or subdirectories not strictly related to the focal code.
-- **<u>Tests Project Root Path (also referred to as "Tests Root"):</u>** Root path of a focal project containing test cases manually developed by human programmers.
-- **<u>Gen-tests Project Root Path (also referred to as "Gen-tests Root"):</u>** Root path of a focal project intended to contain exclusively test cases automatically generated via Large Language Models.
-- **<u>Env-config Project Root Path (also referred to as "Env-config Root"):</u>** Root path of a focal project containing the files required to configure its specific focal environment.
-- **<u>Cov-config Project Root Path (also referred to as "Cov-config Root"):</u>** Root path of a focal project containing the files required to configure the tools for calculating coverage and other focal code quality metrics.
-- **<u>Full Project Root Path (also referred to as "Full Root"):</u>** Root path of a focal project that includes the entire contents of the project involved in an automatic test case generation process and a test evaluation process. Specifically, it contains:
-	- as subdirectories at the **first level**:
-		- the Gen-tests Project Root Path
-		- the Env-config Project Root Path 
-		- the Cov-config Project Root Path 
-	- as subdirectories at **arbitrary nesting** levels:
-		- the Focal Project Root Path
-		- the Tests Project Root Path
