@@ -63,6 +63,37 @@ nav:
     - Focal Environments: common/focal_envs.md
   - GenTestsAI:
     - Introduction to GenTestsAI: gtsai/intro.md
+    - Classes and Hierarchies (by scope):
+      - Configuration:
+        - _APlatSpecConfigValidator: hiers/gtsai/absclasses/_APlatSpecConfigValidator.md
+        - AGeneralConfigValidator: hiers/gtsai/absclasses/AGeneralConfigValidator.md
+        - AAccessorConfigValidator: hiers/gtsai/absclasses/AAccessorConfigValidator.md
+        - AModelsConfigValidator: hiers/gtsai/absclasses/AModelsConfigValidator.md
+        - OllamaAccessorConfigValidator: hiers/gtsai/classes/OllamaAccessorConfigValidator.md
+        - OllamaGeneralConfigValidator: hiers/gtsai/classes/OllamaGeneralConfigValidator.md
+        - OllamaModelsConfigValidator: hiers/gtsai/classes/OllamaModelsConfigValidator.md
+        - CacheConfigValidator: hiers/gtsai/classes/CacheConfigValidator.md
+        - CalcCovConfigValidator: hiers/gtsai/classes/CalcCovConfigValidator.md
+        - ProjectsConfigValidator: hiers/gtsai/classes/ProjectsConfigValidator.md
+        - ProjsEnvironConfigValidator: hiers/gtsai/classes/ProjsEnvironConfigValidator.md
+        - PromptsConfigValidator: hiers/gtsai/classes/PromptsConfigValidator.md
+      
+        - Factories:
+          - PlatSpecCfgValidatorFactoryResolver: hiers/gtsai/classes/PlatSpecCfgValidatorFactoryResolver.md
+          - EPlatSpecCfgPurpose: hiers/gtsai/enums/EPlatSpecCfgPurpose.md
+          - IPlatSpecCfgValidatorFactory: hiers/gtsai/interfaces/IPlatSpecCfgValidatorFactory.md
+          - GeneralPlatSpecCfgValidatorFactory: hiers/gtsai/classes/GeneralPlatSpecCfgValidatorFactory.md
+          - AccessorPlatSpecCfgValidatorFactory: hiers/gtsai/classes/AccessorPlatSpecCfgValidatorFactory.md
+          - ModelsPlatSpecCfgValidatorFactory: hiers/gtsai/classes/ModelsPlatSpecCfgValidatorFactory.md
+      
+      - Incremental Prompt Building:
+        - PromptBuilder: hiers/gtsai/classes/PromptBuilder.md
+        - TemplateNotSetError: hiers/gtsai/classes/TemplateNotSetError.md
+        - IncompletePromptError: hiers/gtsai/classes/IncompletePromptError.md
+        - InvalidPlaceholderError: hiers/gtsai/classes/InvalidPlaceholderError.md
+      
+      - General Purpose:
+        - PtsuitePromptingTry: hiers/gtsai/classes/PtsuitePromptingTry.md
   - GenTestsAILib:
     - Introduction to GenTestsAILib: gtsai_lib/intro.md
     - Architecture overview: gtsai_lib/arch.md
